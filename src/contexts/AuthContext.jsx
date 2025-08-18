@@ -35,14 +35,45 @@ export const AuthProvider = ({ children }) => {
           } else {
             // Sessão expirada
             localStorage.removeItem('awayuk_user');
+            createDevelopmentUser();
           }
+        } else {
+          // Criar utilizador temporário para desenvolvimento
+          createDevelopmentUser();
         }
       } catch (error) {
         console.error('Erro ao verificar estado de autenticação:', error);
         localStorage.removeItem('awayuk_user');
+        createDevelopmentUser();
       } finally {
         setIsLoading(false);
       }
+    };
+
+    // Função para criar utilizador temporário para desenvolvimento
+    const createDevelopmentUser = () => {
+      const devUser = {
+        id: 999,
+        firstName: 'Admin',
+        lastName: 'Desenvolvimento',
+        email: 'admin@awaysuk.dev',
+        phone: '+44 7000 000 000',
+        currentCity: 'Londres',
+        originProvince: 'Luanda',
+        profession: 'Administrador',
+        interests: ['Desenvolvimento', 'Gestão', 'Comunidade'],
+        languagesSpoken: ['Português', 'Inglês'],
+        arrivalYear: 2020,
+        avatar: `https://ui-avatars.com/api/?name=Admin+Dev&background=3b82f6&color=fff`,
+        isLoggedIn: true,
+        loginTime: new Date().toISOString(),
+        role: 'admin',
+        emailVerified: true
+      };
+      
+      localStorage.setItem('awayuk_user', JSON.stringify(devUser));
+      setUser(devUser);
+      setIsAuthenticated(true);
     };
 
     checkAuthStatus();

@@ -1,0 +1,526 @@
+import React, { useState } from 'react';
+import {
+  ChartBarIcon,
+  UsersIcon,
+  CalendarDaysIcon,
+  BriefcaseIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  HeartIcon,
+  ChatBubbleLeftIcon,
+  ShareIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ClockIcon,
+  MapPinIcon,
+  AcademicCapIcon,
+  BuildingOfficeIcon
+} from '@heroicons/react/24/outline';
+
+const StatisticsManagement = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [selectedMetric, setSelectedMetric] = useState('overview');
+
+  // Mock data - em produção viria de uma API
+  const overviewStats = {
+    totalMembers: { current: 1247, previous: 1156, change: 7.9 },
+    activeMembers: { current: 892, previous: 834, change: 7.0 },
+    totalEvents: { current: 45, previous: 38, change: 18.4 },
+    totalOpportunities: { current: 127, previous: 98, change: 29.6 },
+    totalContent: { current: 234, previous: 201, change: 16.4 },
+    totalViews: { current: 15678, previous: 12456, change: 25.9 },
+    totalEngagement: { current: 3456, previous: 2987, change: 15.7 },
+    conversionRate: { current: 12.5, previous: 10.8, change: 15.7 }
+  };
+
+  const memberStats = {
+    byLocation: [
+      { location: 'Londres', count: 456, percentage: 36.6 },
+      { location: 'Manchester', count: 234, percentage: 18.8 },
+      { location: 'Birmingham', count: 189, percentage: 15.2 },
+      { location: 'Liverpool', count: 145, percentage: 11.6 },
+      { location: 'Edinburgh', count: 98, percentage: 7.9 },
+      { location: 'Outras', count: 125, percentage: 10.0 }
+    ],
+    byAge: [
+      { range: '18-25', count: 298, percentage: 23.9 },
+      { range: '26-35', count: 456, percentage: 36.6 },
+      { range: '36-45', count: 312, percentage: 25.0 },
+      { range: '46-55', count: 134, percentage: 10.7 },
+      { range: '55+', count: 47, percentage: 3.8 }
+    ],
+    byProfession: [
+      { profession: 'Tecnologia', count: 234, percentage: 18.8 },
+      { profession: 'Saúde', count: 189, percentage: 15.2 },
+      { profession: 'Educação', count: 156, percentage: 12.5 },
+      { profession: 'Finanças', count: 134, percentage: 10.7 },
+      { profession: 'Engenharia', count: 123, percentage: 9.9 },
+      { profession: 'Outras', count: 411, percentage: 33.0 }
+    ],
+    registrationTrend: [
+      { month: 'Jan', count: 45 },
+      { month: 'Fev', count: 52 },
+      { month: 'Mar', count: 67 },
+      { month: 'Abr', count: 78 },
+      { month: 'Mai', count: 89 },
+      { month: 'Jun', count: 95 },
+      { month: 'Jul', count: 112 },
+      { month: 'Ago', count: 134 },
+      { month: 'Set', count: 145 },
+      { month: 'Out', count: 167 },
+      { month: 'Nov', count: 189 },
+      { month: 'Dez', count: 234 }
+    ]
+  };
+
+  const eventStats = {
+    byCategory: [
+      { category: 'Networking', count: 15, attendance: 456 },
+      { category: 'Cultural', count: 12, attendance: 389 },
+      { category: 'Profissional', count: 8, attendance: 234 },
+      { category: 'Educacional', count: 6, attendance: 178 },
+      { category: 'Social', count: 4, attendance: 123 }
+    ],
+    attendanceRate: { current: 78.5, previous: 72.3, change: 8.6 },
+    averageAttendance: { current: 34.2, previous: 28.7, change: 19.2 },
+    popularTimes: [
+      { time: '18:00-19:00', events: 18 },
+      { time: '19:00-20:00', events: 15 },
+      { time: '20:00-21:00', events: 8 },
+      { time: '14:00-15:00', events: 4 }
+    ]
+  };
+
+  const contentStats = {
+    byType: [
+      { type: 'Artigos', count: 89, views: 12456, engagement: 1234 },
+      { type: 'Vídeos', count: 45, views: 8934, engagement: 2345 },
+      { type: 'Galerias', count: 34, views: 5678, engagement: 890 },
+      { type: 'Guias', count: 28, views: 4567, engagement: 567 },
+      { type: 'Notícias', count: 38, views: 6789, engagement: 789 }
+    ],
+    topContent: [
+      { title: 'Guia Completo: Como Encontrar Emprego no Reino Unido', views: 2456, likes: 234, comments: 89 },
+      { title: 'Vídeo: Testemunho de Sucesso - Engenheiro em Manchester', views: 2100, likes: 189, comments: 67 },
+      { title: 'Galeria: Festa da Independência de Angola 2024', views: 1890, likes: 156, comments: 45 },
+      { title: 'Dicas de Integração: Sistema de Saúde Britânico (NHS)', views: 1567, likes: 123, comments: 34 },
+      { title: 'Oportunidades de Bolsas de Estudo para 2025', views: 1234, likes: 98, comments: 23 }
+    ],
+    engagementTrend: [
+      { month: 'Jan', views: 8456, likes: 567, comments: 234 },
+      { month: 'Fev', views: 9234, likes: 634, comments: 267 },
+      { month: 'Mar', views: 10567, likes: 723, comments: 298 },
+      { month: 'Abr', views: 11234, likes: 789, comments: 334 },
+      { month: 'Mai', views: 12456, likes: 856, comments: 378 },
+      { month: 'Jun', views: 13678, likes: 923, comments: 412 }
+    ]
+  };
+
+  const periods = [
+    { value: '7d', label: 'Últimos 7 dias' },
+    { value: '30d', label: 'Últimos 30 dias' },
+    { value: '90d', label: 'Últimos 3 meses' },
+    { value: '1y', label: 'Último ano' }
+  ];
+
+  const metrics = [
+    { value: 'overview', label: 'Visão Geral', icon: ChartBarIcon },
+    { value: 'members', label: 'Membros', icon: UsersIcon },
+    { value: 'events', label: 'Eventos', icon: CalendarDaysIcon },
+    { value: 'opportunities', label: 'Oportunidades', icon: BriefcaseIcon },
+    { value: 'content', label: 'Conteúdos', icon: DocumentTextIcon }
+  ];
+
+  const formatNumber = (num) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
+  const formatPercentage = (num) => {
+    return num.toFixed(1) + '%';
+  };
+
+  const getChangeIcon = (change) => {
+    if (change > 0) {
+      return <ArrowUpIcon className="h-4 w-4 text-green-500" />;
+    } else if (change < 0) {
+      return <ArrowDownIcon className="h-4 w-4 text-red-500" />;
+    }
+    return null;
+  };
+
+  const getChangeColor = (change) => {
+    if (change > 0) return 'text-green-600';
+    if (change < 0) return 'text-red-600';
+    return 'text-gray-600';
+  };
+
+  const StatCard = ({ title, value, change, icon: Icon, suffix = '' }) => (
+    <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="p-5">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <Icon className="h-6 w-6 text-gray-400" />
+          </div>
+          <div className="ml-5 w-0 flex-1">
+            <dl>
+              <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+              <dd className="flex items-baseline">
+                <div className="text-2xl font-semibold text-gray-900">
+                  {formatNumber(value)}{suffix}
+                </div>
+                {change !== undefined && (
+                  <div className={`ml-2 flex items-baseline text-sm font-semibold ${getChangeColor(change)}`}>
+                    {getChangeIcon(change)}
+                    <span className="ml-1">{formatPercentage(Math.abs(change))}</span>
+                  </div>
+                )}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ProgressBar = ({ label, value, total, color = 'bg-red-500' }) => {
+    const percentage = (value / total) * 100;
+    return (
+      <div className="mb-4">
+        <div className="flex justify-between text-sm font-medium text-gray-900 mb-1">
+          <span>{label}</span>
+          <span>{value} ({formatPercentage(percentage)})</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full ${color}`}
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total de Membros"
+          value={overviewStats.totalMembers.current}
+          change={overviewStats.totalMembers.change}
+          icon={UsersIcon}
+        />
+        <StatCard
+          title="Membros Ativos"
+          value={overviewStats.activeMembers.current}
+          change={overviewStats.activeMembers.change}
+          icon={UsersIcon}
+        />
+        <StatCard
+          title="Total de Eventos"
+          value={overviewStats.totalEvents.current}
+          change={overviewStats.totalEvents.change}
+          icon={CalendarDaysIcon}
+        />
+        <StatCard
+          title="Oportunidades"
+          value={overviewStats.totalOpportunities.current}
+          change={overviewStats.totalOpportunities.change}
+          icon={BriefcaseIcon}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Conteúdos"
+          value={overviewStats.totalContent.current}
+          change={overviewStats.totalContent.change}
+          icon={DocumentTextIcon}
+        />
+        <StatCard
+          title="Visualizações"
+          value={overviewStats.totalViews.current}
+          change={overviewStats.totalViews.change}
+          icon={EyeIcon}
+        />
+        <StatCard
+          title="Engajamento"
+          value={overviewStats.totalEngagement.current}
+          change={overviewStats.totalEngagement.change}
+          icon={HeartIcon}
+        />
+        <StatCard
+          title="Taxa de Conversão"
+          value={overviewStats.conversionRate.current}
+          change={overviewStats.conversionRate.change}
+          icon={ArrowUpIcon}
+          suffix="%"
+        />
+      </div>
+    </div>
+  );
+
+  const renderMembers = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Localização</h3>
+          <div className="space-y-3">
+            {memberStats.byLocation.map((item, index) => (
+              <ProgressBar
+                key={index}
+                label={item.location}
+                value={item.count}
+                total={1247}
+                color={`bg-red-${500 - index * 100}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Idade</h3>
+          <div className="space-y-3">
+            {memberStats.byAge.map((item, index) => (
+              <ProgressBar
+                key={index}
+                label={item.range}
+                value={item.count}
+                total={1247}
+                color={`bg-blue-${500 - index * 100}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Profissão</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {memberStats.byProfession.map((item, index) => (
+            <ProgressBar
+              key={index}
+              label={item.profession}
+              value={item.count}
+              total={1247}
+              color={`bg-green-${500 - index * 50}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderEvents = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <StatCard
+          title="Taxa de Comparência"
+          value={eventStats.attendanceRate.current}
+          change={eventStats.attendanceRate.change}
+          icon={UsersIcon}
+          suffix="%"
+        />
+        <StatCard
+          title="Média de Participantes"
+          value={eventStats.averageAttendance.current}
+          change={eventStats.averageAttendance.change}
+          icon={UsersIcon}
+        />
+        <StatCard
+          title="Total de Eventos"
+          value={45}
+          icon={CalendarDaysIcon}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Eventos por Categoria</h3>
+          <div className="space-y-4">
+            {eventStats.byCategory.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">{item.category}</div>
+                  <div className="text-sm text-gray-500">{item.count} eventos</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-900">{item.attendance}</div>
+                  <div className="text-sm text-gray-500">participantes</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Horários Populares</h3>
+          <div className="space-y-3">
+            {eventStats.popularTimes.map((item, index) => (
+              <ProgressBar
+                key={index}
+                label={item.time}
+                value={item.events}
+                total={45}
+                color={`bg-purple-${500 - index * 100}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => (
+    <div className="space-y-6">
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Conteúdos por Tipo</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Quantidade
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Visualizações
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Engajamento
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {contentStats.byType.map((item, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {item.type}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.count}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(item.views)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(item.engagement)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Conteúdos Mais Populares</h3>
+        <div className="space-y-4">
+          {contentStats.topContent.map((item, index) => (
+            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900 line-clamp-1">
+                  {item.title}
+                </div>
+                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <EyeIcon className="h-3 w-3 mr-1" />
+                    {formatNumber(item.views)}
+                  </div>
+                  <div className="flex items-center">
+                    <HeartIcon className="h-3 w-3 mr-1" />
+                    {formatNumber(item.likes)}
+                  </div>
+                  <div className="flex items-center">
+                    <ChatBubbleLeftIcon className="h-3 w-3 mr-1" />
+                    {formatNumber(item.comments)}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-semibold text-gray-900">#{index + 1}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMetricContent = () => {
+    switch (selectedMetric) {
+      case 'members':
+        return renderMembers();
+      case 'events':
+        return renderEvents();
+      case 'content':
+        return renderContent();
+      default:
+        return renderOverview();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="sm:flex sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Estatísticas e Relatórios</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Acompanhe métricas detalhadas e insights sobre a comunidade
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md"
+          >
+            {periods.map(period => (
+              <option key={period.value} value={period.value}>
+                {period.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Metric Tabs */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+            {metrics.map((metric) => {
+              const IconComponent = metric.icon;
+              return (
+                <button
+                  key={metric.value}
+                  onClick={() => setSelectedMetric(metric.value)}
+                  className={`${
+                    selectedMetric === metric.value
+                      ? 'border-red-500 text-red-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                >
+                  <IconComponent className="h-5 w-5 mr-2" />
+                  {metric.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+        <div className="p-6">
+          {renderMetricContent()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StatisticsManagement;

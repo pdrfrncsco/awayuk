@@ -349,17 +349,18 @@ const BusinessOpportunities = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-600 to-yellow-500 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Negócios & Oportunidades</h1>
-            <p className="text-xl opacity-90 max-w-3xl mx-auto">
-              Acesso exclusivo a vagas de emprego, estágios e oportunidades de negócio dentro da comunidade angolana no Reino Unido
-            </p>
+      <section>
+        <div className="bg-gradient-to-r from-red-600 to-yellow-500 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold mb-4">Negócios & Oportunidades</h1>
+              <p className="text-xl opacity-90 max-w-3xl mx-auto">
+                Acesso exclusivo a vagas de emprego, estágios e oportunidades de negócio dentro da comunidade angolana no Reino Unido
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-
+      </section>
       {/* Filtros e Pesquisa */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
