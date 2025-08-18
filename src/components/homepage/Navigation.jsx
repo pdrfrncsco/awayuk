@@ -22,13 +22,13 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
         <div className="flex items-center space-x-4">
-          <div className="text-2xl font-bold text-red-800">
-            <span className="text-red-600">AWAY</span>UK
-          </div>
+            <div className="flex items-center ">
+              <div className="flex items-center justify-center h-10 w-10 rounded-md bg-gradient-to-r from-yellow-500 to-red-500 text-white">
+                <i className="fas fa-globe-africa text-xl"></i>
+              </div>
+              <span className="ml-3 text-xl font-bold text-red">AWAYUK</span>
+            </div>
           <div className="hidden md:flex space-x-1">
-            <span className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-full live-badge">
-              ANGOLA
-            </span>
           </div>
         </div>
           <div className="hidden md:ml-6 md:flex md:items-center md:space-x-8">

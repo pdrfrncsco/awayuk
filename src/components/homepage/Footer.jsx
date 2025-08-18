@@ -46,7 +46,7 @@ const Footer = () => {
               <div className="flex items-center justify-center h-10 w-10 rounded-md bg-gradient-to-r from-yellow-500 to-red-500 text-white">
                 <i className="fas fa-globe-africa text-xl"></i>
               </div>
-              <span className="ml-3 text-xl font-bold text-white">Angola Connect UK</span>
+              <span className="ml-3 text-xl font-bold text-white">AWAYUK</span>
             </div>
             <p className="text-gray-300 text-base">
               Conectando a comunidade angolana no Reino Unido. Construindo pontes, criando oportunidades e fortalecendo laços culturais.
