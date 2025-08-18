@@ -1,9 +1,21 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = async () => {
+    const result = logout();
+    if (result.success) {
+      setShowUserMenu(false);
+      navigate('/');
+    }
+  };
 
   return (
     <nav className="bg-white shadow-lg fixed w-full z-10">
@@ -40,20 +52,88 @@ const Navigation = () => {
             >
               Comunidade
             </Link>
-            <a href="#" className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Eventos
-            </a>
-            <a href="#" className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Negócios
-            </a>
-            <a href="#" className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <Link 
+                to="/eventos" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === '/eventos' ? 'text-red-600 bg-red-50' : 'text-gray-700 hover:text-red-600'
+                }`}
+              >
+                Eventos
+              </Link>
+              <Link 
+                to="/oportunidades" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === '/oportunidades' ? 'text-red-600 bg-red-50' : 'text-gray-700 hover:text-red-600'
+                }`}
+              >
+                Oportunidades
+              </Link>
+
+            <Link 
+              to="/sobre" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/sobre' 
+                  ? 'text-red-600 bg-red-50' 
+                  : 'text-gray-700 hover:text-red-600'
+              }`}
+            >
               Sobre
-            </a>
+            </Link>
           </div>
-          <div className="flex items-center">
-            <a href="#" className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition duration-300">
-              Registar
-            </a>
+          <div className="flex items-center space-x-3">
+             {isAuthenticated ? (
+               <div className="relative">
+                 <button
+                   onClick={() => setShowUserMenu(!showUserMenu)}
+                   className="flex items-center space-x-2 text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                 >
+                   <img
+                     src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName + ' ' + user?.lastName)}&background=f59e0b&color=fff`}
+                     alt={`${user?.firstName} ${user?.lastName}`}
+                     className="h-8 w-8 rounded-full"
+                   />
+                   <span>{user?.firstName}</span>
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                   </svg>
+                 </button>
+                 
+                 {showUserMenu && (
+                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                     <Link
+                       to={`/perfil/${user?.id}`}
+                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       onClick={() => setShowUserMenu(false)}
+                     >
+                       Ver Perfil
+                     </Link>
+                     <Link
+                       to="/configuracoes"
+                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       onClick={() => setShowUserMenu(false)}
+                     >
+                       Configurações
+                     </Link>
+                     <hr className="my-1" />
+                     <button
+                       onClick={handleLogout}
+                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                     >
+                       Sair
+                     </button>
+                   </div>
+                 )}
+               </div>
+             ) : (
+               <>
+                 <Link to="/login" className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                   Entrar
+                 </Link>
+                 <Link to="/registo" className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition duration-300">
+                   Registar
+                 </Link>
+               </>
+             )}
             <button 
               className="md:hidden ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -89,20 +169,91 @@ const Navigation = () => {
               >
                 Comunidade
               </Link>
-              <a href="#" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md">
+              <Link 
+                to="/eventos" 
+                className={`block px-3 py-2 text-base font-medium rounded-md ${
+                  location.pathname === '/eventos' 
+                    ? 'text-red-600 bg-red-50' 
+                    : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 Eventos
-              </a>
+              </Link>
+              <Link 
+                to="/oportunidades" 
+                className={`block px-3 py-2 text-base font-medium rounded-md ${
+                  location.pathname === '/oportunidades' 
+                    ? 'text-red-600 bg-red-50' 
+                    : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Oportunidades
+              </Link>
               <a href="#" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md">
                 Negócios
               </a>
-              <a href="#" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md">
+              <Link 
+                to="/sobre" 
+                className={`block px-3 py-2 text-base font-medium rounded-md ${
+                  location.pathname === '/sobre' 
+                    ? 'text-red-600 bg-red-50' 
+                    : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 Sobre
-              </a>
+              </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
-                <button className="w-full text-left bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
-                  Registar
-                </button>
-              </div>
+                 {isAuthenticated ? (
+                   <div className="space-y-1">
+                     <div className="flex items-center px-3 py-2">
+                       <img
+                         src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName + ' ' + user?.lastName)}&background=f59e0b&color=fff`}
+                         alt={`${user?.firstName} ${user?.lastName}`}
+                         className="h-10 w-10 rounded-full mr-3"
+                       />
+                       <div>
+                         <div className="text-base font-medium text-gray-800">{user?.firstName} {user?.lastName}</div>
+                         <div className="text-sm text-gray-500">{user?.email}</div>
+                       </div>
+                     </div>
+                     <Link
+                       to={`/perfil/${user?.id}`}
+                       className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
+                       onClick={() => setIsMobileMenuOpen(false)}
+                     >
+                       Ver Perfil
+                     </Link>
+                     <Link
+                       to="/configuracoes"
+                       className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
+                       onClick={() => setIsMobileMenuOpen(false)}
+                     >
+                       Configurações
+                     </Link>
+                     <button
+                       onClick={() => {
+                         handleLogout();
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
+                     >
+                       Sair
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="space-y-1">
+                     <Link to="/login" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
+                       Entrar
+                     </Link>
+                     <Link to="/registo" className="block px-3 py-2 text-base font-medium bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
+                       Registar
+                     </Link>
+                   </div>
+                 )}
+               </div>
             </div>
           </div>
         )}
