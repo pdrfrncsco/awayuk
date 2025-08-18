@@ -21,21 +21,29 @@ const AboutUs = () => {
   const values = [
     {
       icon: HeartIcon,
+      iconBg: 'bg-red-100',
+      iconColor: 'text-red-600',
       title: 'Solidariedade',
       description: 'Apoiamos uns aos outros em todas as jornadas, criando uma rede de suporte genuína e duradoura.'
     },
     {
       icon: GlobeAltIcon,
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
       title: 'Diversidade Cultural',
       description: 'Celebramos a riqueza das nossas diferentes origens, criando pontes entre culturas e tradições.'
     },
     {
       icon: AcademicCapIcon,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
       title: 'Crescimento Contínuo',
       description: 'Promovemos o desenvolvimento pessoal e profissional através de partilha de conhecimento e experiências.'
     },
     {
       icon: SparklesIcon,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
       title: 'Inovação',
       description: 'Incentivamos ideias criativas e soluções inovadoras para os desafios da nossa comunidade.'
     }
@@ -45,7 +53,7 @@ const AboutUs = () => {
     {
       name: 'Maria Santos',
       role: 'Fundadora & Presidente',
-      bio: 'Emigrou para o Reino Unido há 15 anos e dedica-se a ajudar outros portugueses na sua jornada.',
+      bio: 'Emigrou para o Reino Unido há 15 anos e dedica-se a ajudar outros angolanos na sua jornada.',
       image: '/api/placeholder/150/150'
     },
     {
@@ -64,36 +72,49 @@ const AboutUs = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="gradient-bg pt-24 pb-32 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Sobre a AWAYSUK
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-6">
+              <span className="block">Sobre a</span>
+              <span className="block text-yellow-200">AWAYSUK</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+            <p className="mt-3 text-lg text-yellow-100 max-w-3xl mx-auto mb-8">
               Uma comunidade vibrante de angolanos no Reino Unido, unidos pela paixão de crescer juntos
             </p>
             <div className="flex justify-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-6">
-                <p className="text-lg font-medium">
+                <p className="text-lg font-medium text-white">
                   "Longe de casa, mas nunca sozinhos"
                 </p>
               </div>
             </div>
           </div>
         </div>
-      </div>
+        <div className="wave-shape">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
+          </svg>
+        </div>
+      </section>
 
-      {/* Stats Section */}
-      <div className="py-16 bg-white">
+      <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="flex justify-center mb-4">
-                  <stat.icon className="h-12 w-12 text-blue-600" />
+                  <div className={`flex items-center justify-center h-16 w-16 rounded-md ${
+                    index === 0 ? 'bg-red-100' :
+                    index === 1 ? 'bg-yellow-100' :
+                    index === 2 ? 'bg-blue-100' : 'bg-green-100'
+                  }`}>
+                    <stat.icon className={`h-8 w-8 ${
+                      index === 0 ? 'text-red-600' :
+                      index === 1 ? 'text-yellow-600' :
+                      index === 2 ? 'text-blue-600' : 'text-green-600'
+                    }`} />
+                  </div>
                 </div>
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {stat.value}
@@ -107,14 +128,13 @@ const AboutUs = () => {
         </div>
       </div>
 
-      {/* Mission Section */}
-      <div className="py-16 bg-gray-50">
+      <section id="mission" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
               A Nossa Missão
             </h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto">
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
               Criamos uma ponte entre Angola e o Reino Unido, oferecendo suporte, oportunidades e 
               uma verdadeira sensação de pertença a todos os angolanos que escolheram fazer do UK a sua casa.
             </p>
@@ -127,7 +147,7 @@ const AboutUs = () => {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                  <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                   <p className="text-gray-600">
@@ -135,7 +155,7 @@ const AboutUs = () => {
                   </p>
                 </div>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                  <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                   <p className="text-gray-600">
@@ -143,7 +163,7 @@ const AboutUs = () => {
                   </p>
                 </div>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                  <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                   <p className="text-gray-600">
@@ -151,7 +171,7 @@ const AboutUs = () => {
                   </p>
                 </div>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                  <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                   <p className="text-gray-600">
@@ -179,48 +199,44 @@ const AboutUs = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Values Section */}
-      <div className="py-16 bg-white">
+      <section id="values" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
               Os Nossos Valores
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
               Estes são os princípios que nos guiam e definem quem somos como comunidade
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="mt-16 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((value, index) => (
-              <div key={index} className="text-center group">
-                <div className="flex justify-center mb-6">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <value.icon className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-300" />
-                  </div>
+              <div key={index} className="bg-gray-50 rounded-lg p-6 transition-all duration-300 hover:shadow-lg">
+                <div className={`flex items-center justify-center h-12 w-12 rounded-md ${value.iconBg} ${value.iconColor}`}>
+                  <value.icon className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {value.title}
-                </h3>
-                <p className="text-gray-600">
-                  {value.description}
-                </p>
+                <div className="mt-5">
+                  <h3 className="text-lg font-medium text-gray-900">{value.title}</h3>
+                  <p className="mt-2 text-base text-gray-500">
+                    {value.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Team Section */}
-      <div className="py-16 bg-gray-50">
+      <section id="team" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
               Conheça a Nossa Equipa
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
               As pessoas dedicadas que tornam a AWAYSUK uma realidade todos os dias
             </p>
           </div>
@@ -229,7 +245,7 @@ const AboutUs = () => {
             {team.map((member, index) => (
               <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                  <div className="w-full h-64 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                  <div className="w-full h-64 bg-gradient-to-br from-yellow-400 to-red-500 flex items-center justify-center">
                     <UserGroupIcon className="h-20 w-20 text-white opacity-50" />
                   </div>
                 </div>
@@ -237,7 +253,7 @@ const AboutUs = () => {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     {member.name}
                   </h3>
-                  <p className="text-blue-600 font-medium mb-4">
+                  <p className="text-red-600 font-medium mb-4">
                     {member.role}
                   </p>
                   <p className="text-gray-600">
@@ -248,29 +264,27 @@ const AboutUs = () => {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* CTA Section */}
-      <div className="py-16 bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+      <section className="gradient-bg py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl mb-6">
             Junta-te à Nossa Comunidade
           </h2>
-          <p className="text-xl mb-8 max-w-3xl mx-auto">
+          <p className="text-lg text-yellow-100 max-w-3xl mx-auto mb-8">
             Faz parte de uma rede que te apoia, inspira e celebra contigo. 
             Porque juntos somos mais fortes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-300">
+            <button className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-red-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
               Torna-te Membro
             </button>
-            <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300">
+            <button className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 bg-opacity-60 hover:bg-opacity-70 md:py-4 md:text-lg md:px-10">
               Contacta-nos
             </button>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
