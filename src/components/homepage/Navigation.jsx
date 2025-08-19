@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
+import LanguageSelector from '../LanguageSelector';
 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -40,7 +43,7 @@ const Navigation = () => {
                   : 'text-gray-700 hover:text-red-600'
               }`}
             >
-              Início
+              {t('navigation.home')}
             </Link>
             <Link 
               to="/comunidade" 
@@ -50,7 +53,7 @@ const Navigation = () => {
                   : 'text-gray-700 hover:text-red-600'
               }`}
             >
-              Comunidade
+              {t('navigation.community')}
             </Link>
             <Link 
                 to="/eventos" 
@@ -58,7 +61,7 @@ const Navigation = () => {
                   location.pathname === '/eventos' ? 'text-red-600 bg-red-50' : 'text-gray-700 hover:text-red-600'
                 }`}
               >
-                Eventos
+                {t('navigation.events')}
               </Link>
               <Link 
                 to="/oportunidades" 
@@ -66,7 +69,7 @@ const Navigation = () => {
                   location.pathname === '/oportunidades' ? 'text-red-600 bg-red-50' : 'text-gray-700 hover:text-red-600'
                 }`}
               >
-                Oportunidades
+                {t('navigation.opportunities')}
               </Link>
 
             <Link 
@@ -77,10 +80,11 @@ const Navigation = () => {
                   : 'text-gray-700 hover:text-red-600'
               }`}
             >
-              Sobre
+              {t('navigation.about')}
             </Link>
           </div>
           <div className="flex items-center space-x-3">
+            <LanguageSelector />
              {isAuthenticated ? (
                <div className="relative">
                  <button
@@ -105,21 +109,21 @@ const Navigation = () => {
                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                        onClick={() => setShowUserMenu(false)}
                      >
-                       Ver Perfil
+                       {t('common.profile')}
                      </Link>
                      <Link
                        to="/configuracoes"
                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                        onClick={() => setShowUserMenu(false)}
                      >
-                       Configurações
+                       {t('common.settings')}
                      </Link>
                      <hr className="my-1" />
                      <button
                        onClick={handleLogout}
                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                      >
-                       Sair
+                       {t('common.logout')}
                      </button>
                    </div>
                  )}
@@ -127,10 +131,10 @@ const Navigation = () => {
              ) : (
                <>
                  <Link to="/login" className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                   Entrar
+                   {t('common.login')}
                  </Link>
                  <Link to="/registo" className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition duration-300">
-                   Registar
+                   {t('common.register')}
                  </Link>
                </>
              )}
@@ -156,7 +160,7 @@ const Navigation = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Início
+                {t('navigation.home')}
               </Link>
               <Link 
                 to="/comunidade" 
@@ -167,7 +171,7 @@ const Navigation = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Comunidade
+                {t('navigation.community')}
               </Link>
               <Link 
                 to="/eventos" 
@@ -178,7 +182,7 @@ const Navigation = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Eventos
+                {t('navigation.events')}
               </Link>
               <Link 
                 to="/oportunidades" 
@@ -189,7 +193,7 @@ const Navigation = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Oportunidades
+                {t('navigation.opportunities')}
               </Link>
               <a href="#" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md">
                 Negócios
@@ -203,7 +207,7 @@ const Navigation = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Sobre
+                {t('navigation.about')}
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
                  {isAuthenticated ? (
@@ -224,14 +228,14 @@ const Navigation = () => {
                        className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
                        onClick={() => setIsMobileMenuOpen(false)}
                      >
-                       Ver Perfil
+                       {t('common.profile')}
                      </Link>
                      <Link
                        to="/configuracoes"
                        className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
                        onClick={() => setIsMobileMenuOpen(false)}
                      >
-                       Configurações
+                       {t('common.settings')}
                      </Link>
                      <button
                        onClick={() => {
@@ -240,16 +244,16 @@ const Navigation = () => {
                        }}
                        className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md"
                      >
-                       Sair
+                       {t('common.logout')}
                      </button>
                    </div>
                  ) : (
                    <div className="space-y-1">
                      <Link to="/login" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
-                       Entrar
+                       {t('common.login')}
                      </Link>
                      <Link to="/registo" className="block px-3 py-2 text-base font-medium bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
-                       Registar
+                       {t('common.register')}
                      </Link>
                    </div>
                  )}

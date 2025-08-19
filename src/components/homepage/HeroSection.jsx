@@ -1,23 +1,24 @@
+import { useTranslation } from '../../hooks/useTranslation';
+
 const HeroSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="gradient-bg pt-24 pb-32 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
           <div className="mt-10 sm:mt-12 lg:mt-0">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-              <span className="block">Conecte-se com a</span>
-              <span className="block text-yellow-200">Comunidade Angolana</span>
-              <span className="block">no Reino Unido</span>
+              {t('hero.title')}
             </h1>
             <p className="mt-3 text-lg text-yellow-100">
-              Uma plataforma dedicada a unir empreendedores, profissionais e estudantes angolanos no UK. Promova seu negócio, encontre oportunidades e construa conexões valiosas.
+              {t('hero.subtitle')}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <a href="#" className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-red-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
-                Começar agora
+                {t('hero.cta')}
               </a>
               <a href="#" className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 bg-opacity-60 hover:bg-opacity-70 md:py-4 md:text-lg md:px-10">
-                <i className="fas fa-play-circle mr-2"></i> Ver vídeo
+                <i className="fas fa-play-circle mr-2"></i> {t('hero.learnMore')}
               </a>
             </div>
           </div>

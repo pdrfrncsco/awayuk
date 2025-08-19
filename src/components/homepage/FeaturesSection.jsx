@@ -1,46 +1,50 @@
+import { useTranslation } from '../../hooks/useTranslation';
+
 const FeaturesSection = () => {
+  const { t } = useTranslation();
+  
   const features = [
     {
       icon: "fas fa-users",
       iconBg: "bg-red-100",
       iconColor: "text-red-600",
-      title: "Network Eficiente",
-      description: "Conecte-se com outros angolanos em sua área ou setor de atuação. Encontre mentores, parceiros e colaboradores."
+      title: t('features.community.title'),
+      description: t('features.community.description')
     },
     {
       icon: "fas fa-store",
       iconBg: "bg-yellow-100",
       iconColor: "text-yellow-600",
-      title: "Vitrine Digital",
-      description: "Cada membro tem sua página personalizada para mostrar seus negócios, serviços ou habilidades profissionais."
+      title: t('features.store.title'),
+      description: t('features.store.description')
+    },
+    {
+      icon: "fas fa-graduation-cap",
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+      title: t('features.resources.title'),
+      description: t('features.resources.description')
     },
     {
       icon: "fas fa-calendar-alt",
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
-      title: "Eventos Locais",
-      description: "Descubra e participe de eventos da comunidade angolana em todo o Reino Unido."
-    },
-    {
-      icon: "fas fa-comments",
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-      title: "Fórum de Discussão",
-      description: "Debata temas relevantes, peça conselhos e compartilhe experiências com a comunidade."
+      title: t('features.events.title'),
+      description: t('features.events.description')
     },
     {
       icon: "fas fa-briefcase",
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
-      title: "Oportunidades",
-      description: "Acesso exclusivo a vagas de emprego, estágios e oportunidades de negócio dentro da comunidade."
+      title: t('features.opportunities.title'),
+      description: t('features.opportunities.description')
     },
     {
       icon: "fas fa-hand-holding-heart",
       iconBg: "bg-indigo-100",
       iconColor: "text-indigo-600",
-      title: "Apoio Comunitário",
-      description: "Encontre ajuda e orientação sobre vistos, moradia, educação e outros desafios de viver no UK."
+      title: t('features.support.title'),
+      description: t('features.support.description')
     }
   ];
 
@@ -49,10 +53,10 @@ const FeaturesSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Como podemos ajudar a sua jornada no UK
+            {t('features.title')}
           </h2>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
-            Ferramentas poderosas para conectar, crescer e prosperar na comunidade angolana
+            {t('features.subtitle')}
           </p>
         </div>
 

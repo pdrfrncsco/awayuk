@@ -51,19 +51,19 @@ const AboutUs = () => {
 
   const team = [
     {
-      name: 'Maria Santos',
-      role: 'Fundadora & Presidente',
+      name: 'Evandro Amaral',
+      role: 'Fundador & Presidente',
       bio: 'Emigrou para o Reino Unido há 15 anos e dedica-se a ajudar outros angolanos na sua jornada.',
       image: '/api/placeholder/150/150'
     },
     {
-      name: 'João Silva',
-      role: 'Coordenador de Eventos',
+      name: 'Juelsa Amaral',
+      role: 'Coordenador de Eventos e Projectos',
       bio: 'Especialista em criar experiências memoráveis que unem a nossa comunidade.',
       image: '/api/placeholder/150/150'
     },
     {
-      name: 'Ana Costa',
+      name: 'Pedro Francisco',
       role: 'Responsável de Parcerias',
       bio: 'Constrói pontes entre empresas e a nossa comunidade, criando oportunidades para todos.',
       image: '/api/placeholder/150/150'
@@ -77,7 +77,7 @@ const AboutUs = () => {
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-6">
               <span className="block">Sobre a</span>
-              <span className="block text-yellow-200">AWAYSUK</span>
+              <span className="block text-yellow-200">AWAYUK</span>
             </h1>
             <p className="mt-3 text-lg text-yellow-100 max-w-3xl mx-auto mb-8">
               Uma comunidade vibrante de angolanos no Reino Unido, unidos pela paixão de crescer juntos

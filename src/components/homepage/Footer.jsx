@@ -1,10 +1,13 @@
+import { useTranslation } from '../../hooks/useTranslation';
+
 const Footer = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   const platformLinks = [
-    { name: "Início", href: "#home" },
-    { name: "Recursos", href: "#features" },
-    { name: "Comunidade", href: "#community" },
+    { name: t('navigation.home'), href: "#home" },
+    { name: t('features.title'), href: "#features" },
+    { name: t('navigation.community'), href: "#community" },
     { name: "Preços", href: "#pricing" }
   ];
 
@@ -49,7 +52,7 @@ const Footer = () => {
               <span className="ml-3 text-xl font-bold text-white">AWAYUK</span>
             </div>
             <p className="text-gray-300 text-base">
-              Conectando a comunidade angolana no Reino Unido. Construindo pontes, criando oportunidades e fortalecendo laços culturais.
+              {t('footer.description')}
             </p>
             <div className="flex space-x-6">
               {socialLinks.map((social) => (
@@ -63,7 +66,7 @@ const Footer = () => {
           <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Plataforma</h3>
+                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">{t('footer.quickLinks')}</h3>
                 <ul className="mt-4 space-y-4">
                   {platformLinks.map((link) => (
                     <li key={link.name}>
@@ -75,7 +78,7 @@ const Footer = () => {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Suporte</h3>
+                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">{t('footer.support')}</h3>
                 <ul className="mt-4 space-y-4">
                   {supportLinks.map((link) => (
                     <li key={link.name}>
@@ -89,7 +92,7 @@ const Footer = () => {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Comunidade</h3>
+                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">{t('footer.community')}</h3>
                 <ul className="mt-4 space-y-4">
                   {communityLinks.map((link) => (
                     <li key={link.name}>
@@ -101,7 +104,7 @@ const Footer = () => {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Empresa</h3>
+                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">{t('footer.legal')}</h3>
                 <ul className="mt-4 space-y-4">
                   {companyLinks.map((link) => (
                     <li key={link.name}>
@@ -119,17 +122,17 @@ const Footer = () => {
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex space-x-6 md:order-2">
               <a href="#" className="text-gray-400 hover:text-gray-300 text-sm">
-                Política de Privacidade
+                {t('footer.privacyPolicy')}
               </a>
               <a href="#" className="text-gray-400 hover:text-gray-300 text-sm">
-                Termos de Serviço
+                {t('footer.termsOfService')}
               </a>
               <a href="#" className="text-gray-400 hover:text-gray-300 text-sm">
-                Cookies
+                {t('footer.cookiePolicy')}
               </a>
             </div>
             <p className="mt-8 text-base text-gray-400 md:mt-0 md:order-1">
-              &copy; {currentYear} Angola Connect UK. Todos os direitos reservados.
+              {t('footer.copyright')}
             </p>
           </div>
         </div>

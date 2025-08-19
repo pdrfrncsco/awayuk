@@ -5,9 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run i18n:build-check && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "i18n": "node scripts/i18n-manager.cjs",
+    "i18n:extract": "node scripts/extract-translations.cjs",
+    "i18n:sync": "node scripts/sync-translations.cjs",
+    "i18n:validate": "node scripts/validate-translations.cjs",
+    "i18n:update": "node scripts/i18n-manager.cjs update",
+    "i18n:build-check": "node scripts/i18n-manager.cjs build-check",
+    "i18n:stats": "node scripts/i18n-manager.cjs stats"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -24,6 +31,7 @@
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "glob": "^10.4.5",
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",

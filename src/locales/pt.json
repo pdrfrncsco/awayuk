@@ -1,0 +1,244 @@
+{
+  "common": {
+    "loading": "A carregar...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "add": "Adicionar",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "clear": "Limpar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Seguinte",
+    "previous": "Anterior",
+    "submit": "Submeter",
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Registar",
+    "profile": "Perfil",
+    "settings": "Definições",
+    "home": "Início",
+    "about": "Sobre",
+    "contact": "Contacto",
+    "language": "Idioma"
+  },
+  "navigation": {
+    "home": "Início",
+    "community": "Comunidade",
+    "events": "Eventos",
+    "opportunities": "Oportunidades",
+    "about": "Sobre Nós",
+    "login": "Entrar",
+    "register": "Registar",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "title": "Conectando Angolanos no Reino Unido",
+    "subtitle": "Uma plataforma para unir, apoiar e fortalecer a comunidade angolana no Reino Unido",
+    "cta": "Junte-se à Comunidade",
+    "learnMore": "Saber Mais"
+  },
+  "features": {
+    "title": "O que oferecemos",
+    "subtitle": "Descubra como a AWAYSUK pode ajudá-lo a conectar-se e crescer",
+    "community": {
+      "title": "Comunidade Unida",
+      "description": "Conecte-se com outros angolanos, partilhe experiências e construa relacionamentos duradouros."
+    },
+    "events": {
+      "title": "Eventos Culturais",
+      "description": "Participe em eventos que celebram a nossa cultura e tradições angolanas."
+    },
+    "opportunities": {
+      "title": "Oportunidades de Negócio",
+      "description": "Descubra oportunidades de emprego, negócios e desenvolvimento profissional."
+    },
+    "support": {
+      "title": "Apoio e Orientação",
+      "description": "Receba apoio na integração e orientação para a vida no Reino Unido."
+    },
+    "resources": {
+      "title": "Recursos e Materiais",
+      "description": "Acesse guias, artigos e ferramentas úteis para a sua jornada no Reino Unido."
+    },
+    "store": {
+      "title": "Vitrine Digital",
+      "description": "Descubra produtos e serviços oferecidos por membros da comunidade."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar na sua conta",
+      "subtitle": "Bem-vindo de volta! Entre na sua conta para continuar.",
+      "email": "Email",
+      "password": "Palavra-passe",
+      "rememberMe": "Lembrar-me",
+      "forgotPassword": "Esqueceu a palavra-passe?",
+      "loginButton": "Entrar",
+      "noAccount": "Não tem conta?",
+      "signUp": "Registar-se"
+    },
+    "register": {
+      "title": "Criar nova conta",
+      "subtitle": "Junte-se à nossa comunidade e comece a conectar-se hoje.",
+      "firstName": "Primeiro Nome",
+      "lastName": "Último Nome",
+      "email": "Email",
+      "password": "Palavra-passe",
+      "confirmPassword": "Confirmar Palavra-passe",
+      "phone": "Telefone",
+      "dateOfBirth": "Data de Nascimento",
+      "gender": "Género",
+      "currentCity": "Cidade Atual",
+      "postcode": "Código Postal",
+      "originProvince": "Província de Origem",
+      "arrivalYear": "Ano de Chegada ao Reino Unido",
+      "profession": "Profissão",
+      "interests": "Interesses",
+      "languagesSpoken": "Idiomas Falados",
+      "registerButton": "Criar Conta",
+      "hasAccount": "Já tem conta?",
+      "signIn": "Entrar"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bem-vindo, {{name}}!",
+    "overview": "Visão Geral",
+    "members": "Membros",
+    "events": "Eventos",
+    "opportunities": "Oportunidades",
+    "content": "Conteúdos",
+    "statistics": "Estatísticas",
+    "settings": "Definições",
+    "stats": {
+      "totalMembers": "Total de Membros",
+      "eventsThisMonth": "Eventos Este Mês",
+      "activeOpportunities": "Oportunidades Ativas",
+      "publishedPosts": "Posts Publicados"
+    },
+    "recentActivity": "Atividade Recente",
+    "quickActions": "Ações Rápidas",
+    "viewAll": "Ver Todos"
+  },
+  "members": {
+    "title": "Gestão de Membros",
+    "totalMembers": "Total de Membros",
+    "newThisMonth": "Novos Este Mês",
+    "activeMembers": "Membros Ativos",
+    "searchPlaceholder": "Pesquisar membros...",
+    "filterByRole": "Filtrar por papel",
+    "filterByStatus": "Filtrar por estado",
+    "addMember": "Adicionar Membro",
+    "exportData": "Exportar Dados",
+    "name": "Nome",
+    "email": "Email",
+    "role": "Papel",
+    "status": "Estado",
+    "joinDate": "Data de Adesão",
+    "actions": "Ações",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "pending": "Pendente",
+    "admin": "Administrador",
+    "moderator": "Moderador",
+    "member": "Membro",
+    "guest": "Convidado"
+  },
+  "events": {
+    "title": "Gestão de Eventos",
+    "totalEvents": "Total de Eventos",
+    "thisMonth": "Este Mês",
+    "upcoming": "Próximos",
+    "searchPlaceholder": "Pesquisar eventos...",
+    "filterByType": "Filtrar por tipo",
+    "filterByStatus": "Filtrar por estado",
+    "createEvent": "Criar Evento",
+    "exportEvents": "Exportar Eventos",
+    "name": "Nome",
+    "date": "Data",
+    "location": "Local",
+    "attendees": "Participantes",
+    "status": "Estado",
+    "actions": "Ações"
+  },
+  "opportunities": {
+    "title": "Gestão de Oportunidades",
+    "totalOpportunities": "Total de Oportunidades",
+    "activeJobs": "Empregos Ativos",
+    "applications": "Candidaturas",
+    "searchPlaceholder": "Pesquisar oportunidades...",
+    "filterByType": "Filtrar por tipo",
+    "filterByLocation": "Filtrar por localização",
+    "addOpportunity": "Adicionar Oportunidade",
+    "exportData": "Exportar Dados",
+    "title_field": "Título",
+    "company": "Empresa",
+    "location": "Localização",
+    "type": "Tipo",
+    "posted": "Publicado",
+    "applications_count": "Candidaturas",
+    "actions": "Ações"
+  },
+  "content": {
+    "title": "Gestão de Conteúdos",
+    "totalPosts": "Total de Posts",
+    "published": "Publicados",
+    "drafts": "Rascunhos",
+    "searchPlaceholder": "Pesquisar conteúdos...",
+    "filterByType": "Filtrar por tipo",
+    "filterByStatus": "Filtrar por estado",
+    "createPost": "Criar Post",
+    "exportContent": "Exportar Conteúdo",
+    "title_field": "Título",
+    "author": "Autor",
+    "type": "Tipo",
+    "status": "Estado",
+    "date": "Data",
+    "views": "Visualizações",
+    "actions": "Ações"
+  },
+  "statistics": {
+    "title": "Estatísticas e Relatórios",
+    "overview": "Visão Geral",
+    "memberGrowth": "Crescimento de Membros",
+    "eventAttendance": "Participação em Eventos",
+    "contentEngagement": "Envolvimento com Conteúdo",
+    "exportReport": "Exportar Relatório",
+    "dateRange": "Intervalo de Datas",
+    "last7Days": "Últimos 7 dias",
+    "last30Days": "Últimos 30 dias",
+    "last3Months": "Últimos 3 meses",
+    "lastYear": "Último ano",
+    "custom": "Personalizado"
+  },
+  "footer": {
+    "description": "Conectando e fortalecendo a comunidade angolana no Reino Unido através de eventos, oportunidades e apoio mútuo.",
+    "quickLinks": "Links Rápidos",
+    "community": "Comunidade",
+    "support": "Apoio",
+    "legal": "Legal",
+    "privacyPolicy": "Política de Privacidade",
+    "termsOfService": "Termos de Serviço",
+    "cookiePolicy": "Política de Cookies",
+    "followUs": "Siga-nos",
+    "newsletter": "Newsletter",
+    "newsletterDescription": "Subscreva a nossa newsletter para receber as últimas notícias e atualizações.",
+    "emailPlaceholder": "O seu email",
+    "subscribe": "Subscrever",
+    "copyright": "© 2024 AWAYSUK. Todos os direitos reservados."
+  },
+  "Mensagem enviada com sucesso!": "Mensagem enviada com sucesso!",
+  "/locales/pt": {
+    "json": "/locales/pt.json"
+  },
+  "João Silva": "João Silva",
+  "Funcionalidade de recuperação de password será implementada em breve": {
+    "": "Funcionalidade de recuperação de password será implementada em breve."
+  }
+}

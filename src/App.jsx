@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PermissionsProvider, usePermissions } from './contexts/PermissionsContext';
+import { I18nProvider } from './contexts/I18nContext';
 import { RouteGuard } from './components/dashboard/PermissionGuard';
 import Navigation from './components/homepage/Navigation';
 import HeroSection from './components/homepage/HeroSection';
@@ -72,9 +73,10 @@ const PublicLayout = ({ children }) => (
 
 function App() {
   return (
-    <AuthProvider>
-      <PermissionsProvider>
-        <Router>
+    <I18nProvider>
+      <AuthProvider>
+        <PermissionsProvider>
+          <Router>
           <div className="min-h-screen bg-white">
             <Routes>
             {/* Rotas Públicas */}
@@ -132,9 +134,10 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
-        </Router>
-      </PermissionsProvider>
-    </AuthProvider>
+          </Router>
+        </PermissionsProvider>
+      </AuthProvider>
+    </I18nProvider>
   );
 }
 
