@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -8,7 +8,8 @@ import {
   LockClosedIcon,
   UserIcon,
   ExclamationCircleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 
 const Register = () => {
@@ -27,6 +28,37 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Validação em tempo real da força da password
+  useEffect(() => {
+    const calculatePasswordStrength = (password) => {
+      let strength = 0;
+      if (password.length >= 8) strength += 1;
+      if (/[a-z]/.test(password)) strength += 1;
+      if (/[A-Z]/.test(password)) strength += 1;
+      if (/[0-9]/.test(password)) strength += 1;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+      return strength;
+    };
+
+    setPasswordStrength(calculatePasswordStrength(formData.password));
+  }, [formData.password]);
+
+  // Validação em tempo real do formulário
+  useEffect(() => {
+    const isValid = 
+      formData.username.length >= 3 &&
+      /\S+@\S+\.\S+/.test(formData.email) &&
+      formData.first_name.trim() &&
+      formData.last_name.trim() &&
+      formData.password.length >= 8 &&
+      formData.password === formData.password_confirm &&
+      formData.agreeTerms;
+    
+    setIsFormValid(isValid);
+  }, [formData]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -52,6 +84,8 @@ const Register = () => {
       newErrors.username = 'Username é obrigatório';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username deve ter pelo menos 3 caracteres';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = 'Username só pode conter letras, números e underscore';
     }
 
     // Validação do email
@@ -64,11 +98,15 @@ const Register = () => {
     // Validação do nome
     if (!formData.first_name.trim()) {
       newErrors.first_name = 'Nome é obrigatório';
+    } else if (formData.first_name.length < 2) {
+      newErrors.first_name = 'Nome deve ter pelo menos 2 caracteres';
     }
 
     // Validação do apelido
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Apelido é obrigatório';
+    } else if (formData.last_name.length < 2) {
+      newErrors.last_name = 'Apelido deve ter pelo menos 2 caracteres';
     }
 
     // Validação da password
@@ -76,6 +114,8 @@ const Register = () => {
       newErrors.password = 'Password é obrigatória';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password deve ter pelo menos 8 caracteres';
+    } else if (passwordStrength < 3) {
+      newErrors.password = 'Password muito fraca. Use letras maiúsculas, minúsculas e números';
     }
 
     // Validação da confirmação de password
@@ -117,10 +157,10 @@ const Register = () => {
       if (result.success) {
         setRegistrationSuccess(true);
         
-        // Redirecionar após 3 segundos
+        // Redirecionar após 4 segundos
         setTimeout(() => {
-          navigate('/login');
-        }, 3000);
+          navigate('/verificar-email');
+        }, 4000);
       } else {
         setErrors({ general: result.error || 'Erro ao criar conta. Tente novamente.' });
       }
@@ -128,6 +168,20 @@ const Register = () => {
     } catch (error) {
       setErrors({ general: 'Erro ao criar conta. Tente novamente.' });
     }
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength <= 1) return 'bg-red-500';
+    if (passwordStrength <= 2) return 'bg-yellow-500';
+    if (passwordStrength <= 3) return 'bg-blue-500';
+    return 'bg-green-500';
+  };
+
+  const getPasswordStrengthText = () => {
+    if (passwordStrength <= 1) return 'Muito fraca';
+    if (passwordStrength <= 2) return 'Fraca';
+    if (passwordStrength <= 3) return 'Média';
+    return 'Forte';
   };
 
   if (registrationSuccess) {
@@ -142,7 +196,15 @@ const Register = () => {
             <p className="text-gray-600 mb-4">
               A sua conta foi criada. Verifique o seu email para ativar a conta.
             </p>
-            <p className="text-sm text-gray-500">A redirecionar para o login...</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center">
+                <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2" />
+                <span className="text-blue-800 text-sm">
+                  Enviámos um email de verificação para <strong>{formData.email}</strong>
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">A redirecionar para a página de verificação...</p>
           </div>
         </div>
       </div>
@@ -190,16 +252,25 @@ const Register = () => {
                   value={formData.username}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.username ? 'border-red-300 bg-red-50' : 
+                    formData.username && !errors.username ? 'border-green-300 bg-green-50' : 'border-gray-300'
                   }`}
                   placeholder="Escolha um username"
                 />
+                {formData.username && !errors.username && formData.username.length >= 3 && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.username && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
                   <ExclamationCircleIcon className="h-4 w-4 mr-1" />
                   {errors.username}
                 </p>
+              )}
+              {formData.username && !errors.username && (
+                <p className="mt-1 text-sm text-green-600">Username disponível</p>
               )}
             </div>
 
@@ -220,10 +291,16 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.email ? 'border-red-300 bg-red-50' : 
+                    formData.email && /\S+@\S+\.\S+/.test(formData.email) ? 'border-green-300 bg-green-50' : 'border-gray-300'
                   }`}
                   placeholder="seu.email@exemplo.com"
                 />
+                {formData.email && /\S+@\S+\.\S+/.test(formData.email) && !errors.email && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -247,7 +324,8 @@ const Register = () => {
                   value={formData.first_name}
                   onChange={handleInputChange}
                   className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.first_name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.first_name ? 'border-red-300 bg-red-50' : 
+                    formData.first_name && formData.first_name.length >= 2 ? 'border-green-300 bg-green-50' : 'border-gray-300'
                   }`}
                   placeholder="Seu nome"
                 />
@@ -271,7 +349,8 @@ const Register = () => {
                   value={formData.last_name}
                   onChange={handleInputChange}
                   className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.last_name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.last_name ? 'border-red-300 bg-red-50' : 
+                    formData.last_name && formData.last_name.length >= 2 ? 'border-green-300 bg-green-50' : 'border-gray-300'
                   }`}
                   placeholder="Seu apelido"
                 />
@@ -303,7 +382,7 @@ const Register = () => {
                   className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
                     errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="Crie uma password segura"
+                  placeholder="Escolha uma password segura"
                 />
                 <button
                   type="button"
@@ -317,6 +396,25 @@ const Register = () => {
                   )}
                 </button>
               </div>
+              
+              {/* Indicador de força da password */}
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                        style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-600">{getPasswordStrengthText()}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Use pelo menos 8 caracteres com letras maiúsculas, minúsculas e números
+                  </div>
+                </div>
+              )}
+              
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
                   <ExclamationCircleIcon className="h-4 w-4 mr-1" />
@@ -325,7 +423,7 @@ const Register = () => {
               )}
             </div>
 
-            {/* Confirmar Password */}
+            {/* Confirmação de Password */}
             <div>
               <label htmlFor="password_confirm" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirmar Password *
@@ -342,7 +440,8 @@ const Register = () => {
                   value={formData.password_confirm}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.password_confirm ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.password_confirm ? 'border-red-300 bg-red-50' : 
+                    formData.password_confirm && formData.password === formData.password_confirm ? 'border-green-300 bg-green-50' : 'border-gray-300'
                   }`}
                   placeholder="Confirme a sua password"
                 />
@@ -357,6 +456,11 @@ const Register = () => {
                     <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
+                {formData.password_confirm && formData.password === formData.password_confirm && (
+                  <div className="absolute inset-y-0 right-8 pr-3 flex items-center">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.password_confirm && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -364,47 +468,50 @@ const Register = () => {
                   {errors.password_confirm}
                 </p>
               )}
-            </div>
-          </div>
-
-          {/* Termos e Condições */}
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="agreeTerms"
-                name="agreeTerms"
-                type="checkbox"
-                checked={formData.agreeTerms}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="agreeTerms" className="text-gray-700">
-                Aceito os{' '}
-                <Link to="/termos" className="text-yellow-600 hover:text-yellow-500 font-medium">
-                  Termos e Condições
-                </Link>{' '}
-                e a{' '}
-                <Link to="/privacidade" className="text-yellow-600 hover:text-yellow-500 font-medium">
-                  Política de Privacidade
-                </Link>
-              </label>
-              {errors.agreeTerms && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                  {errors.agreeTerms}
-                </p>
+              {formData.password_confirm && formData.password === formData.password_confirm && (
+                <p className="mt-1 text-sm text-green-600">Passwords coincidem</p>
               )}
+            </div>
+
+            {/* Termos e Condições */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="agreeTerms"
+                  name="agreeTerms"
+                  type="checkbox"
+                  checked={formData.agreeTerms}
+                  onChange={handleInputChange}
+                  className="focus:ring-yellow-500 h-4 w-4 text-yellow-600 border-gray-300 rounded"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="agreeTerms" className="text-gray-700">
+                  Aceito os{' '}
+                  <Link to="/termos" className="text-yellow-600 hover:text-yellow-500 font-medium">
+                    Termos e Condições
+                  </Link>{' '}
+                  e a{' '}
+                  <Link to="/privacidade" className="text-yellow-600 hover:text-yellow-500 font-medium">
+                    Política de Privacidade
+                  </Link>
+                </label>
+                {errors.agreeTerms && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                    {errors.agreeTerms}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Botão de Submit */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !isFormValid}
             className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-colors ${
-              isLoading
+              isLoading || !isFormValid
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-700 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500'
             }`}

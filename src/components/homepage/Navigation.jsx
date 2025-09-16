@@ -105,11 +105,27 @@ const Navigation = () => {
                  {showUserMenu && (
                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
                      <Link
-                       to={`/perfil/${user?.id}`}
+                       to="/perfil"
                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                        onClick={() => setShowUserMenu(false)}
                      >
                        {t('common.profile')}
+                     </Link>
+                     <Link
+                       to="/criar-evento"
+                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       onClick={() => setShowUserMenu(false)}
+                     >
+                       <i className="fas fa-plus mr-2"></i>
+                       Criar Evento
+                     </Link>
+                     <Link
+                       to="/criar-oportunidade"
+                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       onClick={() => setShowUserMenu(false)}
+                     >
+                       <i className="fas fa-briefcase mr-2"></i>
+                       Criar Oportunidade
                      </Link>
                      <Link
                        to="/configuracoes"

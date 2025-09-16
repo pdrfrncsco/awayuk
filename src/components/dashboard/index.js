@@ -6,4 +6,5 @@ export { default as EventsManagement } from './EventsManagement';
 export { default as OpportunitiesManagement } from './OpportunitiesManagement';
 export { default as ContentManagement } from './ContentManagement';
 export { default as StatisticsManagement } from './StatisticsManagement';
+export { default as RolesManagement } from './RolesManagement';
 export { default as PermissionGuard, RouteGuard, PermissionCheck } from './PermissionGuard';

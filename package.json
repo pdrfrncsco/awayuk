@@ -17,6 +17,7 @@
     "i18n:stats": "node scripts/i18n-manager.cjs stats"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
     "axios": "^1.12.2",
     "react": "^19.1.1",
