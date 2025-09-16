@@ -15,7 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
@@ -41,11 +41,9 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validação do email
-    if (!formData.email) {
-      newErrors.email = 'Email é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+    // Validação do username (pode ser email ou username)
+    if (!formData.username) {
+      newErrors.username = 'Email ou username é obrigatório';
     }
 
     // Validação da password
@@ -67,14 +65,14 @@ const Login = () => {
     }
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.username, formData.password);
       
       if (result.success) {
         setLoginSuccess(true);
         
         // Redirecionar após 1 segundo
         setTimeout(() => {
-          navigate('/comunidade');
+          navigate('/dashboard');
         }, 1000);
       } else {
         setErrors({ general: result.error || 'Erro ao fazer login. Tente novamente.' });
@@ -131,32 +129,32 @@ const Login = () => {
           )}
 
           <div className="space-y-4">
-            {/* Email */}
+            {/* Username/Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                Email ou Username
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <EnvelopeIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={formData.email}
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors ${
-                    errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="seu.email@exemplo.com"
+                  placeholder="seu.email@exemplo.com ou username"
                 />
               </div>
-              {errors.email && (
+              {errors.username && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
                   <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                  {errors.email}
+                  {errors.username}
                 </p>
               )}
             </div>

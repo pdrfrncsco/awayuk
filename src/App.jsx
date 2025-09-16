@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { PermissionsProvider, usePermissions } from './contexts/PermissionsContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { PermissionsProvider } from './contexts/PermissionsContext';
 import { I18nProvider } from './contexts/I18nContext';
 import { RouteGuard } from './components/dashboard/PermissionGuard';
+import ProtectedRoute, { GuestRoute, VerifiedRoute } from './components/auth/ProtectedRoute';
+import { PageLoader } from './components/common/LoadingSpinner';
 import Navigation from './components/homepage/Navigation';
 import HeroSection from './components/homepage/HeroSection';
 import FeaturesSection from './components/homepage/FeaturesSection';
@@ -18,8 +20,10 @@ import EventDetails from './pages/public/EventDetails';
 import BusinessOpportunities from './pages/public/BusinessOpportunities';
 import OpportunityDetails from './pages/public/OpportunityDetails';
 import AboutUs from './pages/public/AboutUs';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import VerifyEmail from './pages/auth/VerifyEmail';
+import Unauthorized from './pages/auth/Unauthorized';
 import {
   DashboardLayout,
   Dashboard,
@@ -43,24 +47,12 @@ const HomePage = () => (
   </>
 );
 
-// Componente de proteção de rotas
-const ProtectedRoute = ({ children }) => {
-  const { user, isLoading, isAuthenticated } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return children;
-};
+// Componente para páginas que requerem email verificado
+const VerifiedDashboardRoute = ({ children }) => (
+  <VerifiedRoute fallback={<PageLoader message="A verificar autenticação..." />}>
+    {children}
+  </VerifiedRoute>
+);
 
 // Componente de layout público
 const PublicLayout = ({ children }) => (
@@ -87,16 +79,30 @@ function App() {
             <Route path="/oportunidades" element={<PublicLayout><BusinessOpportunities /></PublicLayout>} />
             <Route path="/oportunidade/:id" element={<PublicLayout><OpportunityDetails /></PublicLayout>} />
             <Route path="/sobre" element={<PublicLayout><AboutUs /></PublicLayout>} />
-            <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
-            <Route path="/registo" element={<PublicLayout><Register /></PublicLayout>} />
+            <Route path="/login" element={
+              <GuestRoute>
+                <PublicLayout><Login /></PublicLayout>
+              </GuestRoute>
+            } />
+            <Route path="/registo" element={
+              <GuestRoute>
+                <PublicLayout><Register /></PublicLayout>
+              </GuestRoute>
+            } />
+            <Route path="/verificar-email" element={
+              <ProtectedRoute fallback={<PageLoader />}>
+                <VerifyEmail />
+              </ProtectedRoute>
+            } />
+            <Route path="/nao-autorizado" element={<Unauthorized />} />
             <Route path="/membro/:id" element={<PublicLayout><MemberProfile /></PublicLayout>} />
             <Route path="/perfil/:id" element={<PublicLayout><MemberProfile /></PublicLayout>} />
             
             {/* Rotas do Dashboard (Protegidas) */}
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <VerifiedDashboardRoute>
                 <DashboardLayout />
-              </ProtectedRoute>
+              </VerifiedDashboardRoute>
             }>
               <Route index element={
                 <RouteGuard permission={PERMISSIONS.VIEW_DASHBOARD}>

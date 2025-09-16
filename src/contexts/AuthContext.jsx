@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService, TokenManager } from '../services';
 
 const AuthContext = createContext();
 
@@ -15,108 +16,81 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Verificar se existe utilizador logado no localStorage ao carregar a aplicação
+  // Verificar se existe utilizador logado ao carregar a aplicação
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       try {
-        const storedUser = localStorage.getItem('awayuk_user');
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          
-          // Verificar se a sessão ainda é válida (exemplo: 24 horas)
-          const loginTime = new Date(userData.loginTime);
-          const currentTime = new Date();
-          const timeDifference = currentTime - loginTime;
-          const hoursElapsed = timeDifference / (1000 * 60 * 60);
-          
-          if (hoursElapsed < 24 && userData.isLoggedIn) {
+        const token = TokenManager.getAccessToken();
+        
+        if (token && !TokenManager.isTokenExpired(token)) {
+          // Token válido, buscar dados do utilizador
+          try {
+            const userData = await authService.getCurrentUser();
             setUser(userData);
             setIsAuthenticated(true);
-          } else {
-            // Sessão expirada
-            localStorage.removeItem('awayuk_user');
-            createDevelopmentUser();
+          } catch (error) {
+            console.error('Erro ao buscar dados do utilizador:', error);
+            // Token inválido, tentar refresh
+            await handleTokenRefresh();
           }
         } else {
-          // Criar utilizador temporário para desenvolvimento
-          createDevelopmentUser();
+          // Tentar refresh token se disponível
+          await handleTokenRefresh();
         }
       } catch (error) {
         console.error('Erro ao verificar estado de autenticação:', error);
-        localStorage.removeItem('awayuk_user');
-        createDevelopmentUser();
+        await logout();
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Função para criar utilizador temporário para desenvolvimento
-    const createDevelopmentUser = () => {
-      const devUser = {
-        id: 999,
-        firstName: 'Admin',
-        lastName: 'Desenvolvimento',
-        email: 'admin@awaysuk.dev',
-        phone: '+44 7000 000 000',
-        currentCity: 'Londres',
-        originProvince: 'Luanda',
-        profession: 'Administrador',
-        interests: ['Desenvolvimento', 'Gestão', 'Comunidade'],
-        languagesSpoken: ['Português', 'Inglês'],
-        arrivalYear: 2020,
-        avatar: `https://ui-avatars.com/api/?name=Admin+Dev&background=3b82f6&color=fff`,
-        isLoggedIn: true,
-        loginTime: new Date().toISOString(),
-        role: 'admin',
-        emailVerified: true
-      };
-      
-      localStorage.setItem('awayuk_user', JSON.stringify(devUser));
-      setUser(devUser);
-      setIsAuthenticated(true);
+    const handleTokenRefresh = async () => {
+      try {
+        const refreshToken = TokenManager.getRefreshToken();
+        if (refreshToken) {
+          await authService.refreshToken();
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          await logout();
+        }
+      } catch (error) {
+        console.error('Erro ao renovar token:', error);
+        await logout();
+      }
     };
 
     checkAuthStatus();
   }, []);
 
   // Função de login
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
       setIsLoading(true);
       
-      // Simular chamada à API de login
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await authService.login(username, password);
       
-      // Simular resposta da API
-      const userData = {
-        id: 1,
-        firstName: 'João',
-        lastName: 'Silva',
-        email: email,
-        phone: '+44 7123 456 789',
-        currentCity: 'Londres',
-        originProvince: 'Luanda',
-        profession: 'Engenheiro de Software',
-        interests: ['Tecnologia', 'Networking', 'Cultura Angolana'],
-        languagesSpoken: ['Português', 'Inglês', 'Kimbundu'],
-        arrivalYear: 2020,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent('João Silva')}&background=f59e0b&color=fff`,
-        isLoggedIn: true,
-        loginTime: new Date().toISOString()
-      };
+      if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+        return { success: true, user: response.user };
+      }
       
-      // Guardar no localStorage
-      localStorage.setItem('awayuk_user', JSON.stringify(userData));
-      
-      // Atualizar estado
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      return { success: true, user: userData };
+      return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
       
     } catch (error) {
       console.error('Erro no login:', error);
-      return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
+      let errorMessage = 'Erro ao fazer login. Tente novamente.';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.non_field_errors) {
+        errorMessage = error.response.data.non_field_errors[0];
+      }
+      
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -127,46 +101,45 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Simular chamada à API de registo
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await authService.register(formData);
       
-      // Simular criação de conta
-      const userData = {
-        id: Date.now(), // ID temporário
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
-        currentCity: formData.currentCity,
-        postcode: formData.postcode,
-        originProvince: formData.originProvince,
-        arrivalYear: formData.arrivalYear,
-        profession: formData.profession,
-        interests: formData.interests,
-        languagesSpoken: formData.languagesSpoken,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.firstName + ' ' + formData.lastName)}&background=f59e0b&color=fff`,
-        isLoggedIn: false, // Conta criada mas não logada automaticamente
-        createdAt: new Date().toISOString(),
-        emailVerified: false
-      };
+      if (response.user) {
+        return { 
+          success: true, 
+          user: response.user,
+          message: response.message || 'Conta criada com sucesso. Verifique o seu email.'
+        };
+      }
       
-      return { success: true, user: userData };
+      return { success: false, error: 'Erro ao criar conta. Tente novamente.' };
       
     } catch (error) {
       console.error('Erro no registo:', error);
-      return { success: false, error: 'Erro ao criar conta. Tente novamente.' };
+      let errorMessage = 'Erro ao criar conta. Tente novamente.';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.email) {
+          errorMessage = errorData.email[0];
+        } else if (errorData.username) {
+          errorMessage = errorData.username[0];
+        } else if (errorData.password) {
+          errorMessage = errorData.password[0];
+        } else if (errorData.non_field_errors) {
+          errorMessage = errorData.non_field_errors[0];
+        }
+      }
+      
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
   };
 
   // Função de logout
-  const logout = () => {
+  const logout = async () => {
     try {
-      // Remover dados do localStorage
-      localStorage.removeItem('awayuk_user');
+      await authService.logout();
       
       // Limpar estado
       setUser(null);
@@ -175,6 +148,11 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Erro no logout:', error);
+      // Mesmo com erro, limpar estado local
+      setUser(null);
+      setIsAuthenticated(false);
+      TokenManager.clearTokens();
+      
       return { success: false, error: 'Erro ao fazer logout.' };
     }
   };
@@ -184,26 +162,32 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Simular chamada à API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authService.updateProfile(updatedData);
       
-      const updatedUser = {
-        ...user,
-        ...updatedData,
-        updatedAt: new Date().toISOString()
-      };
+      if (response) {
+        // Buscar dados atualizados do utilizador
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        
+        return { success: true, user: userData };
+      }
       
-      // Atualizar localStorage
-      localStorage.setItem('awayuk_user', JSON.stringify(updatedUser));
-      
-      // Atualizar estado
-      setUser(updatedUser);
-      
-      return { success: true, user: updatedUser };
+      return { success: false, error: 'Erro ao atualizar perfil.' };
       
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
-      return { success: false, error: 'Erro ao atualizar perfil.' };
+      let errorMessage = 'Erro ao atualizar perfil.';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.non_field_errors) {
+          errorMessage = errorData.non_field_errors[0];
+        }
+      }
+      
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +218,7 @@ export const AuthProvider = ({ children }) => {
 
   // Função para verificar se o email está verificado
   const isEmailVerified = () => {
-    return user?.emailVerified || false;
+    return user?.is_active || false;
   };
 
   // Função para reenviar email de verificação
@@ -242,14 +226,84 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Simular chamada à API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authService.resendVerificationEmail();
       
-      return { success: true, message: 'Email de verificação enviado.' };
+      return { 
+        success: true, 
+        message: response.message || 'Email de verificação enviado.' 
+      };
       
     } catch (error) {
       console.error('Erro ao reenviar email:', error);
-      return { success: false, error: 'Erro ao enviar email de verificação.' };
+      let errorMessage = 'Erro ao enviar email de verificação.';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para alterar password
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await authService.changePassword({
+        old_password: currentPassword,
+        new_password: newPassword
+      });
+      
+      return { 
+        success: true, 
+        message: response.message || 'Password alterada com sucesso.' 
+      };
+      
+    } catch (error) {
+      console.error('Erro ao alterar password:', error);
+      let errorMessage = 'Erro ao alterar password.';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.old_password) {
+          errorMessage = errorData.old_password[0];
+        } else if (errorData.new_password) {
+          errorMessage = errorData.new_password[0];
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail;
+        }
+      }
+      
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para solicitar reset de password
+  const requestPasswordReset = async (email) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await authService.requestPasswordReset({ email });
+      
+      return { 
+        success: true, 
+        message: response.message || 'Email de recuperação enviado.' 
+      };
+      
+    } catch (error) {
+      console.error('Erro ao solicitar reset de password:', error);
+      let errorMessage = 'Erro ao enviar email de recuperação.';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -275,7 +329,11 @@ export const AuthProvider = ({ children }) => {
     
     // Funções de verificação
     isEmailVerified,
-    resendVerificationEmail
+    resendVerificationEmail,
+    
+    // Funções de password
+    changePassword,
+    requestPasswordReset
   };
 
   return (

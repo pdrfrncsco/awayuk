@@ -207,6 +207,22 @@ class AuthService {
   }
 
   /**
+   * Reenvia email de verificação
+   * @returns {Promise<Object>} Resposta do servidor
+   */
+  async resendVerificationEmail() {
+    try {
+      return await this.apiClient.post('/auth/resend-verification/');
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao reenviar email de verificação',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
    * Verifica se o usuário está autenticado
    * @returns {boolean} Status de autenticação
    */
