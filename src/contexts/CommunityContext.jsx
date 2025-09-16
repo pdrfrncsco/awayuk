@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CommunityContext = createContext();
 
-export const useCommunity = () => {
+// Hook personalizado para usar o contexto
+const useCommunity = () => {
   const context = useContext(CommunityContext);
   if (!context) {
     throw new Error('useCommunity must be used within a CommunityProvider');
@@ -10,7 +11,8 @@ export const useCommunity = () => {
   return context;
 };
 
-export const CommunityProvider = ({ children }) => {
+// Componente Provider
+const CommunityProvider = ({ children }) => {
   const [members, setMembers] = useState([]);
   const [connections, setConnections] = useState([]);
   const [connectionRequests, setConnectionRequests] = useState([]);
@@ -35,7 +37,7 @@ export const CommunityProvider = ({ children }) => {
       bio: 'Apaixonada por tecnologia e inovação. Especialista em React e Node.js.',
       skills: ['React', 'Node.js', 'JavaScript', 'Python'],
       interests: ['Tecnologia', 'Empreendedorismo', 'Viagens'],
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+      avatar: 'https://picsum.photos/150/150?random=20',
       joinedDate: '2023-01-15',
       isOnline: true,
       mutualConnections: 5,
@@ -51,7 +53,7 @@ export const CommunityProvider = ({ children }) => {
       bio: 'Designer com foco em experiência do utilizador e interfaces intuitivas.',
       skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping'],
       interests: ['Design', 'Arte', 'Fotografia'],
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      avatar: 'https://picsum.photos/150/150?random=21',
       joinedDate: '2023-02-20',
       isOnline: false,
       mutualConnections: 3,
@@ -67,7 +69,7 @@ export const CommunityProvider = ({ children }) => {
       bio: 'Especialista em gestão de projetos ágeis e transformação digital.',
       skills: ['Scrum', 'Agile', 'Project Management', 'Leadership'],
       interests: ['Gestão', 'Liderança', 'Inovação'],
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+      avatar: 'https://picsum.photos/150/150?random=22',
       joinedDate: '2023-03-10',
       isOnline: true,
       mutualConnections: 8,
@@ -83,7 +85,7 @@ export const CommunityProvider = ({ children }) => {
       bio: 'Transformo dados em insights valiosos para negócios.',
       skills: ['Python', 'SQL', 'Machine Learning', 'Tableau'],
       interests: ['Data Science', 'IA', 'Estatística'],
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      avatar: 'https://picsum.photos/150/150?random=23',
       joinedDate: '2023-04-05',
       isOnline: false,
       mutualConnections: 2,
@@ -99,7 +101,7 @@ export const CommunityProvider = ({ children }) => {
       bio: 'Especialista em estratégias de marketing digital e growth hacking.',
       skills: ['SEO', 'Google Ads', 'Social Media', 'Analytics'],
       interests: ['Marketing', 'Empreendedorismo', 'Redes Sociais'],
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+      avatar: 'https://picsum.photos/150/150?random=24',
       joinedDate: '2023-05-12',
       isOnline: true,
       mutualConnections: 6,
@@ -114,7 +116,7 @@ export const CommunityProvider = ({ children }) => {
         id: 6,
         name: 'Carlos Mendes',
         profession: 'Desenvolvedor Frontend',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
+        avatar: 'https://picsum.photos/150/150?random=25'
       },
       message: 'Olá! Gostaria de conectar contigo para trocar experiências sobre React.',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
@@ -126,7 +128,7 @@ export const CommunityProvider = ({ children }) => {
         id: 7,
         name: 'Luisa Rodrigues',
         profession: 'Product Manager',
-        avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150'
+        avatar: 'https://picsum.photos/150/150?random=26'
       },
       message: 'Vi o teu perfil e achei interessante a tua experiência. Vamos conectar?',
       timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 horas atrás
@@ -280,3 +282,6 @@ export const CommunityProvider = ({ children }) => {
     </CommunityContext.Provider>
   );
 };
+
+// Exports
+export { CommunityProvider, useCommunity };

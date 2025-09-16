@@ -16,7 +16,6 @@ import PricingSection from './components/homepage/PricingSection';
 import ContactSection from './components/homepage/ContactSection';
 import Footer from './components/homepage/Footer';
 import CommunityExplorer from './pages/public/CommunityExplorer';
-import MemberProfile from './pages/public/MemberProfile';
 import EventsExplorer from './pages/public/EventsExplorer';
 import EventDetails from './pages/public/EventDetails';
 import EventList from './pages/events/EventList';
@@ -128,8 +127,8 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/nao-autorizado" element={<Unauthorized />} />
-            <Route path="/membro/:id" element={<PublicLayout><MemberProfile /></PublicLayout>} />
-            <Route path="/perfil/:id" element={<PublicLayout><MemberProfile /></PublicLayout>} />
+            <Route path="/membro/:id" element={<PublicLayout><Profile /></PublicLayout>} />
+            <Route path="/perfil/:id" element={<PublicLayout><Profile /></PublicLayout>} />
             
             {/* Rotas do Dashboard (Protegidas) */}
             <Route path="/dashboard" element={

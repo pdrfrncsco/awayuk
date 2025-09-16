@@ -11,12 +11,14 @@ import authServiceInstance, { AuthService } from './authService.js';
 import notificationServiceInstance, { NotificationService } from './notificationService.js';
 import eventServiceInstance, { EventService } from './eventService.js';
 import opportunityServiceInstance, { OpportunityService } from './opportunityService.js';
+import profileServiceInstance, { ProfileService } from './profileService.js';
 
 // Exportar serviços específicos
 export { default as authService, AuthService } from './authService.js';
 export { default as notificationService, NotificationService } from './notificationService.js';
 export { default as eventService, EventService } from './eventService.js';
 export { default as opportunityService, OpportunityService } from './opportunityService.js';
+export { default as profileService, ProfileService } from './profileService.js';
 
 /**
  * Objeto com todos os serviços para importação conveniente
@@ -49,6 +51,7 @@ export const configureServices = (config) => {
     notificationServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     eventServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
+    profileServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
   }
 
   // Configurar timeout se fornecido
@@ -57,6 +60,7 @@ export const configureServices = (config) => {
     notificationServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     eventServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
+    profileServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
   }
 
   // Configurar headers globais se fornecidos
@@ -65,6 +69,7 @@ export const configureServices = (config) => {
     Object.assign(notificationServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(eventServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(opportunityServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
+    Object.assign(profileServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
   }
 };
 
@@ -110,6 +115,13 @@ export const healthCheck = async () => {
       results.opportunities = true;
     } catch (error) {
       console.warn('Opportunity service health check failed:', error.message);
+    }
+
+    try {
+      await profileServiceInstance.apiClient.get('/health/');
+      results.profile = true;
+    } catch (error) {
+      console.warn('Profile service health check failed:', error.message);
     }
 
   } catch (error) {

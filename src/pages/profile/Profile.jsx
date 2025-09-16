@@ -1,704 +1,709 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  UserCircleIcon,
-  PencilIcon,
-  CheckIcon,
-  XMarkIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  CameraIcon,
-  MapPinIcon,
-  CalendarIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  BriefcaseIcon,
-  AcademicCapIcon,
-  GlobeAltIcon,
-  ExclamationCircleIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline';
 
-const Profile = () => {
-  const { user, updateProfile, changePassword } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  // Estados para edição de perfil
-  const [profileData, setProfileData] = useState({
-    first_name: '',
-    last_name: '',
+const MemberProfile = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const memberId = parseInt(id) || 1;
+  const [activeTab, setActiveTab] = useState('sobre');
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
     email: '',
     phone: '',
-    bio: '',
-    location: '',
-    website: '',
-    profession: '',
-    education: '',
-    date_of_birth: '',
-    profile_picture: null
+    message: '',
+    service: ''
   });
 
-  // Estados para mudança de password
-  const [passwordData, setPasswordData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
-  });
+  // Estados para dados do backend
+  const [profileData, setProfileData] = useState(null);
+  const [services, setServices] = useState([]);
+  const [portfolio, setPortfolio] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Verificar se é o próprio perfil do usuário
+  const isOwnProfile = user && user.id === memberId;
+
+  // Carregar dados do perfil
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        website: user.website || '',
-        profession: user.profession || '',
-        education: user.education || '',
-        date_of_birth: user.date_of_birth || '',
-        profile_picture: user.profile_picture || null
-      });
-    }
-  }, [user]);
+    const loadProfileData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfileData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+        // Carregar perfil detalhado
+        const profileResponse = await profileService.getUserProfile(memberId);
+        setProfileData(profileResponse.data);
 
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+        // Carregar testemunhos
+        const testimonialsResponse = await profileService.getUserTestimonials(memberId);
+        setTestimonials(testimonialsResponse.data);
 
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setMessage('');
+        // Se for o próprio perfil, carregar serviços e portfólio editáveis
+        if (isOwnProfile) {
+          const [servicesResponse, portfolioResponse] = await Promise.all([
+            profileService.getUserServices(),
+            profileService.getUserPortfolio()
+          ]);
+          setServices(servicesResponse.data);
+          setPortfolio(portfolioResponse.data);
+        } else {
+          // Para outros perfis, usar os dados do perfil detalhado
+          setServices(profileResponse.data.services || []);
+          setPortfolio(profileResponse.data.portfolio_items || []);
+        }
 
-    try {
-      const result = await updateProfile(profileData);
-      
-      if (result.success) {
-        setMessage('Perfil atualizado com sucesso!');
-        setIsEditing(false);
-      } else {
-        setError(result.error || 'Erro ao atualizar perfil.');
+      } catch (err) {
+        console.error('Erro ao carregar perfil:', err);
+        setError('Erro ao carregar dados do perfil. Tente novamente.');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setError('Erro ao atualizar perfil. Tente novamente.');
-    } finally {
-      setIsLoading(false);
+    };
+
+    if (memberId) {
+      loadProfileData();
     }
-  };
+  }, [memberId, isOwnProfile]);
 
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (passwordData.new_password !== passwordData.confirm_password) {
-      setError('As passwords não coincidem.');
-      return;
-    }
-
-    if (passwordData.new_password.length < 8) {
-      setError('A nova password deve ter pelo menos 8 caracteres.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const result = await changePassword(passwordData.current_password, passwordData.new_password);
-      
-      if (result.success) {
-        setMessage('Password alterada com sucesso!');
-        setIsChangingPassword(false);
-        setPasswordData({
-          current_password: '',
-          new_password: '',
-          confirm_password: ''
-        });
-      } else {
-        setError(result.error || 'Erro ao alterar password.');
+  // Dados do membro baseados no backend ou fallback para mock
+  const member = profileData ? {
+    id: profileData.id,
+    name: profileData.full_name || `${profileData.first_name} ${profileData.last_name}`,
+    profession: profileData.profession || 'Profissional',
+    location: profileData.location || 'Localização não informada',
+    category: profileData.category || 'Geral',
+    avatar: profileData.profile_image || "https://picsum.photos/150/150?random=10",
+    coverImage: profileData.cover_image || "https://picsum.photos/1200/400?random=20",
+    rating: profileData.rating || 0,
+    reviewCount: profileData.review_count || 0,
+    verified: profileData.is_verified || false,
+    memberSince: profileData.member_since ? new Date(profileData.member_since).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : 'Janeiro 2022',
+    responseTime: profileData.response_time || 'Dentro de 2 horas',
+    completedProjects: profileData.completed_projects || 0,
+    description: profileData.bio || 'Biografia não informada',
+    phone: profileData.phone || '',
+    email: profileData.email || '',
+    website: profileData.website || '',
+    socialMedia: profileData.social_media || {},
+    services: services,
+    portfolio: portfolio,
+    testimonials: testimonials,
+    qualifications: profileData.qualifications || [],
+    languages: profileData.languages || []
+  } : {
+    id: 1,
+    name: "Ana Kiala",
+    profession: "Designer de Interiores",
+    location: "Londres",
+    category: "Design & Criatividade",
+    avatar: "https://picsum.photos/150/150?random=10",
+    coverImage: "https://picsum.photos/1200/400?random=20",
+    rating: 4.8,
+    reviewCount: 23,
+    verified: true,
+    memberSince: "Janeiro 2022",
+    responseTime: "Dentro de 2 horas",
+    completedProjects: 45,
+    description: "Designer de interiores apaixonada por criar espaços únicos e funcionais. Com mais de 8 anos de experiência, especializo-me em design residencial contemporâneo e consultoria de decoração. Acredito que cada espaço deve refletir a personalidade dos seus habitantes.",
+    phone: "+44 20 1234 5678",
+    email: "ana.kiala@example.com",
+    website: "www.anakiladesign.co.uk",
+    socialMedia: {
+      instagram: "@anakiladesign",
+      linkedin: "ana-kiala-design",
+      facebook: "Ana Kiala Design"
+    },
+    services: [
+      {
+        id: 1,
+        name: "Design Residencial Completo",
+        description: "Projeto completo de design de interiores para residências, incluindo conceito, plantas, especificações e acompanhamento.",
+        price: "A partir de £2,500",
+        duration: "4-8 semanas",
+        image: "https://picsum.photos/300/200?random=30"
+      },
+      {
+        id: 2,
+        name: "Consultoria de Decoração",
+        description: "Sessão de consultoria para orientação sobre cores, móveis, layout e decoração de ambientes específicos.",
+        price: "£150/hora",
+        duration: "1-2 horas",
+        image: "https://picsum.photos/300/200?random=31"
+      },
+      {
+        id: 3,
+        name: "Projeto de Cozinha",
+        description: "Design especializado para cozinhas, incluindo layout funcional, escolha de materiais e especificações técnicas.",
+        price: "A partir de £1,800",
+        duration: "3-5 semanas",
+        image: "https://picsum.photos/300/200?random=32"
       }
-    } catch (error) {
-      setError('Erro ao alterar password. Tente novamente.');
-    } finally {
-      setIsLoading(false);
+    ],
+    portfolio: [
+      {
+        id: 1,
+        title: "Apartamento Moderno em Canary Wharf",
+        description: "Transformação completa de apartamento de 2 quartos com conceito minimalista e toques africanos.",
+        image: "https://picsum.photos/400/300?random=40",
+        category: "Residencial"
+      },
+      {
+        id: 2,
+        title: "Casa Vitoriana em Hampstead",
+        description: "Renovação respeitosa de casa histórica combinando elementos clássicos com design contemporâneo.",
+        image: "https://picsum.photos/400/300?random=41",
+        category: "Residencial"
+      },
+      {
+        id: 3,
+        title: "Escritório Criativo em Shoreditch",
+        description: "Design de espaço de trabalho colaborativo para startup de tecnologia.",
+        image: "https://picsum.photos/400/300?random=42",
+        category: "Comercial"
+      }
+    ],
+    testimonials: [
+      {
+        id: 1,
+        name: "Carlos Mendes",
+        rating: 5,
+        comment: "Ana transformou completamente nossa casa. O resultado superou todas as expectativas. Profissional excepcional!",
+        date: "Dezembro 2023",
+        project: "Design Residencial Completo"
+      },
+      {
+        id: 2,
+        name: "Sofia Rodrigues",
+        rating: 5,
+        comment: "Consultoria excelente! Ana tem um olhar único e conseguiu resolver todos os nossos problemas de layout.",
+        date: "Novembro 2023",
+        project: "Consultoria de Decoração"
+      },
+      {
+        id: 3,
+        name: "Miguel Santos",
+        rating: 4,
+        comment: "Muito satisfeito com o projeto da cozinha. Ana é criativa e atenta aos detalhes.",
+        date: "Outubro 2023",
+        project: "Projeto de Cozinha"
+      }
+    ],
+    qualifications: [
+      "Bacharelado em Design de Interiores - University of Arts London",
+      "Certificação BIID (British Institute of Interior Design)",
+      "Especialização em Design Sustentável",
+      "Curso de AutoCAD e SketchUp Avançado"
+    ],
+    languages: ["Português", "Inglês", "Francês"]
+  };
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<i key={i} className="fas fa-star text-yellow-400"></i>);
+    }
+
+    if (hasHalfStar) {
+      stars.push(<i key="half" className="fas fa-star-half-alt text-yellow-400"></i>);
+    }
+
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<i key={`empty-${i}`} className="far fa-star text-gray-300"></i>);
+    }
+
+    return stars;
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Enviar formulário de contato para a API
+      const contactData = {
+        ...contactForm,
+        recipient_id: memberId
+      };
+      
+      // Aqui você pode adicionar uma chamada para um serviço de contato/mensagens
+      // await contactService.sendMessage(contactData);
+      
+      console.log('Formulário de contato enviado:', contactData);
+      setShowContactModal(false);
+      setContactForm({ name: '', email: '', phone: '', message: '', service: '' });
+      alert('Mensagem enviada com sucesso!');
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+      alert('Erro ao enviar mensagem. Tente novamente.');
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setIsChangingPassword(false);
-    setError('');
-    setMessage('');
-    
-    // Restaurar dados originais
-    if (user) {
-      setProfileData({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        website: user.website || '',
-        profession: user.profession || '',
-        education: user.education || '',
-        date_of_birth: user.date_of_birth || '',
-        profile_picture: user.profile_picture || null
-      });
-    }
-    
-    setPasswordData({
-      current_password: '',
-      new_password: '',
-      confirm_password: ''
-    });
-  };
+  const ContactModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Contactar {member.name}
+            </h3>
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <form onSubmit={handleContactSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome *
+              </label>
+              <input
+                type="text"
+                required
+                value={contactForm.name}
+                onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={contactForm.email}
+                onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Telefone
+              </label>
+              <input
+                type="tel"
+                value={contactForm.phone}
+                onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Serviço de Interesse
+              </label>
+              <select
+                value={contactForm.service}
+                onChange={(e) => setContactForm({...contactForm, service: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              >
+                <option value="">Selecione um serviço</option>
+                {member && member.services && member.services.map(service => (
+                  <option key={service.id} value={service.name}>{service.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mensagem *
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={contactForm.message}
+                onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                placeholder="Descreva o seu projeto ou necessidade..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              ></textarea>
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowContactModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90"
+              >
+                Enviar Mensagem
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-PT');
-  };
-
-  if (!user) {
+  // Loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
-          <p className="text-gray-600">Precisa de fazer login para aceder ao seu perfil.</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <p className="font-medium">Erro ao carregar perfil</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <Link 
+            to="/comunidade"
+            className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+          >
+            <i className="fas fa-arrow-left mr-2"></i>
+            Voltar à Comunidade
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar se member existe
+  if (!member) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados do perfil...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Meu Perfil</h1>
-              {!isEditing && !isChangingPassword && (
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                  >
-                    <PencilIcon className="h-4 w-4 mr-2" />
-                    Editar Perfil
-                  </button>
-                  <button
-                    onClick={() => setIsChangingPassword(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-700 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                  >
-                    Alterar Password
-                  </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Back Button */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            to="/comunidade"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <i className="fas fa-arrow-left mr-2"></i>
+            Voltar à Comunidade
+          </Link>
+        </div>
+      </div>
+
+      {/* Cover Image */}
+      <div className="relative h-64 md:h-80">
+        <img 
+          src={member.coverImage} 
+          alt="Cover" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+      </div>
+
+      {/* Profile Header */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative -mt-20 bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+            <div className="relative">
+              <img 
+                src={member.avatar} 
+                alt={member.name}
+                className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg"
+              />
+              {member.verified && (
+                <div className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-2">
+                  <i className="fas fa-check text-sm"></i>
                 </div>
               )}
             </div>
+            
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
+                    {member.name}
+                    {member.verified && (
+                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                        Verificado
+                      </span>
+                    )}
+                  </h1>
+                  <p className="text-lg text-gray-600 mt-1">{member.profession}</p>
+                  <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+                    <span>
+                      <i className="fas fa-map-marker-alt mr-1"></i>
+                      {member.location}
+                    </span>
+                    <span>
+                      <i className="fas fa-calendar-alt mr-1"></i>
+                      Membro desde {member.memberSince}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col md:items-end mt-4 md:mt-0">
+                  <div className="flex items-center mb-2">
+                    <div className="flex mr-2">
+                      {renderStars(member.rating)}
+                    </div>
+                    <span className="text-sm text-gray-600">({member.reviewCount} avaliações)</span>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    <i className="fas fa-clock mr-1"></i>
+                    Responde {member.responseTime}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    <i className="fas fa-check-circle mr-1"></i>
+                    {member.completedProjects} projetos concluídos
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Mensagens de feedback */}
-          {error && (
-            <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2" />
-                <span className="text-red-800 text-sm">{error}</span>
-              </div>
-            </div>
-          )}
-
-          {message && (
-            <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-green-800 text-sm">{message}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Foto de perfil e informações básicas */}
-          <div className="px-6 py-6">
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                {profileData.profile_picture ? (
-                  <img
-                    src={profileData.profile_picture}
-                    alt="Foto de perfil"
-                    className="h-24 w-24 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-                    <UserCircleIcon className="h-16 w-16 text-gray-400" />
-                  </div>
-                )}
-                {isEditing && (
-                  <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-yellow-500 text-white flex items-center justify-center hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                    <CameraIcon className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {profileData.first_name} {profileData.last_name}
-                </h2>
-                <p className="text-gray-600">{profileData.email}</p>
-                {profileData.profession && (
-                  <p className="text-gray-500 text-sm">{profileData.profession}</p>
-                )}
-                {profileData.location && (
-                  <div className="flex items-center text-gray-500 text-sm mt-1">
-                    <MapPinIcon className="h-4 w-4 mr-1" />
-                    {profileData.location}
-                  </div>
-                )}
-              </div>
-            </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={() => setShowContactModal(true)}
+              className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+            >
+              <i className="fas fa-envelope mr-2"></i>
+              Contactar
+            </button>
+            <a
+              href={`tel:${member.phone}`}
+              className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
+            >
+              <i className="fas fa-phone mr-2"></i>
+              Ligar
+            </a>
+            <a
+              href={`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+            >
+              <i className="fab fa-whatsapp mr-2"></i>
+              WhatsApp
+            </a>
+            <button className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
+              <i className="fas fa-share-alt mr-2"></i>
+              Partilhar
+            </button>
           </div>
         </div>
 
-        {/* Formulário de edição de perfil */}
-        {isEditing && (
-          <div className="bg-white shadow rounded-lg mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Editar Informações</h3>
-            </div>
-            
-            <form onSubmit={handleProfileSubmit} className="px-6 py-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome
-                  </label>
-                  <input
-                    type="text"
-                    id="first_name"
-                    name="first_name"
-                    value={profileData.first_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Apelido
-                  </label>
-                  <input
-                    type="text"
-                    id="last_name"
-                    name="last_name"
-                    value={profileData.last_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={profileData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefone
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="profession" className="block text-sm font-medium text-gray-700 mb-2">
-                    Profissão
-                  </label>
-                  <input
-                    type="text"
-                    id="profession"
-                    name="profession"
-                    value={profileData.profession}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                    Localização
-                  </label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={profileData.location}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-2">
-                    Website
-                  </label>
-                  <input
-                    type="url"
-                    id="website"
-                    name="website"
-                    value={profileData.website}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="date_of_birth" className="block text-sm font-medium text-gray-700 mb-2">
-                    Data de Nascimento
-                  </label>
-                  <input
-                    type="date"
-                    id="date_of_birth"
-                    name="date_of_birth"
-                    value={profileData.date_of_birth}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="education" className="block text-sm font-medium text-gray-700 mb-2">
-                  Educação
-                </label>
-                <input
-                  type="text"
-                  id="education"
-                  name="education"
-                  value={profileData.education}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
-                  Biografia
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  rows={4}
-                  value={profileData.bio}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  placeholder="Conte-nos um pouco sobre si..."
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3">
+        {/* Tabs Navigation */}
+        <div className="bg-white rounded-lg shadow-md mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {[
+                { id: 'sobre', label: 'Sobre', icon: 'fas fa-user' },
+                { id: 'servicos', label: 'Serviços', icon: 'fas fa-briefcase' },
+                { id: 'portfolio', label: 'Portfolio', icon: 'fas fa-images' },
+                { id: 'avaliacoes', label: 'Avaliações', icon: 'fas fa-star' }
+              ].map(tab => (
                 <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? 'border-red-500 text-red-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
                 >
-                  <XMarkIcon className="h-4 w-4 mr-2 inline" />
-                  Cancelar
+                  <i className={`${tab.icon} mr-2`}></i>
+                  {tab.label}
                 </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-700 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    'A guardar...'
-                  ) : (
-                    <>
-                      <CheckIcon className="h-4 w-4 mr-2 inline" />
-                      Guardar Alterações
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              ))}
+            </nav>
           </div>
-        )}
 
-        {/* Formulário de mudança de password */}
-        {isChangingPassword && (
-          <div className="bg-white shadow rounded-lg mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Alterar Password</h3>
-            </div>
-            
-            <form onSubmit={handlePasswordSubmit} className="px-6 py-6 space-y-6">
-              <div>
-                <label htmlFor="current_password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password Atual
-                </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    id="current_password"
-                    name="current_password"
-                    value={passwordData.current_password}
-                    onChange={handlePasswordChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showCurrentPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'sobre' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Sobre Mim</h3>
+                  <p className="text-gray-700 leading-relaxed">{member.description}</p>
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nova Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    id="new_password"
-                    name="new_password"
-                    value={passwordData.new_password}
-                    onChange={handlePasswordChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showNewPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar Nova Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    id="confirm_password"
-                    name="confirm_password"
-                    value={passwordData.confirm_password}
-                    onChange={handlePasswordChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                >
-                  <XMarkIcon className="h-4 w-4 mr-2 inline" />
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-700 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    'A alterar...'
-                  ) : (
-                    <>
-                      <CheckIcon className="h-4 w-4 mr-2 inline" />
-                      Alterar Password
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Informações do perfil (modo visualização) */}
-        {!isEditing && !isChangingPassword && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Informações pessoais */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Informações Pessoais</h3>
-              </div>
-              <div className="px-6 py-6 space-y-4">
-                <div className="flex items-center">
-                  <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-3" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-600">{profileData.email}</p>
+                    <h4 className="font-semibold text-gray-900 mb-3">Qualificações</h4>
+                    <ul className="space-y-2">
+                      {member.qualifications && member.qualifications.map((qual, index) => (
+                        <li key={index} className="flex items-start">
+                          <i className="fas fa-graduation-cap text-red-500 mt-1 mr-2"></i>
+                          <span className="text-gray-700">{qual}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-
-                {profileData.phone && (
-                  <div className="flex items-center">
-                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Telefone</p>
-                      <p className="text-sm text-gray-600">{profileData.phone}</p>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Idiomas</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {member.languages && member.languages.map((lang, index) => (
+                        <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                          {lang}
+                        </span>
+                      ))}
                     </div>
-                  </div>
-                )}
-
-                {profileData.date_of_birth && (
-                  <div className="flex items-center">
-                    <CalendarIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Data de Nascimento</p>
-                      <p className="text-sm text-gray-600">{formatDate(profileData.date_of_birth)}</p>
+                    
+                    <h4 className="font-semibold text-gray-900 mb-3 mt-6">Contactos</h4>
+                    <div className="space-y-2">
+                      <p className="text-gray-700">
+                        <i className="fas fa-envelope mr-2 text-gray-500"></i>
+                        {member.email}
+                      </p>
+                      <p className="text-gray-700">
+                        <i className="fas fa-phone mr-2 text-gray-500"></i>
+                        {member.phone}
+                      </p>
+                      {member.website && (
+                        <p className="text-gray-700">
+                          <i className="fas fa-globe mr-2 text-gray-500"></i>
+                          <a href={`https://${member.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {member.website}
+                          </a>
+                        </p>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                {profileData.location && (
-                  <div className="flex items-center">
-                    <MapPinIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Localização</p>
-                      <p className="text-sm text-gray-600">{profileData.location}</p>
-                    </div>
-                  </div>
-                )}
-
-                {profileData.website && (
-                  <div className="flex items-center">
-                    <GlobeAltIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Website</p>
-                      <a 
-                        href={profileData.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-yellow-600 hover:text-yellow-500"
-                      >
-                        {profileData.website}
+                    
+                    <h4 className="font-semibold text-gray-900 mb-3 mt-6">Redes Sociais</h4>
+                    <div className="flex space-x-3">
+                      <a href="#" className="text-pink-600 hover:text-pink-800">
+                        <i className="fab fa-instagram text-xl"></i>
+                      </a>
+                      <a href="#" className="text-blue-600 hover:text-blue-800">
+                        <i className="fab fa-linkedin text-xl"></i>
+                      </a>
+                      <a href="#" className="text-blue-700 hover:text-blue-900">
+                        <i className="fab fa-facebook text-xl"></i>
                       </a>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Informações profissionais */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Informações Profissionais</h3>
-              </div>
-              <div className="px-6 py-6 space-y-4">
-                {profileData.profession && (
-                  <div className="flex items-center">
-                    <BriefcaseIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Profissão</p>
-                      <p className="text-sm text-gray-600">{profileData.profession}</p>
-                    </div>
-                  </div>
-                )}
-
-                {profileData.education && (
-                  <div className="flex items-center">
-                    <AcademicCapIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Educação</p>
-                      <p className="text-sm text-gray-600">{profileData.education}</p>
-                    </div>
-                  </div>
-                )}
-
-                {!profileData.profession && !profileData.education && (
-                  <p className="text-sm text-gray-500 italic">
-                    Nenhuma informação profissional adicionada ainda.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Biografia */}
-            {profileData.bio && (
-              <div className="bg-white shadow rounded-lg lg:col-span-2">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Sobre Mim</h3>
                 </div>
-                <div className="px-6 py-6">
-                  <p className="text-gray-600 whitespace-pre-wrap">{profileData.bio}</p>
+              </div>
+            )}
+
+            {activeTab === 'servicos' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {member && member.services && member.services.map(service => (
+                  <div key={service.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    <img 
+                      src={service.image} 
+                      alt={service.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">{service.name}</h4>
+                      <p className="text-gray-600 text-sm mb-3">{service.description}</p>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold text-red-600">{service.price}</span>
+                        <span className="text-sm text-gray-500">
+                          <i className="fas fa-clock mr-1"></i>
+                          {service.duration}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setContactForm({...contactForm, service: service.name});
+                          setShowContactModal(true);
+                        }}
+                        className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 rounded-md hover:opacity-90 transition-opacity"
+                      >
+                        Solicitar Orçamento
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'portfolio' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {member.portfolio && member.portfolio.map(project => (
+                  <div key={project.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                          {project.category}
+                        </span>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">{project.title}</h4>
+                      <p className="text-gray-600 text-sm">{project.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'avaliacoes' && (
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-gray-900 mb-2">{member.rating}</div>
+                    <div className="flex justify-center mb-2">
+                      {renderStars(member.rating)}
+                    </div>
+                    <p className="text-gray-600">{member.reviewCount} avaliações</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {member.testimonials && member.testimonials.map(testimonial => (
+                    <div key={testimonial.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h5 className="font-semibold text-gray-900">{testimonial.name}</h5>
+                          <p className="text-sm text-gray-500">{testimonial.project} • {testimonial.date}</p>
+                        </div>
+                        <div className="flex">
+                          {renderStars(testimonial.rating)}
+                        </div>
+                      </div>
+                      <p className="text-gray-700">{testimonial.comment}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Contact Modal */}
+      {showContactModal && <ContactModal />}
     </div>
   );
 };
 
-export default Profile;
+export default MemberProfile;

@@ -5,28 +5,28 @@ const CommunitySection = () => {
       profession: "Designer de Interiores",
       location: "Londres",
       avatar: "https://picsum.photos/40/40?random=3",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
+      image: "https://picsum.photos/634/400?random=10"
     },
     {
       name: "João Manuel",
       profession: "Consultor Financeiro",
       location: "Manchester",
       avatar: "https://picsum.photos/40/40?random=4",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
+      image: "https://picsum.photos/634/400?random=11"
     },
     {
       name: "Luísa Domingos",
       profession: "Chef de Cozinha",
       location: "Birmingham",
       avatar: "https://picsum.photos/40/40?random=5",
-      image: "https://images.unsplash.com/photo-1484863137850-59b6f5bc6a0e?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
+      image: "https://picsum.photos/634/400?random=12"
     },
     {
       name: "Pedro Santos",
       profession: "Desenvolvedor de Software",
       location: "Edimburgo",
       avatar: "https://picsum.photos/40/40?random=6",
-      image: "https://images.unsplash.com/photo-1485178575877-1a13bf489dfe?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
+      image: "https://picsum.photos/634/400?random=13"
     }
   ];
 
