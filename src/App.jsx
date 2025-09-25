@@ -47,6 +47,7 @@ import CommunityPage from './pages/dashboard/CommunityPage';
 import ConnectionsPage from './pages/dashboard/ConnectionsPage';
 import { PERMISSIONS } from './contexts/PermissionsContext';
 import { ToastNotifications } from './components/notifications';
+import TestAPI from './pages/TestAPI';
 
 // Componente da página inicial
 const HomePage = () => (
@@ -106,6 +107,7 @@ function App() {
             } />
             <Route path="/oportunidade/:id" element={<PublicLayout><OpportunityDetails /></PublicLayout>} />
             <Route path="/sobre" element={<PublicLayout><AboutUs /></PublicLayout>} />
+            <Route path="/test-api" element={<PublicLayout><TestAPI /></PublicLayout>} />
             <Route path="/login" element={
               <GuestRoute>
                 <PublicLayout><Login /></PublicLayout>

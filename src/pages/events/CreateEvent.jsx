@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import eventService from '../../services/eventService';
+import EventImageUpload from '../../components/events/EventImageUpload';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -520,16 +521,18 @@ const CreateEvent = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Imagem de Destaque
                   </label>
-                  <input
-                    type="file"
-                    name="featured_image"
-                    onChange={handleInputChange}
-                    accept="image/*"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  <EventImageUpload
+                    onImageUpload={(uploadedImages) => {
+                      if (uploadedImages.length > 0) {
+                        setFormData(prev => ({
+                          ...prev,
+                          featured_image: uploadedImages[0].id
+                        }));
+                      }
+                    }}
+                    maxFiles={1}
+                    showPreview={true}
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Formatos aceites: JPG, PNG, GIF (máx. 5MB)
-                  </p>
                 </div>
               </div>
             </div>

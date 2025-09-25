@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import ProfileImageUpload from '../../components/profile/ProfileImageUpload';
 
 const MemberProfile = () => {
   const { id } = useParams();
@@ -426,11 +427,24 @@ const MemberProfile = () => {
         <div className="relative -mt-20 bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
             <div className="relative">
-              <img 
-                src={member.avatar} 
-                alt={member.name}
-                className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg"
-              />
+              {isOwnProfile ? (
+                <ProfileImageUpload
+                  currentImage={member.avatar}
+                  onImageUpdate={(newImage) => {
+                    setProfileData(prev => ({
+                      ...prev,
+                      profile_image: newImage.file_url
+                    }));
+                  }}
+                  size="large"
+                />
+              ) : (
+                <img 
+                  src={member.avatar} 
+                  alt={member.name}
+                  className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg"
+                />
+              )}
               {member.verified && (
                 <div className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-2">
                   <i className="fas fa-check text-sm"></i>

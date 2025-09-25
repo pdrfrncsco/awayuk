@@ -32,6 +32,22 @@ class TokenManager {
   static isAuthenticated() {
     return !!this.getAccessToken();
   }
+
+  static isTokenExpired(token) {
+    if (!token) return true;
+    
+    try {
+      // Decodificar o payload do JWT (sem verificar assinatura)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      // Verificar se o token expirou
+      return payload.exp < currentTime;
+    } catch (error) {
+      // Se não conseguir decodificar, considerar como expirado
+      return true;
+    }
+  }
 }
 
 /**

@@ -132,7 +132,7 @@ class AuthService {
    */
   async changePassword(currentPassword, newPassword, confirmPassword) {
     try {
-      return await this.apiClient.post('/auth/change-password/', {
+      return await this.apiClient.post('/auth/password/change/', {
         current_password: currentPassword,
         new_password: newPassword,
         confirm_password: confirmPassword
@@ -153,7 +153,7 @@ class AuthService {
    */
   async requestPasswordReset(email) {
     try {
-      return await this.apiClient.post('/auth/password-reset/', {
+      return await this.apiClient.post('/auth/password/reset/', {
         email
       });
     } catch (error) {
@@ -166,7 +166,7 @@ class AuthService {
   }
 
   /**
-   * Confirma reset de senha
+   * Confirma reset de senha com token
    * @param {string} token - Token de reset
    * @param {string} newPassword - Nova senha
    * @param {string} confirmPassword - Confirmação da nova senha
@@ -174,7 +174,7 @@ class AuthService {
    */
   async confirmPasswordReset(token, newPassword, confirmPassword) {
     try {
-      return await this.apiClient.post('/auth/password-reset-confirm/', {
+      return await this.apiClient.post('/auth/password/reset/confirm/', {
         token,
         new_password: newPassword,
         confirm_password: confirmPassword
@@ -212,7 +212,7 @@ class AuthService {
    */
   async resendVerificationEmail() {
     try {
-      return await this.apiClient.post('/auth/resend-verification/');
+      return await this.apiClient.post('/auth/email/resend/');
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao reenviar email de verificação',

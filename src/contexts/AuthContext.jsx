@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         if (token && !TokenManager.isTokenExpired(token)) {
           // Token válido, buscar dados do utilizador
           try {
-            const userData = await authService.getCurrentUser();
+            const userData = await authService.getProfile();
             setUser(userData);
             setIsAuthenticated(true);
           } catch (error) {
@@ -49,8 +49,8 @@ export const AuthProvider = ({ children }) => {
       try {
         const refreshToken = TokenManager.getRefreshToken();
         if (refreshToken) {
-          await authService.refreshToken();
-          const userData = await authService.getCurrentUser();
+          await authService.refreshAccessToken();
+          const userData = await authService.getProfile();
           setUser(userData);
           setIsAuthenticated(true);
         } else {
@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response) {
         // Buscar dados atualizados do utilizador
-        const userData = await authService.getCurrentUser();
+        const userData = await authService.getProfile();
         setUser(userData);
         
         return { success: true, user: userData };
