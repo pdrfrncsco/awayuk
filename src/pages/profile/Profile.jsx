@@ -3,10 +3,16 @@ import { useParams, Link } from 'react-router-dom';
 import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileImageUpload from '../../components/profile/ProfileImageUpload';
+import CoverImageUpload from '../../components/profile/CoverImageUpload';
+import AboutTabEditor from '../../components/profile/AboutTabEditor';
+import ServicesManager from '../../components/profile/ServicesManager';
+import PortfolioManager from '../../components/profile/PortfolioManager';
+import { useToast } from '../../components/common/Toast';
 
 const MemberProfile = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const { ToastContainer } = useToast();
   const memberId = id ? parseInt(id) : null;
   const [activeTab, setActiveTab] = useState('sobre');
   const [showContactModal, setShowContactModal] = useState(false);
@@ -25,6 +31,9 @@ const MemberProfile = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditingAbout, setIsEditingAbout] = useState(false);
+  const [isEditingServices, setIsEditingServices] = useState(false);
+  const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
 
   // Verificar se é o próprio perfil do usuário (memoizado para evitar re-renders)
   const isOwnProfile = useMemo(() => {
@@ -98,6 +107,84 @@ const MemberProfile = () => {
       loadProfileData();
     }
   }, [memberId, loadProfileData]);
+
+  // Função para salvar as informações da aba "Sobre"
+  const handleSaveAbout = async (formData) => {
+    try {
+      // Aqui você faria a chamada para a API para salvar os dados
+      // const updatedProfile = await profileService.updateProfile(memberId, formData);
+      
+      // Por enquanto, vamos atualizar o estado local
+      setProfileData(prev => ({
+        ...prev,
+        bio: formData.description,
+        qualifications: formData.qualifications,
+        languages: formData.languages,
+        email: formData.email,
+        phone: formData.phone,
+        website: formData.website
+      }));
+      
+      setIsEditingAbout(false);
+      
+      // Mostrar feedback de sucesso
+      console.log('Informações salvas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar informações:', error);
+      throw error;
+    }
+  };
+
+  // Função para cancelar a edição
+  const handleCancelAbout = () => {
+    setIsEditingAbout(false);
+  };
+
+  // Função para salvar os serviços
+  const handleSaveServices = async (servicesData) => {
+    try {
+      // Aqui você faria a chamada para a API para salvar os serviços
+      // const updatedServices = await profileService.updateServices(memberId, servicesData);
+      
+      // Por enquanto, vamos atualizar o estado local
+      setServices(servicesData);
+      setIsEditingServices(false);
+      
+      // Mostrar feedback de sucesso
+      console.log('Serviços salvos com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar serviços:', error);
+      throw error;
+    }
+  };
+
+  // Função para cancelar a edição dos serviços
+  const handleCancelServices = () => {
+    setIsEditingServices(false);
+  };
+
+  // Função para salvar o portfólio
+  const handleSavePortfolio = async (portfolioData) => {
+    try {
+      // Aqui você faria a chamada para a API para salvar os dados
+      // const updatedPortfolio = await profileService.updatePortfolio(memberId, portfolioData);
+      
+      // Por enquanto, vamos atualizar o estado local
+      setPortfolio(portfolioData);
+      setIsEditingPortfolio(false);
+      
+      // Mostrar feedback de sucesso
+      console.log('Portfólio salvo com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar portfólio:', error);
+      throw error;
+    }
+  };
+
+  // Função para cancelar a edição do portfólio
+  const handleCancelPortfolio = () => {
+    setIsEditingPortfolio(false);
+  };
 
   // Dados do membro baseados no backend ou fallback para mock
   const member = profileData ? {
@@ -442,12 +529,27 @@ const MemberProfile = () => {
 
       {/* Cover Image */}
       <div className="relative h-64 md:h-80">
-        <img 
-          src={member.coverImage} 
-          alt="Cover" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+        {isOwnProfile ? (
+          <CoverImageUpload
+            currentImage={member.coverImage}
+            onImageUpdate={(newImage) => {
+              setProfileData(prev => ({
+                ...prev,
+                cover_image: newImage.file_url
+              }));
+            }}
+            height="h-64 md:h-80"
+          />
+        ) : (
+          <>
+            <img 
+              src={member.coverImage} 
+              alt="Cover" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+          </>
+        )}
       </div>
 
       {/* Profile Header */}
@@ -586,125 +688,239 @@ const MemberProfile = () => {
           <div className="p-6">
             {activeTab === 'sobre' && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Sobre Mim</h3>
-                  <p className="text-gray-700 leading-relaxed">{member.description}</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Qualificações</h4>
-                    <ul className="space-y-2">
-                      {member.qualifications && member.qualifications.map((qual, index) => (
-                        <li key={index} className="flex items-start">
-                          <i className="fas fa-graduation-cap text-red-500 mt-1 mr-2"></i>
-                          <span className="text-gray-700">{qual}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Idiomas</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {member.languages && member.languages.map((lang, index) => (
-                        <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                          {lang}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <h4 className="font-semibold text-gray-900 mb-3 mt-6">Contactos</h4>
-                    <div className="space-y-2">
-                      <p className="text-gray-700">
-                        <i className="fas fa-envelope mr-2 text-gray-500"></i>
-                        {member.email}
-                      </p>
-                      <p className="text-gray-700">
-                        <i className="fas fa-phone mr-2 text-gray-500"></i>
-                        {member.phone}
-                      </p>
-                      {member.website && (
-                        <p className="text-gray-700">
-                          <i className="fas fa-globe mr-2 text-gray-500"></i>
-                          <a href={`https://${member.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            {member.website}
-                          </a>
-                        </p>
+                {isEditingAbout ? (
+                  <AboutTabEditor
+                    profileData={{
+                      description: member.description,
+                      qualifications: member.qualifications,
+                      languages: member.languages,
+                      email: member.email,
+                      phone: member.phone,
+                      website: member.website
+                    }}
+                    onSave={handleSaveAbout}
+                    onCancel={handleCancelAbout}
+                  />
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">Sobre Mim</h3>
+                      {isOwnProfile && (
+                        <button
+                          onClick={() => setIsEditingAbout(true)}
+                          className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <i className="fas fa-edit mr-2"></i>
+                          Editar
+                        </button>
                       )}
                     </div>
                     
-                    <h4 className="font-semibold text-gray-900 mb-3 mt-6">Redes Sociais</h4>
-                    <div className="flex space-x-3">
-                      <a href="#" className="text-pink-600 hover:text-pink-800">
-                        <i className="fab fa-instagram text-xl"></i>
-                      </a>
-                      <a href="#" className="text-blue-600 hover:text-blue-800">
-                        <i className="fab fa-linkedin text-xl"></i>
-                      </a>
-                      <a href="#" className="text-blue-700 hover:text-blue-900">
-                        <i className="fab fa-facebook text-xl"></i>
-                      </a>
+                    <div>
+                      <p className="text-gray-700 leading-relaxed">{member.description}</p>
                     </div>
-                  </div>
-                </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Qualificações</h4>
+                        <ul className="space-y-2">
+                          {member.qualifications && member.qualifications.map((qual, index) => (
+                            <li key={index} className="flex items-start">
+                              <i className="fas fa-graduation-cap text-red-500 mt-1 mr-2"></i>
+                              <span className="text-gray-700">{qual}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Idiomas</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {member.languages && member.languages.map((lang, index) => (
+                            <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <h4 className="font-semibold text-gray-900 mb-3 mt-6">Contactos</h4>
+                        <div className="space-y-2">
+                          <p className="text-gray-700">
+                            <i className="fas fa-envelope mr-2 text-gray-500"></i>
+                            {member.email}
+                          </p>
+                          <p className="text-gray-700">
+                            <i className="fas fa-phone mr-2 text-gray-500"></i>
+                            {member.phone}
+                          </p>
+                          {member.website && (
+                            <p className="text-gray-700">
+                              <i className="fas fa-globe mr-2 text-gray-500"></i>
+                              <a href={`https://${member.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                {member.website}
+                              </a>
+                            </p>
+                          )}
+                        </div>
+                        
+                        <h4 className="font-semibold text-gray-900 mb-3 mt-6">Redes Sociais</h4>
+                        <div className="flex space-x-3">
+                          <a href="#" className="text-pink-600 hover:text-pink-800">
+                            <i className="fab fa-instagram text-xl"></i>
+                          </a>
+                          <a href="#" className="text-blue-600 hover:text-blue-800">
+                            <i className="fab fa-linkedin text-xl"></i>
+                          </a>
+                          <a href="#" className="text-blue-700 hover:text-blue-900">
+                            <i className="fab fa-facebook text-xl"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
             {activeTab === 'servicos' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {member && member.services && member.services.map(service => (
-                  <div key={service.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    <img 
-                      src={service.image} 
-                      alt={service.name}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">{service.name}</h4>
-                      <p className="text-gray-600 text-sm mb-3">{service.description}</p>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold text-red-600">{service.price}</span>
-                        <span className="text-sm text-gray-500">
-                          <i className="fas fa-clock mr-1"></i>
-                          {service.duration}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setContactForm({...contactForm, service: service.name});
-                          setShowContactModal(true);
-                        }}
-                        className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 rounded-md hover:opacity-90 transition-opacity"
-                      >
-                        Solicitar Orçamento
-                      </button>
+              <div>
+                {isEditingServices ? (
+                  <ServicesManager
+                    services={services}
+                    onSave={handleSaveServices}
+                    onCancel={handleCancelServices}
+                    isOwnProfile={isOwnProfile}
+                  />
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">Serviços</h3>
+                      {isOwnProfile && (
+                        <button
+                          onClick={() => setIsEditingServices(true)}
+                          className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <i className="fas fa-edit mr-2"></i>
+                          Gerenciar Serviços
+                        </button>
+                      )}
                     </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {member && member.services && member.services.map(service => (
+                        <div key={service.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                          <img 
+                            src={service.image} 
+                            alt={service.name}
+                            className="w-full h-48 object-cover"
+                          />
+                          <div className="p-4">
+                            <h4 className="font-semibold text-gray-900 mb-2">{service.name}</h4>
+                            <p className="text-gray-600 text-sm mb-3">{service.description}</p>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-lg font-bold text-red-600">{service.price}</span>
+                              <span className="text-sm text-gray-500">
+                                <i className="fas fa-clock mr-1"></i>
+                                {service.duration}
+                              </span>
+                            </div>
+                            {!isOwnProfile && (
+                              <button
+                                onClick={() => {
+                                  setContactForm({...contactForm, service: service.name});
+                                  setShowContactModal(true);
+                                }}
+                                className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 rounded-md hover:opacity-90 transition-opacity"
+                              >
+                                Solicitar Orçamento
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {(!member.services || member.services.length === 0) && (
+                      <div className="text-center py-12">
+                        <i className="fas fa-briefcase text-4xl text-gray-300 mb-4"></i>
+                        <p className="text-gray-500">
+                          {isOwnProfile ? 'Nenhum serviço adicionado ainda.' : 'Nenhum serviço disponível.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             )}
 
             {activeTab === 'portfolio' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {member.portfolio && member.portfolio.map(project => (
-                  <div key={project.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                    <img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                          {project.category}
-                        </span>
+              <div>
+                {isEditingPortfolio ? (
+                  <PortfolioManager
+                    portfolio={portfolio}
+                    onSave={handleSavePortfolio}
+                    onCancel={handleCancelPortfolio}
+                    isOwnProfile={isOwnProfile}
+                  />
+                ) : (
+                  <div>
+                    {isOwnProfile && (
+                      <div className="mb-6 flex justify-end">
+                        <button
+                          onClick={() => setIsEditingPortfolio(true)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          <i className="fas fa-edit mr-2"></i>
+                          Gerenciar Portfólio
+                        </button>
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-2">{project.title}</h4>
-                      <p className="text-gray-600 text-sm">{project.description}</p>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {portfolio && portfolio.map(project => (
+                        <div key={project.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                          <img 
+                            src={project.image || `https://picsum.photos/400/300?random=${project.id}`} 
+                            alt={project.title}
+                            className="w-full h-48 object-cover"
+                          />
+                          <div className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                {project.category}
+                              </span>
+                            </div>
+                            <h4 className="font-semibold text-gray-900 mb-2">{project.title}</h4>
+                            <p className="text-gray-600 text-sm mb-3">{project.description}</p>
+                            
+                            {project.client && (
+                              <p className="text-xs text-gray-500 mb-1">
+                                <i className="fas fa-user mr-1"></i>
+                                Cliente: {project.client}
+                              </p>
+                            )}
+                            
+                            {project.completedDate && (
+                              <p className="text-xs text-gray-500">
+                                <i className="fas fa-calendar mr-1"></i>
+                                Concluído em: {new Date(project.completedDate).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    
+                    {(!portfolio || portfolio.length === 0) && (
+                      <div className="text-center py-12">
+                        <i className="fas fa-folder-open text-4xl text-gray-300 mb-4"></i>
+                        <p className="text-gray-500">
+                          {isOwnProfile ? 'Nenhum projeto adicionado ainda.' : 'Nenhum projeto disponível.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             )}
 
@@ -744,6 +960,9 @@ const MemberProfile = () => {
 
       {/* Contact Modal */}
       {showContactModal && <ContactModal />}
+      
+      {/* Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 };
