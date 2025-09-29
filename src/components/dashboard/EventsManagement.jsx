@@ -1,124 +1,152 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CalendarIcon,
   MapPinIcon,
-  UsersIcon,
-  ClockIcon,
+  UserGroupIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
   EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  ShareIcon,
-  TagIcon
+  DocumentDuplicateIcon,
+  ClockIcon,
+  CurrencyPoundIcon
 } from '@heroicons/react/24/outline';
+import { services } from '../../services';
 
 const EventsManagement = () => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
+  const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 0
+  });
 
-  // Mock data - em produção viria de uma API
-  const events = [
-    {
-      id: 1,
-      title: 'Networking Night Londres',
-      description: 'Uma noite de networking para profissionais angolanos em Londres',
-      date: '2024-12-20',
-      time: '19:00',
-      location: 'Central London Hotel',
-      address: '123 Oxford Street, London W1D 2HX',
-      category: 'networking',
-      status: 'published',
-      attendees: 45,
-      maxAttendees: 80,
-      price: 15,
-      organizer: 'Maria Santos',
-      image: null,
-      tags: ['networking', 'profissional', 'londres']
-    },
-    {
-      id: 2,
-      title: 'Workshop: CV para o Reino Unido',
-      description: 'Aprenda a criar um CV eficaz para o mercado de trabalho britânico',
-      date: '2024-12-25',
-      time: '14:00',
-      location: 'Online',
-      address: 'Zoom Meeting',
-      category: 'workshop',
-      status: 'published',
-      attendees: 120,
-      maxAttendees: 150,
-      price: 0,
-      organizer: 'João Silva',
-      image: null,
-      tags: ['workshop', 'cv', 'emprego']
-    },
-    {
-      id: 3,
-      title: 'Festa de Ano Novo Angolana',
-      description: 'Celebre o Ano Novo com a comunidade angolana em Manchester',
-      date: '2024-12-31',
-      time: '20:00',
-      location: 'Manchester Community Center',
-      address: '456 Market Street, Manchester M1 1AA',
-      category: 'social',
-      status: 'draft',
-      attendees: 0,
-      maxAttendees: 200,
-      price: 25,
-      organizer: 'Ana Costa',
-      image: null,
-      tags: ['festa', 'ano-novo', 'manchester']
-    },
-    {
-      id: 4,
-      title: 'Seminário: Empreendedorismo no Reino Unido',
-      description: 'Dicas e estratégias para empreendedores angolanos no Reino Unido',
-      date: '2024-12-15',
-      time: '10:00',
-      location: 'Birmingham Business Hub',
-      address: '789 Business Park, Birmingham B1 1BB',
-      category: 'business',
-      status: 'cancelled',
-      attendees: 25,
-      maxAttendees: 60,
-      price: 20,
-      organizer: 'Pedro Oliveira',
-      image: null,
-      tags: ['empreendedorismo', 'business', 'birmingham']
-    },
-    {
-      id: 5,
-      title: 'Encontro Cultural: Música Angolana',
-      description: 'Uma tarde dedicada à música tradicional e contemporânea de Angola',
-      date: '2025-01-10',
-      time: '15:00',
-      location: 'Edinburgh Arts Centre',
-      address: '321 Arts Street, Edinburgh EH1 1CC',
-      category: 'cultural',
-      status: 'published',
-      attendees: 35,
-      maxAttendees: 100,
-      price: 10,
-      organizer: 'Carla Mendes',
-      image: null,
-      tags: ['música', 'cultura', 'edinburgh']
+  // Carregar eventos da API
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filters = {
+        search: searchTerm,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        page: pagination.page,
+        limit: pagination.limit
+      };
+
+      const response = await services.eventsService.getEvents(filters);
+      
+      setEvents(response.results);
+      setPagination(prev => ({
+        ...prev,
+        total: response.count,
+        totalPages: Math.ceil(response.count / prev.limit)
+      }));
+    } catch (err) {
+      setError('Erro ao carregar eventos');
+      console.error('Erro ao carregar eventos:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const categories = [
-    { value: 'networking', label: 'Networking', color: 'bg-blue-100 text-blue-800' },
-    { value: 'workshop', label: 'Workshop', color: 'bg-green-100 text-green-800' },
-    { value: 'social', label: 'Social', color: 'bg-purple-100 text-purple-800' },
-    { value: 'business', label: 'Business', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'cultural', label: 'Cultural', color: 'bg-pink-100 text-pink-800' }
-  ];
+  // Carregar categorias da API
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await services.eventsService.getCategories();
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error('Erro ao carregar categorias:', err);
+    }
+  };
 
+  // Deletar evento
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm('Tem certeza que deseja deletar este evento?')) {
+      return;
+    }
+
+    try {
+      await services.eventsService.deleteEvent(eventId);
+      await loadEvents(); // Recarregar lista
+    } catch (err) {
+      alert('Erro ao deletar evento');
+      console.error('Erro ao deletar evento:', err);
+    }
+  };
+
+  // Duplicar evento
+  const handleDuplicateEvent = async (eventId) => {
+    try {
+      await services.eventsService.duplicateEvent(eventId);
+      await loadEvents(); // Recarregar lista
+    } catch (err) {
+      alert('Erro ao duplicar evento');
+      console.error('Erro ao duplicar evento:', err);
+    }
+  };
+
+  // Alterar status do evento
+  const handleStatusChange = async (eventId, newStatus) => {
+    try {
+      await services.eventsService.updateEventStatus(eventId, newStatus);
+      await loadEvents(); // Recarregar lista
+    } catch (err) {
+      alert('Erro ao alterar status do evento');
+      console.error('Erro ao alterar status:', err);
+    }
+  };
+
+  // Exportar eventos
+  const handleExportEvents = async () => {
+    try {
+      const filters = {
+        search: searchTerm,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined
+      };
+      
+      await services.eventsService.exportEvents(filters, 'csv');
+    } catch (err) {
+      alert('Erro ao exportar eventos');
+      console.error('Erro ao exportar eventos:', err);
+    }
+  };
+
+  // Efeitos
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [searchTerm, statusFilter, categoryFilter, pagination.page]);
+
+  // Funções de paginação
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleLimitChange = (newLimit) => {
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+  };
+
+  // Filtrar eventos
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,12 +174,28 @@ const EventsManagement = () => {
   };
 
   const getCategoryBadge = (category) => {
-    const categoryData = categories.find(cat => cat.value === category);
-    if (!categoryData) return null;
+    const categoryColors = {
+      networking: 'bg-blue-100 text-blue-800',
+      workshop: 'bg-green-100 text-green-800',
+      social: 'bg-purple-100 text-purple-800',
+      business: 'bg-yellow-100 text-yellow-800',
+      cultural: 'bg-pink-100 text-pink-800'
+    };
+    
+    const categoryLabels = {
+      networking: 'Networking',
+      workshop: 'Workshop',
+      social: 'Social',
+      business: 'Business',
+      cultural: 'Cultural'
+    };
+    
+    const color = categoryColors[category] || 'bg-gray-100 text-gray-800';
+    const label = categoryLabels[category] || category;
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryData.color}`}>
-        {categoryData.label}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
+        {label}
       </span>
     );
   };
@@ -164,7 +208,7 @@ const EventsManagement = () => {
     });
   };
 
-  const EventCard = ({ event }) => (
+  const EventCard = ({ event, onDelete, onDuplicate, onStatusChange }) => (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
       <div className="p-6">
         <div className="flex items-start justify-between">
@@ -176,10 +220,59 @@ const EventsManagement = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
             <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
           </div>
-          <div className="ml-4">
+          <div className="ml-4 relative group">
             <button className="text-gray-400 hover:text-gray-600">
               <EllipsisVerticalIcon className="h-5 w-5" />
             </button>
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="py-1">
+                <button
+                  onClick={() => {/* Ver detalhes */}}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                >
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                  Ver detalhes
+                </button>
+                <button
+                  onClick={() => {/* Editar */}}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Editar
+                </button>
+                <button
+                  onClick={() => onDuplicate(event.id)}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                >
+                  <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
+                  Duplicar
+                </button>
+                {event.status === 'published' && (
+                  <button
+                    onClick={() => onStatusChange(event.id, 'draft')}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  >
+                    Despublicar
+                  </button>
+                )}
+                {event.status === 'draft' && (
+                  <button
+                    onClick={() => onStatusChange(event.id, 'published')}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  >
+                    Publicar
+                  </button>
+                )}
+                <hr className="my-1" />
+                <button
+                  onClick={() => onDelete(event.id)}
+                  className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  Deletar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -193,7 +286,7 @@ const EventsManagement = () => {
             {event.location}
           </div>
           <div className="flex items-center text-sm text-gray-500">
-            <UsersIcon className="h-4 w-4 mr-2" />
+            <UserGroupIcon className="h-4 w-4 mr-2" />
             {event.attendees}/{event.maxAttendees} participantes
           </div>
         </div>
@@ -210,7 +303,7 @@ const EventsManagement = () => {
               <PencilIcon className="h-4 w-4" />
             </button>
             <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md">
-              <ShareIcon className="h-4 w-4" />
+              <DocumentDuplicateIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -228,7 +321,13 @@ const EventsManagement = () => {
             Crie e gerencie eventos para a comunidade AWAYSUK
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex items-center space-x-3">
+          <button
+            onClick={handleExportEvents}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Exportar
+          </button>
           <button
             type="button"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -317,8 +416,8 @@ const EventsManagement = () => {
                   >
                     <option value="all">Todas</option>
                     {categories.map(category => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
+                      <option key={category.id} value={category.slug}>
+                        {category.name}
                       </option>
                     ))}
                   </select>
@@ -338,89 +437,189 @@ const EventsManagement = () => {
             </h3>
           </div>
 
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Evento
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data/Hora
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Local
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Participantes
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="relative px-6 py-3">
-                      <span className="sr-only">Ações</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                          <div className="text-sm text-gray-500">{event.category}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatDate(event.date)}</div>
-                        <div className="text-sm text-gray-500">{event.time}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{event.location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {event.attendees}/{event.maxAttendees}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(event.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900">
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                          <button className="text-green-600 hover:text-green-900">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <EllipsisVerticalIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Estados de Loading e Erro */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+              <p className="mt-2 text-sm text-gray-500">Carregando eventos...</p>
             </div>
           )}
 
-          {filteredEvents.length === 0 && (
+          {error && (
             <div className="text-center py-12">
-              <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum evento encontrado</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Tente ajustar os filtros ou termos de pesquisa.
-              </p>
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <p className="text-sm text-red-600">{error}</p>
+                <button 
+                  onClick={loadEvents}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
+                >
+                  Tentar novamente
+                </button>
+              </div>
             </div>
+          )}
+
+          {/* Lista de Eventos */}
+          {!loading && !error && (
+            <>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {events.map((event) => (
+                    <EventCard 
+                      key={event.id} 
+                      event={event} 
+                      onDelete={handleDeleteEvent}
+                      onDuplicate={handleDuplicateEvent}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Evento
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Data/Hora
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Local
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Participantes
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="relative px-6 py-3">
+                          <span className="sr-only">Ações</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {events.map((event) => (
+                        <tr key={event.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                              <div className="text-sm text-gray-500">{event.category}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{formatDate(event.date)}</div>
+                            <div className="text-sm text-gray-500">{event.time}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">{event.location}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {event.attendees}/{event.maxAttendees}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(event.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button className="text-blue-600 hover:text-blue-900">
+                                <EyeIcon className="h-4 w-4" />
+                              </button>
+                              <button className="text-green-600 hover:text-green-900">
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button className="text-gray-400 hover:text-gray-600">
+                                <EllipsisVerticalIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Paginação */}
+              {pagination.totalPages > 1 && (
+                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page === 1}
+                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page === pagination.totalPages}
+                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Próximo
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Mostrando <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> a{' '}
+                        <span className="font-medium">
+                          {Math.min(pagination.page * pagination.limit, pagination.total)}
+                        </span>{' '}
+                        de <span className="font-medium">{pagination.total}</span> resultados
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <button
+                          onClick={() => handlePageChange(pagination.page - 1)}
+                          disabled={pagination.page === 1}
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          Anterior
+                        </button>
+                        {[...Array(pagination.totalPages)].map((_, index) => {
+                          const page = index + 1;
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                page === pagination.page
+                                  ? 'z-10 bg-red-50 border-red-500 text-red-600'
+                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => handlePageChange(pagination.page + 1)}
+                          disabled={pagination.page === pagination.totalPages}
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          Próximo
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {events.length === 0 && (
+                <div className="text-center py-12">
+                  <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum evento encontrado</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Tente ajustar os filtros ou criar um novo evento.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -14,6 +14,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { services } from '../../services';
 
 const RolesManagement = () => {
   const { user } = useAuth();
@@ -23,99 +24,163 @@ const RolesManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
-  // Mock data - em produção viria de uma API
-  const [roles] = useState([
-    {
-      id: 1,
-      name: 'admin',
-      displayName: 'Administrador',
-      description: 'Acesso total ao sistema com todas as permissões',
-      userCount: 3,
-      permissions: ['view_dashboard', 'manage_users', 'manage_events', 'manage_opportunities', 'manage_content', 'view_statistics', 'manage_settings'],
-      isActive: true,
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'moderator',
-      displayName: 'Moderador',
-      description: 'Gestão de conteúdo e eventos da comunidade',
-      userCount: 8,
-      permissions: ['view_dashboard', 'manage_events', 'manage_opportunities', 'manage_content', 'view_statistics'],
-      isActive: true,
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 3,
-      name: 'premium_member',
-      displayName: 'Membro Premium',
-      description: 'Acesso a funcionalidades premium da plataforma',
-      userCount: 45,
-      permissions: ['view_dashboard', 'create_events', 'create_opportunities', 'create_content'],
-      isActive: true,
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 4,
-      name: 'member',
-      displayName: 'Membro',
-      description: 'Acesso básico à plataforma',
-      userCount: 234,
-      permissions: ['view_dashboard', 'view_events', 'view_opportunities', 'view_content'],
-      isActive: true,
-      createdAt: '2024-01-15'
-    }
-  ]);
+  // Estados para dados da API
+  const [roles, setRoles] = useState([]);
+  const [userRoles, setUserRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  });
 
-  const [userRoles] = useState([
-    {
-      id: 1,
-      user: { id: 1, name: 'João Silva', email: 'joao@example.com', avatar: null },
-      role: { name: 'admin', displayName: 'Administrador' },
-      grantedBy: { name: 'Sistema', email: 'system@awaysuk.com' },
-      grantedAt: '2024-01-15T10:00:00Z',
-      expiresAt: null,
-      isActive: true,
-      context: {}
-    },
-    {
-      id: 2,
-      user: { id: 2, name: 'Maria Santos', email: 'maria@example.com', avatar: null },
-      role: { name: 'moderator', displayName: 'Moderador' },
-      grantedBy: { name: 'João Silva', email: 'joao@example.com' },
-      grantedAt: '2024-02-01T14:30:00Z',
-      expiresAt: '2024-12-31T23:59:59Z',
-      isActive: true,
-      context: { community: 'Londres' }
-    },
-    {
-      id: 3,
-      user: { id: 3, name: 'Pedro Costa', email: 'pedro@example.com', avatar: null },
-      role: { name: 'premium_member', displayName: 'Membro Premium' },
-      grantedBy: { name: 'Sistema', email: 'system@awaysuk.com' },
-      grantedAt: '2024-03-15T09:15:00Z',
-      expiresAt: '2025-03-15T09:15:00Z',
-      isActive: true,
-      context: {}
-    }
-  ]);
+  // Carregar dados iniciais
+  useEffect(() => {
+    loadInitialData();
+  }, []);
 
-  const permissions = [
-    { id: 'view_dashboard', name: 'Ver Dashboard', category: 'Dashboard' },
-    { id: 'manage_users', name: 'Gerir Utilizadores', category: 'Utilizadores' },
-    { id: 'view_users', name: 'Ver Utilizadores', category: 'Utilizadores' },
-    { id: 'manage_events', name: 'Gerir Eventos', category: 'Eventos' },
-    { id: 'create_events', name: 'Criar Eventos', category: 'Eventos' },
-    { id: 'view_events', name: 'Ver Eventos', category: 'Eventos' },
-    { id: 'manage_opportunities', name: 'Gerir Oportunidades', category: 'Oportunidades' },
-    { id: 'create_opportunities', name: 'Criar Oportunidades', category: 'Oportunidades' },
-    { id: 'view_opportunities', name: 'Ver Oportunidades', category: 'Oportunidades' },
-    { id: 'manage_content', name: 'Gerir Conteúdo', category: 'Conteúdo' },
-    { id: 'create_content', name: 'Criar Conteúdo', category: 'Conteúdo' },
-    { id: 'view_content', name: 'Ver Conteúdo', category: 'Conteúdo' },
-    { id: 'view_statistics', name: 'Ver Estatísticas', category: 'Estatísticas' },
-    { id: 'manage_settings', name: 'Gerir Configurações', category: 'Sistema' }
-  ];
+  // Recarregar dados quando a aba ativa ou termo de pesquisa mudam
+  useEffect(() => {
+    if (activeTab === 'roles') {
+      loadRoles();
+    } else {
+      loadUserRoles();
+    }
+  }, [activeTab, searchTerm, pagination.page, pagination.limit]);
+
+  const loadInitialData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await Promise.all([
+        loadRoles(),
+        loadUserRoles(),
+        loadPermissions()
+      ]);
+    } catch (err) {
+      setError('Erro ao carregar dados iniciais');
+      console.error('Erro ao carregar dados:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRoles = async () => {
+    try {
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        search: searchTerm
+      };
+      const response = await services.accounts.getRoles(params);
+      setRoles(response.roles);
+      setPagination(prev => ({
+        ...prev,
+        total: response.total,
+        totalPages: Math.ceil(response.total / prev.limit)
+      }));
+    } catch (err) {
+      console.error('Erro ao carregar roles:', err);
+      setError('Erro ao carregar roles');
+    }
+  };
+
+  const loadUserRoles = async () => {
+    try {
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        search: searchTerm
+      };
+      const response = await services.accounts.getUserRoles(params);
+      setUserRoles(response.userRoles);
+      setPagination(prev => ({
+        ...prev,
+        total: response.total,
+        totalPages: Math.ceil(response.total / prev.limit)
+      }));
+    } catch (err) {
+      console.error('Erro ao carregar atribuições de roles:', err);
+      setError('Erro ao carregar atribuições de roles');
+    }
+  };
+
+  const loadPermissions = async () => {
+    try {
+      const response = await services.accounts.getPermissions();
+      setPermissions(response);
+    } catch (err) {
+      console.error('Erro ao carregar permissões:', err);
+    }
+  };
+
+  // Handlers para ações
+  const handleCreateRole = async (roleData) => {
+    try {
+      await services.accounts.createRole(roleData);
+      await loadRoles();
+      setShowCreateModal(false);
+    } catch (err) {
+      console.error('Erro ao criar role:', err);
+      setError('Erro ao criar role');
+    }
+  };
+
+  const handleUpdateRole = async (roleId, roleData) => {
+    try {
+      await services.accounts.updateRole(roleId, roleData);
+      await loadRoles();
+    } catch (err) {
+      console.error('Erro ao atualizar role:', err);
+      setError('Erro ao atualizar role');
+    }
+  };
+
+  const handleDeleteRole = async (roleId) => {
+    if (window.confirm('Tem certeza que deseja eliminar esta role?')) {
+      try {
+        await services.accounts.deleteRole(roleId);
+        await loadRoles();
+      } catch (err) {
+        console.error('Erro ao eliminar role:', err);
+        setError('Erro ao eliminar role');
+      }
+    }
+  };
+
+  const handleAssignRole = async (userId, roleId, options = {}) => {
+    try {
+      await services.accounts.assignRole(userId, roleId, options);
+      await loadUserRoles();
+      setShowAssignModal(false);
+    } catch (err) {
+      console.error('Erro ao atribuir role:', err);
+      setError('Erro ao atribuir role');
+    }
+  };
+
+  const handleRevokeRole = async (userRoleId) => {
+    if (window.confirm('Tem certeza que deseja revogar esta role?')) {
+      try {
+        await services.accounts.revokeRole(userRoleId);
+        await loadUserRoles();
+      } catch (err) {
+        console.error('Erro ao revogar role:', err);
+        setError('Erro ao revogar role');
+      }
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleLimitChange = (newLimit) => {
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+  };
 
   const filteredRoles = roles.filter(role =>
     role.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||

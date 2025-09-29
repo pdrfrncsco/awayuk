@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UsersIcon,
   CalendarIcon,
@@ -7,18 +7,94 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   EyeIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { dashboardService } from '../../services';
 
 const Dashboard = () => {
-  const stats = [
+  const [stats, setStats] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [dashboardStats, activities] = await Promise.all([
+        dashboardService.getDashboardStats(),
+        dashboardService.getRecentActivities()
+      ]);
+
+      // Transformar dados das estatísticas para o formato do componente
+      const transformedStats = [
+        {
+          name: 'Total de Membros',
+          value: dashboardStats.members.total.toLocaleString(),
+          change: `+${dashboardStats.members.growthRate}%`,
+          changeType: parseFloat(dashboardStats.members.growthRate) >= 0 ? 'increase' : 'decrease',
+          icon: UsersIcon,
+          color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+          details: `${dashboardStats.members.newThisMonth} novos este mês`
+        },
+        {
+          name: 'Eventos Este Mês',
+          value: dashboardStats.events.thisMonth.toString(),
+          change: `+${dashboardStats.events.growthRate}%`,
+          changeType: parseFloat(dashboardStats.events.growthRate) >= 0 ? 'increase' : 'decrease',
+          icon: CalendarIcon,
+          color: 'bg-gradient-to-br from-green-500 to-green-600',
+          details: `${dashboardStats.events.upcoming} próximos eventos`
+        },
+        {
+          name: 'Oportunidades Ativas',
+          value: dashboardStats.opportunities.active.toString(),
+          change: `+${dashboardStats.opportunities.growthRate}%`,
+          changeType: parseFloat(dashboardStats.opportunities.growthRate) >= 0 ? 'increase' : 'decrease',
+          icon: BriefcaseIcon,
+          color: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
+          details: `${dashboardStats.opportunities.totalApplications} candidaturas`
+        },
+        {
+          name: 'Visualizações',
+          value: dashboardStats.analytics.pageViews.toLocaleString(),
+          change: dashboardStats.analytics.bounceRate < 40 ? '+5%' : '-2%',
+          changeType: dashboardStats.analytics.bounceRate < 40 ? 'increase' : 'decrease',
+          icon: EyeIcon,
+          color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+          details: `${dashboardStats.analytics.bounceRate}% taxa de rejeição`
+        }
+      ];
+
+      setStats(transformedStats);
+      setRecentActivities(activities);
+    } catch (err) {
+      console.error('Erro ao carregar dados do dashboard:', err);
+      setError('Erro ao carregar dados do dashboard. Usando dados de exemplo.');
+      
+      // Usar dados padrão em caso de erro
+      setStats(getDefaultStats());
+      setRecentActivities(getDefaultActivities());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDefaultStats = () => [
     {
       name: 'Total de Membros',
       value: '2,847',
       change: '+12%',
       changeType: 'increase',
       icon: UsersIcon,
-      color: 'bg-gradient-to-br from-blue-500 to-blue-600'
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      details: '342 novos este mês'
     },
     {
       name: 'Eventos Este Mês',
@@ -26,7 +102,8 @@ const Dashboard = () => {
       change: '+8%',
       changeType: 'increase',
       icon: CalendarIcon,
-      color: 'bg-gradient-to-br from-green-500 to-green-600'
+      color: 'bg-gradient-to-br from-green-500 to-green-600',
+      details: '18 próximos eventos'
     },
     {
       name: 'Oportunidades Ativas',
@@ -34,26 +111,28 @@ const Dashboard = () => {
       change: '+23%',
       changeType: 'increase',
       icon: BriefcaseIcon,
-      color: 'bg-gradient-to-br from-yellow-500 to-yellow-600'
+      color: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
+      details: '892 candidaturas'
     },
     {
-      name: 'Posts Publicados',
-      value: '89',
-      change: '-3%',
-      changeType: 'decrease',
-      icon: DocumentTextIcon,
-      color: 'bg-gradient-to-br from-red-500 to-red-600'
+      name: 'Visualizações',
+      value: '45,200',
+      change: '+5%',
+      changeType: 'increase',
+      icon: EyeIcon,
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      details: '34.5% taxa de rejeição'
     }
   ];
 
-  const recentActivities = [
+  const getDefaultActivities = () => [
     {
       id: 1,
       type: 'member',
       title: 'Novo membro registado',
       description: 'João Silva juntou-se à comunidade',
       time: 'Há 2 horas',
-      icon: UsersIcon,
+      icon: 'UsersIcon',
       color: 'bg-blue-100 text-blue-600'
     },
     {
@@ -62,7 +141,7 @@ const Dashboard = () => {
       title: 'Evento criado',
       description: 'Networking Night em Londres',
       time: 'Há 4 horas',
-      icon: CalendarIcon,
+      icon: 'CalendarIcon',
       color: 'bg-green-100 text-green-600'
     },
     {
@@ -71,7 +150,7 @@ const Dashboard = () => {
       title: 'Nova oportunidade',
       description: 'Desenvolvedor Frontend - Tech Company',
       time: 'Há 6 horas',
-      icon: BriefcaseIcon,
+      icon: 'BriefcaseIcon',
       color: 'bg-yellow-100 text-yellow-600'
     },
     {
@@ -80,192 +159,234 @@ const Dashboard = () => {
       title: 'Post publicado',
       description: 'Dicas para entrevistas de emprego no Reino Unido',
       time: 'Há 1 dia',
-      icon: DocumentTextIcon,
+      icon: 'DocumentTextIcon',
       color: 'bg-purple-100 text-purple-600'
     }
   ];
 
-  const quickActions = [
-    {
-      name: 'Criar Evento',
-      description: 'Organizar um novo evento para a comunidade',
-      href: '/dashboard/events/create',
-      icon: CalendarIcon,
-      color: 'bg-green-500 hover:bg-green-600'
-    },
-    {
-      name: 'Adicionar Oportunidade',
-      description: 'Publicar uma nova oportunidade de emprego',
-      href: '/dashboard/opportunities/create',
-      icon: BriefcaseIcon,
-      color: 'bg-yellow-500 hover:bg-yellow-600'
-    },
-    {
-      name: 'Criar Post',
-      description: 'Partilhar conteúdo com a comunidade',
-      href: '/dashboard/content/create',
-      icon: DocumentTextIcon,
-      color: 'bg-purple-500 hover:bg-purple-600'
-    },
-    {
-      name: 'Ver Membros',
-      description: 'Gerir membros da comunidade',
-      href: '/dashboard/members',
-      icon: UsersIcon,
-      color: 'bg-blue-500 hover:bg-blue-600'
-    }
-  ];
+  const getIconComponent = (iconName) => {
+    const icons = {
+      UsersIcon,
+      CalendarIcon,
+      BriefcaseIcon,
+      DocumentTextIcon,
+      EyeIcon,
+      ChatBubbleLeftRightIcon
+    };
+    return icons[iconName] || DocumentTextIcon;
+  };
 
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-yellow-400 via-red-500 to-red-600 rounded-xl shadow-xl p-4 sm:p-6 text-white">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-          Bem-vindo ao Dashboard AWAYSUK
-        </h1>
-        <p className="text-sm sm:text-base text-yellow-100">
-          Gerencie todos os aspectos da comunidade angolana no Reino Unido
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
-        {stats.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow-xl rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="p-4 sm:p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                    <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
                 </div>
-                <div className="ml-4 sm:ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
-                      {stat.name}
-                    </dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        {stat.value}
-                      </div>
-                      <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                        stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {stat.changeType === 'increase' ? (
-                          <ArrowUpIcon className="self-center flex-shrink-0 h-4 w-4" />
-                        ) : (
-                          <ArrowDownIcon className="self-center flex-shrink-0 h-4 w-4" />
-                        )}
-                        <span className="ml-1">{stat.change}</span>
-                      </div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Quick Actions */}
-        <div className="bg-white shadow-xl rounded-xl overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Ações Rápidas</h3>
-          </div>
-          <div className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 gap-3 sm:gap-4">
-              {quickActions.map((action) => (
-                <a
-                  key={action.name}
-                  href={action.href}
-                  className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-xl flex items-center justify-center text-white shadow-lg transition-transform duration-300 hover:scale-110`}>
-                    <action.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div className="ml-3 sm:ml-4">
-                    <p className="text-sm sm:text-base font-medium text-gray-900">{action.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500">{action.description}</p>
-                  </div>
-                </a>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Recent Activities */}
-        <div className="bg-white shadow-xl rounded-xl overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Atividade Recente</h3>
-          </div>
-          <div className="p-4 sm:p-6">
-            <div className="flow-root">
-              <ul className="-mb-6 sm:-mb-8">
-                {recentActivities.map((activity, activityIdx) => (
-                  <li key={activity.id}>
-                    <div className="relative pb-6 sm:pb-8">
-                      {activityIdx !== recentActivities.length - 1 ? (
-                        <span
-                          className="absolute top-4 left-3 sm:left-4 -ml-px h-full w-0.5 bg-gray-200"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <div className="relative flex space-x-2 sm:space-x-3">
-                        <div>
-                          <span className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full flex items-center justify-center ring-4 sm:ring-8 ring-white ${activity.color} shadow-lg`}>
-                            <activity.icon className="h-3 w-3 sm:h-4 sm:w-4" />
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1 pt-0.5 sm:pt-1.5 flex flex-col sm:flex-row sm:justify-between sm:space-x-4">
-                          <div className="flex-1">
-                            <p className="text-xs sm:text-sm font-medium text-gray-900">{activity.title}</p>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{activity.description}</p>
-                          </div>
-                          <div className="text-left sm:text-right text-xs sm:text-sm whitespace-nowrap text-gray-500 mt-1 sm:mt-0">
-                            <time>{activity.time}</time>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
+    );
+  }
 
-      {/* Additional Stats */}
-      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Estatísticas Detalhadas</h3>
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">Visão geral da comunidade AWAYSUK</p>
+          
+          {error && (
+            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <div className="flex">
+                <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-                <EyeIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
+                      <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
+                      <div className="flex items-center">
+                        {stat.changeType === 'increase' ? (
+                          <ArrowUpIcon className="h-4 w-4 text-green-500 mr-1" />
+                        ) : (
+                          <ArrowDownIcon className="h-4 w-4 text-red-500 mr-1" />
+                        )}
+                        <span className={`text-sm font-medium ${
+                          stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {stat.change}
+                        </span>
+                      </div>
+                      {stat.details && (
+                        <p className="text-xs text-gray-500 mt-1">{stat.details}</p>
+                      )}
+                    </div>
+                    <div className={`p-3 rounded-lg ${stat.color}`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h4 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900">Visualizações</h4>
-              <p className="mt-2 text-2xl sm:text-3xl font-bold text-blue-600">45.2K</p>
-              <p className="mt-1 text-xs sm:text-sm text-gray-500">Este mês</p>
+            );
+          })}
+        </div>
+
+        {/* Quick Actions and Recent Activities */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 mx-auto bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            <div className="p-6">
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  {
+                    name: 'Criar Evento',
+                    description: 'Organizar um novo evento para a comunidade',
+                    href: '/dashboard/events/create',
+                    icon: CalendarIcon,
+                    color: 'bg-green-500 hover:bg-green-600'
+                  },
+                  {
+                    name: 'Adicionar Oportunidade',
+                    description: 'Publicar uma nova oportunidade de emprego',
+                    href: '/dashboard/opportunities/create',
+                    icon: BriefcaseIcon,
+                    color: 'bg-yellow-500 hover:bg-yellow-600'
+                  },
+                  {
+                    name: 'Criar Post',
+                    description: 'Partilhar conteúdo com a comunidade',
+                    href: '/dashboard/content/create',
+                    icon: DocumentTextIcon,
+                    color: 'bg-purple-500 hover:bg-purple-600'
+                  },
+                  {
+                    name: 'Ver Membros',
+                    description: 'Gerir membros da comunidade',
+                    href: '/dashboard/members',
+                    icon: UsersIcon,
+                    color: 'bg-blue-500 hover:bg-blue-600'
+                  }
+                ].map((action) => (
+                  <a
+                    key={action.name}
+                    href={action.href}
+                    className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center text-white shadow-sm`}>
+                      <action.icon className="w-5 h-5" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-900">{action.name}</p>
+                      <p className="text-xs text-gray-500">{action.description}</p>
+                    </div>
+                  </a>
+                ))}
               </div>
-              <h4 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900">Interações</h4>
-              <p className="mt-2 text-2xl sm:text-3xl font-bold text-green-600">12.8K</p>
-              <p className="mt-1 text-xs sm:text-sm text-gray-500">Este mês</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 mx-auto bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
-                <UsersIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+          </div>
+
+          {/* Recent Activities */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Atividade Recente</h3>
+            </div>
+            <div className="p-6">
+              <div className="flow-root">
+                <ul className="-mb-8">
+                  {recentActivities.map((activity, activityIdx) => {
+                    const IconComponent = getIconComponent(activity.icon);
+                    return (
+                      <li key={activity.id}>
+                        <div className="relative pb-8">
+                          {activityIdx !== recentActivities.length - 1 ? (
+                            <span
+                              className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          <div className="relative flex space-x-3">
+                            <div>
+                              <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${activity.color}`}>
+                                <IconComponent className="h-4 w-4" />
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                                <p className="text-sm text-gray-500">{activity.description}</p>
+                              </div>
+                              <div className="text-right text-sm whitespace-nowrap text-gray-500">
+                                <time>{activity.time}</time>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-              <h4 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900">Novos Membros</h4>
-              <p className="mt-2 text-2xl sm:text-3xl font-bold text-yellow-600">342</p>
-              <p className="mt-1 text-xs sm:text-sm text-gray-500">Este mês</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Stats */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Estatísticas Detalhadas</h3>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-500 rounded-lg">
+                  <EyeIcon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="mt-4 text-lg font-semibold text-gray-900">Visualizações</h4>
+                <p className="mt-2 text-3xl font-bold text-blue-600">45.2K</p>
+                <p className="mt-1 text-sm text-gray-500">Este mês</p>
+              </div>
+              <div className="text-center p-6 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-500 rounded-lg">
+                  <ChatBubbleLeftRightIcon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="mt-4 text-lg font-semibold text-gray-900">Interações</h4>
+                <p className="mt-2 text-3xl font-bold text-green-600">12.8K</p>
+                <p className="mt-1 text-sm text-gray-500">Este mês</p>
+              </div>
+              <div className="text-center p-6 bg-yellow-50 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-500 rounded-lg">
+                  <UsersIcon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="mt-4 text-lg font-semibold text-gray-900">Novos Membros</h4>
+                <p className="mt-2 text-3xl font-bold text-yellow-600">342</p>
+                <p className="mt-1 text-sm text-gray-500">Este mês</p>
+              </div>
             </div>
           </div>
         </div>

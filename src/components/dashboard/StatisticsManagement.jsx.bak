@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -14,12 +14,73 @@ import {
   ClockIcon,
   MapPinIcon,
   AcademicCapIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  ExclamationTriangleIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
+import { services } from '../../services';
 
 const StatisticsManagement = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [selectedMetric, setSelectedMetric] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Estados para dados das APIs
+  const [overviewStats, setOverviewStats] = useState({});
+  const [memberStats, setMemberStats] = useState({});
+  const [eventStats, setEventStats] = useState({});
+  const [opportunityStats, setOpportunityStats] = useState({});
+  const [contentStats, setContentStats] = useState({});
+
+  // Carregar dados quando o componente monta ou período muda
+  useEffect(() => {
+    loadAllStats();
+  }, [selectedPeriod]);
+
+  const loadAllStats = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const [overview, members, events, opportunities, content] = await Promise.all([
+        services.analytics.getOverviewStats(selectedPeriod),
+        services.analytics.getMembersStats(selectedPeriod),
+        services.analytics.getEventsStats(selectedPeriod),
+        services.analytics.getOpportunitiesStats(selectedPeriod),
+        services.analytics.getContentStats(selectedPeriod)
+      ]);
+
+      setOverviewStats(overview);
+      setMemberStats(members);
+      setEventStats(events);
+      setOpportunityStats(opportunities);
+      setContentStats(content);
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err);
+      setError('Erro ao carregar estatísticas. Usando dados de exemplo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportData = async (type) => {
+    try {
+      const blob = await services.analytics.exportData(type, 'csv', selectedPeriod);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${type}_statistics_${selectedPeriod}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Erro ao exportar dados:', err);
+      setError('Erro ao exportar dados.');
+    }
+  };
 
   // Mock data - em produção viria de uma API
   const overviewStats = {
@@ -211,26 +272,26 @@ const StatisticsManagement = () => {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Membros"
-          value={overviewStats.totalMembers.current}
-          change={overviewStats.totalMembers.change}
+          value={overviewStats.totalMembers?.current || 0}
+          change={overviewStats.totalMembers?.change || 0}
           icon={UsersIcon}
         />
         <StatCard
           title="Membros Ativos"
-          value={overviewStats.activeMembers.current}
-          change={overviewStats.activeMembers.change}
+          value={overviewStats.activeMembers?.current || 0}
+          change={overviewStats.activeMembers?.change || 0}
           icon={UsersIcon}
         />
         <StatCard
           title="Total de Eventos"
-          value={overviewStats.totalEvents.current}
-          change={overviewStats.totalEvents.change}
+          value={overviewStats.totalEvents?.current || 0}
+          change={overviewStats.totalEvents?.change || 0}
           icon={CalendarDaysIcon}
         />
         <StatCard
           title="Oportunidades"
-          value={overviewStats.totalOpportunities.current}
-          change={overviewStats.totalOpportunities.change}
+          value={overviewStats.totalOpportunities?.current || 0}
+          change={overviewStats.totalOpportunities?.change || 0}
           icon={BriefcaseIcon}
         />
       </div>
@@ -238,26 +299,26 @@ const StatisticsManagement = () => {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Conteúdos"
-          value={overviewStats.totalContent.current}
-          change={overviewStats.totalContent.change}
+          value={overviewStats.totalContent?.current || 0}
+          change={overviewStats.totalContent?.change || 0}
           icon={DocumentTextIcon}
         />
         <StatCard
           title="Visualizações"
-          value={overviewStats.totalViews.current}
-          change={overviewStats.totalViews.change}
+          value={overviewStats.totalViews?.current || 0}
+          change={overviewStats.totalViews?.change || 0}
           icon={EyeIcon}
         />
         <StatCard
           title="Engajamento"
-          value={overviewStats.totalEngagement.current}
-          change={overviewStats.totalEngagement.change}
+          value={overviewStats.totalEngagement?.current || 0}
+          change={overviewStats.totalEngagement?.change || 0}
           icon={HeartIcon}
         />
         <StatCard
           title="Taxa de Conversão"
-          value={overviewStats.conversionRate.current}
-          change={overviewStats.conversionRate.change}
+          value={overviewStats.conversionRate?.current || 0}
+          change={overviewStats.conversionRate?.change || 0}
           icon={ArrowUpIcon}
           suffix="%"
         />
@@ -271,12 +332,12 @@ const StatisticsManagement = () => {
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Localização</h3>
           <div className="space-y-3">
-            {memberStats.byLocation.map((item, index) => (
+            {(memberStats.byLocation || []).map((item, index) => (
               <ProgressBar
                 key={index}
                 label={item.location}
                 value={item.count}
-                total={1247}
+                total={overviewStats.totalMembers?.current || 1247}
                 color={`bg-red-${500 - index * 100}`}
               />
             ))}
@@ -286,12 +347,12 @@ const StatisticsManagement = () => {
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Idade</h3>
           <div className="space-y-3">
-            {memberStats.byAge.map((item, index) => (
+            {(memberStats.byAge || []).map((item, index) => (
               <ProgressBar
                 key={index}
                 label={item.range}
                 value={item.count}
-                total={1247}
+                total={overviewStats.totalMembers?.current || 1247}
                 color={`bg-blue-${500 - index * 100}`}
               />
             ))}
@@ -302,12 +363,12 @@ const StatisticsManagement = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Distribuição por Profissão</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {memberStats.byProfession.map((item, index) => (
+          {(memberStats.byProfession || []).map((item, index) => (
             <ProgressBar
               key={index}
               label={item.profession}
               value={item.count}
-              total={1247}
+              total={overviewStats.totalMembers?.current || 1247}
               color={`bg-green-${500 - index * 50}`}
             />
           ))}
@@ -321,20 +382,20 @@ const StatisticsManagement = () => {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <StatCard
           title="Taxa de Comparência"
-          value={eventStats.attendanceRate.current}
-          change={eventStats.attendanceRate.change}
+          value={eventStats.attendanceRate?.current || 0}
+          change={eventStats.attendanceRate?.change || 0}
           icon={UsersIcon}
           suffix="%"
         />
         <StatCard
           title="Média de Participantes"
-          value={eventStats.averageAttendance.current}
-          change={eventStats.averageAttendance.change}
+          value={eventStats.averageAttendance?.current || 0}
+          change={eventStats.averageAttendance?.change || 0}
           icon={UsersIcon}
         />
         <StatCard
           title="Total de Eventos"
-          value={45}
+          value={overviewStats.totalEvents?.current || 0}
           icon={CalendarDaysIcon}
         />
       </div>
@@ -343,7 +404,7 @@ const StatisticsManagement = () => {
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Eventos por Categoria</h3>
           <div className="space-y-4">
-            {eventStats.byCategory.map((item, index) => (
+            {(eventStats.byCategory || []).map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-900">{item.category}</div>
@@ -361,12 +422,12 @@ const StatisticsManagement = () => {
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Horários Populares</h3>
           <div className="space-y-3">
-            {eventStats.popularTimes.map((item, index) => (
+            {(eventStats.popularTimes || []).map((item, index) => (
               <ProgressBar
                 key={index}
                 label={item.time}
                 value={item.events}
-                total={45}
+                total={overviewStats.totalEvents?.current || 45}
                 color={`bg-purple-${500 - index * 100}`}
               />
             ))}
@@ -399,7 +460,7 @@ const StatisticsManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {contentStats.byType.map((item, index) => (
+              {(contentStats.byType || []).map((item, index) => (
                 <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.type}
@@ -423,7 +484,7 @@ const StatisticsManagement = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Conteúdos Mais Populares</h3>
         <div className="space-y-4">
-          {contentStats.topContent.map((item, index) => (
+          {(contentStats.topContent || []).map((item, index) => (
             <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900 line-clamp-1">
@@ -455,6 +516,15 @@ const StatisticsManagement = () => {
   );
 
   const renderMetricContent = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-500">Carregando estatísticas...</p>
+        </div>
+      );
+    }
+
     switch (selectedMetric) {
       case 'members':
         return renderMembers();
@@ -469,6 +539,24 @@ const StatisticsManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-sm text-red-600 hover:text-red-500"
+              >
+                Dispensar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
@@ -477,7 +565,15 @@ const StatisticsManagement = () => {
             Acompanhe métricas detalhadas e insights sobre a comunidade
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button
+            type="button"
+            onClick={() => handleExportData(selectedMetric)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            <ArrowDownTrayIcon className="-ml-1 mr-2 h-5 w-5" />
+            Exportar
+          </button>
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}

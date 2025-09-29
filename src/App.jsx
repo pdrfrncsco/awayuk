@@ -39,7 +39,7 @@ import {
   EventsManagement,
   OpportunitiesManagement,
   ContentManagement,
-  StatisticsManagement,
+  // StatisticsManagement,
   RolesManagement
 } from './components/dashboard';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
@@ -165,7 +165,7 @@ function App() {
               } />
               <Route path="estatisticas" element={
                 <RouteGuard permission={PERMISSIONS.VIEW_STATISTICS}>
-                  <StatisticsManagement />
+                  <div>Estatísticas - Em manutenção</div>
                 </RouteGuard>
               } />
               <Route path="roles" element={
