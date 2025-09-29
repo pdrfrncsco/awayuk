@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,75 +26,78 @@ const MemberProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Verificar se é o próprio perfil do usuário
-  const isOwnProfile = user && user.id === memberId;
+  // Verificar se é o próprio perfil do usuário (memoizado para evitar re-renders)
+  const isOwnProfile = useMemo(() => {
+    return user && user.id === memberId;
+  }, [user?.id, memberId]);
 
-  // Carregar dados do perfil
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Função para carregar dados do perfil (memoizada para evitar re-criações)
+  const loadProfileData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Verificar se memberId é válido
-        if (!memberId || isNaN(memberId)) {
-          console.error('ID do membro inválido:', memberId);
-          throw new Error('ID do membro inválido. Por favor, verifique o link.');
-        }
-
-        // Carregar perfil detalhado
-        console.log('Carregando perfil para memberId:', memberId);
-        const profileResponse = await profileService.getUserProfile(memberId);
-        console.log('Resposta da API getUserProfile:', profileResponse);
-        
-        // Verificar se a resposta contém dados válidos
-        if (!profileResponse || !profileResponse.id) {
-          console.error('Resposta inválida da API:', profileResponse);
-          throw new Error(`Perfil não encontrado para o usuário ID ${memberId}. O usuário pode não existir.`);
-        }
-        
-        setProfileData(profileResponse);
-
-        // Carregar testemunhos
-        const testimonialsResponse = await profileService.getUserTestimonials(memberId);
-        setTestimonials(testimonialsResponse || []);
-
-        // Se for o próprio perfil, carregar serviços e portfólio editáveis
-        if (isOwnProfile) {
-          const [servicesResponse, portfolioResponse] = await Promise.all([
-            profileService.getUserServices(),
-            profileService.getUserPortfolio()
-          ]);
-          setServices(servicesResponse || []);
-          setPortfolio(portfolioResponse || []);
-        } else {
-          // Para outros perfis, usar os dados do perfil detalhado
-          setServices(profileResponse?.services || []);
-          setPortfolio(profileResponse?.portfolio_items || []);
-        }
-
-      } catch (err) {
-        console.error('Erro ao carregar perfil:', err);
-        
-        // Tratamento específico para diferentes tipos de erro
-        if (err.message && err.message.includes('404')) {
-          setError(`Perfil não encontrado. O usuário com ID ${memberId} não existe.`);
-        } else if (err.message && err.message.includes('Network Error')) {
-          setError('Erro de conexão. Verifique sua internet e tente novamente.');
-        } else if (err.message && err.message.includes('ID do membro inválido')) {
-          setError(err.message);
-        } else {
-          setError('Erro ao carregar dados do perfil. Tente novamente.');
-        }
-      } finally {
-        setLoading(false);
+      // Verificar se memberId é válido
+      if (!memberId || isNaN(memberId)) {
+        console.error('ID do membro inválido:', memberId);
+        throw new Error('ID do membro inválido. Por favor, verifique o link.');
       }
-    };
 
+      // Carregar perfil detalhado
+      console.log('Carregando perfil para memberId:', memberId);
+      const profileResponse = await profileService.getUserProfile(memberId);
+      console.log('Resposta da API getUserProfile:', profileResponse);
+      
+      // Verificar se a resposta contém dados válidos
+      if (!profileResponse || !profileResponse.id) {
+        console.error('Resposta inválida da API:', profileResponse);
+        throw new Error(`Perfil não encontrado para o usuário ID ${memberId}. O usuário pode não existir.`);
+      }
+      
+      setProfileData(profileResponse);
+
+      // Carregar testemunhos
+      const testimonialsResponse = await profileService.getUserTestimonials(memberId);
+      setTestimonials(testimonialsResponse || []);
+
+      // Se for o próprio perfil, carregar serviços e portfólio editáveis
+      if (isOwnProfile) {
+        const [servicesResponse, portfolioResponse] = await Promise.all([
+          profileService.getUserServices(),
+          profileService.getUserPortfolio()
+        ]);
+        setServices(servicesResponse || []);
+        setPortfolio(portfolioResponse || []);
+      } else {
+        // Para outros perfis, usar os dados do perfil detalhado
+        setServices(profileResponse?.services || []);
+        setPortfolio(profileResponse?.portfolio_items || []);
+      }
+
+    } catch (err) {
+      console.error('Erro ao carregar perfil:', err);
+      
+      // Tratamento específico para diferentes tipos de erro
+      if (err.message && err.message.includes('404')) {
+        setError(`Perfil não encontrado. O usuário com ID ${memberId} não existe.`);
+      } else if (err.message && err.message.includes('Network Error')) {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else if (err.message && err.message.includes('ID do membro inválido')) {
+        setError(err.message);
+      } else {
+        setError('Erro ao carregar dados do perfil. Tente novamente.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId, isOwnProfile]);
+
+  // useEffect para chamar a função de carregamento
+  useEffect(() => {
     if (memberId) {
       loadProfileData();
     }
-  }, [memberId, isOwnProfile]);
+  }, [memberId, loadProfileData]);
 
   // Dados do membro baseados no backend ou fallback para mock
   const member = profileData ? {
@@ -226,7 +229,7 @@ const MemberProfile = () => {
       "Curso de AutoCAD e SketchUp Avançado"
     ],
     languages: ["Português", "Inglês", "Francês"]
-  };
+  }
 
   const renderStars = (rating) => {
     const stars = [];
