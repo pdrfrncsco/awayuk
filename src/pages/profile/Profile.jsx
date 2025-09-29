@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileImageUpload from '../../components/profile/ProfileImageUpload';
@@ -14,6 +14,16 @@ const MemberProfile = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { ToastContainer } = useToast();
+  const navigate = useNavigate();
+  
+  // Se não há ID na URL e o usuário está autenticado, redirecionar para o próprio perfil
+  useEffect(() => {
+    if (!id && user?.id) {
+      navigate(`/perfil/${user.id}`, { replace: true });
+      return;
+    }
+  }, [id, user?.id, navigate]);
+  
   const memberId = id ? parseInt(id) : null;
   const [activeTab, setActiveTab] = useState('sobre');
   const [showContactModal, setShowContactModal] = useState(false);
@@ -499,6 +509,18 @@ const MemberProfile = () => {
       </div>
     </div>
   );
+
+  // Se não há ID e o usuário está autenticado, não renderizar (redirecionando)
+  if (!id && user?.id) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecionando para o seu perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (loading) {
