@@ -7,7 +7,7 @@ import ProfileImageUpload from '../../components/profile/ProfileImageUpload';
 const MemberProfile = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const memberId = parseInt(id) || 1;
+  const memberId = id ? parseInt(id) : null;
   const [activeTab, setActiveTab] = useState('sobre');
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactForm, setContactForm] = useState({
@@ -36,13 +36,28 @@ const MemberProfile = () => {
         setLoading(true);
         setError(null);
 
+        // Verificar se memberId é válido
+        if (!memberId || isNaN(memberId)) {
+          console.error('ID do membro inválido:', memberId);
+          throw new Error('ID do membro inválido. Por favor, verifique o link.');
+        }
+
         // Carregar perfil detalhado
+        console.log('Carregando perfil para memberId:', memberId);
         const profileResponse = await profileService.getUserProfile(memberId);
-        setProfileData(profileResponse.data);
+        console.log('Resposta da API getUserProfile:', profileResponse);
+        
+        // Verificar se a resposta contém dados válidos
+        if (!profileResponse || !profileResponse.id) {
+          console.error('Resposta inválida da API:', profileResponse);
+          throw new Error(`Perfil não encontrado para o usuário ID ${memberId}. O usuário pode não existir.`);
+        }
+        
+        setProfileData(profileResponse);
 
         // Carregar testemunhos
         const testimonialsResponse = await profileService.getUserTestimonials(memberId);
-        setTestimonials(testimonialsResponse.data);
+        setTestimonials(testimonialsResponse || []);
 
         // Se for o próprio perfil, carregar serviços e portfólio editáveis
         if (isOwnProfile) {
@@ -50,17 +65,27 @@ const MemberProfile = () => {
             profileService.getUserServices(),
             profileService.getUserPortfolio()
           ]);
-          setServices(servicesResponse.data);
-          setPortfolio(portfolioResponse.data);
+          setServices(servicesResponse || []);
+          setPortfolio(portfolioResponse || []);
         } else {
           // Para outros perfis, usar os dados do perfil detalhado
-          setServices(profileResponse.data.services || []);
-          setPortfolio(profileResponse.data.portfolio_items || []);
+          setServices(profileResponse?.services || []);
+          setPortfolio(profileResponse?.portfolio_items || []);
         }
 
       } catch (err) {
         console.error('Erro ao carregar perfil:', err);
-        setError('Erro ao carregar dados do perfil. Tente novamente.');
+        
+        // Tratamento específico para diferentes tipos de erro
+        if (err.message && err.message.includes('404')) {
+          setError(`Perfil não encontrado. O usuário com ID ${memberId} não existe.`);
+        } else if (err.message && err.message.includes('Network Error')) {
+          setError('Erro de conexão. Verifique sua internet e tente novamente.');
+        } else if (err.message && err.message.includes('ID do membro inválido')) {
+          setError(err.message);
+        } else {
+          setError('Erro ao carregar dados do perfil. Tente novamente.');
+        }
       } finally {
         setLoading(false);
       }
@@ -74,7 +99,7 @@ const MemberProfile = () => {
   // Dados do membro baseados no backend ou fallback para mock
   const member = profileData ? {
     id: profileData.id,
-    name: profileData.full_name || `${profileData.first_name} ${profileData.last_name}`,
+    name: profileData.full_name || `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'Nome não informado',
     profession: profileData.profession || 'Profissional',
     location: profileData.location || 'Localização não informada',
     category: profileData.category || 'Geral',

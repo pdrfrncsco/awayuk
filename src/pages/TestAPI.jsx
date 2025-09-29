@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authService } from '../services';
+import { authService, profileService } from '../services';
 
 const TestAPI = () => {
   const [results, setResults] = useState({});
@@ -41,6 +41,18 @@ const TestAPI = () => {
           isAuthenticated: authService.isAuthenticated()
         });
       }
+    },
+    {
+      name: 'Profile Load Test (ID: 2)',
+      test: () => profileService.getUserProfile(2)
+    },
+    {
+      name: 'Profile Services Test (ID: 2)',
+      test: () => profileService.getUserServices(2)
+    },
+    {
+      name: 'Profile Portfolio Test (ID: 2)',
+      test: () => profileService.getUserPortfolio(2)
     }
   ];
 
