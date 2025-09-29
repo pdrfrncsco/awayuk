@@ -7,6 +7,7 @@ import CoverImageUpload from '../../components/profile/CoverImageUpload';
 import AboutTabEditor from '../../components/profile/AboutTabEditor';
 import ServicesManager from '../../components/profile/ServicesManager';
 import PortfolioManager from '../../components/profile/PortfolioManager';
+import ProfileEditor from '../../components/profile/ProfileEditor';
 import { useToast } from '../../components/common/Toast';
 
 const MemberProfile = () => {
@@ -34,6 +35,7 @@ const MemberProfile = () => {
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isEditingServices, setIsEditingServices] = useState(false);
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Verificar se é o próprio perfil do usuário (memoizado para evitar re-renders)
   const isOwnProfile = useMemo(() => {
@@ -184,6 +186,37 @@ const MemberProfile = () => {
   // Função para cancelar a edição do portfólio
   const handleCancelPortfolio = () => {
     setIsEditingPortfolio(false);
+  };
+
+  // Função para salvar as informações básicas do perfil
+  const handleSaveProfile = async (profileFormData) => {
+    try {
+      // Aqui você faria a chamada para a API para salvar os dados
+      // const updatedProfile = await profileService.updateBasicProfile(memberId, profileFormData);
+      
+      // Por enquanto, vamos atualizar o estado local
+      setProfileData(prev => ({
+        ...prev,
+        first_name: profileFormData.first_name,
+        last_name: profileFormData.last_name,
+        profession: profileFormData.profession,
+        location: profileFormData.location,
+        category: profileFormData.category
+      }));
+      
+      setIsEditingProfile(false);
+      
+      // Mostrar feedback de sucesso
+      console.log('Perfil salvo com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      throw error;
+    }
+  };
+
+  // Função para cancelar a edição do perfil
+  const handleCancelProfile = () => {
+    setIsEditingProfile(false);
   };
 
   // Dados do membro baseados no backend ou fallback para mock
@@ -583,58 +616,82 @@ const MemberProfile = () => {
             </div>
             
             <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
-                    {member.name}
-                    {member.verified && (
-                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        Verificado
+              {isEditingProfile && isOwnProfile ? (
+                <ProfileEditor
+                  initialData={{
+                    first_name: profileData?.first_name || '',
+                    last_name: profileData?.last_name || '',
+                    profession: profileData?.profession || '',
+                    location: profileData?.location || '',
+                    category: profileData?.category || ''
+                  }}
+                  onSave={handleSaveProfile}
+                  onCancel={handleCancelProfile}
+                />
+              ) : (
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
+                      {member.name}
+                      {member.verified && (
+                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          Verificado
+                        </span>
+                      )}
+                    </h1>
+                    <p className="text-lg text-gray-600 mt-1">{member.profession}</p>
+                    <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+                      <span>
+                        <i className="fas fa-map-marker-alt mr-1"></i>
+                        {member.location}
                       </span>
-                    )}
-                  </h1>
-                  <p className="text-lg text-gray-600 mt-1">{member.profession}</p>
-                  <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
-                    <span>
-                      <i className="fas fa-map-marker-alt mr-1"></i>
-                      {member.location}
-                    </span>
-                    <span>
-                      <i className="fas fa-calendar-alt mr-1"></i>
-                      Membro desde {member.memberSince}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col md:items-end mt-4 md:mt-0">
-                  <div className="flex items-center mb-2">
-                    <div className="flex mr-2">
-                      {renderStars(member.rating)}
+                      <span>
+                        <i className="fas fa-calendar-alt mr-1"></i>
+                        Membro desde {member.memberSince}
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-600">({member.reviewCount} avaliações)</span>
                   </div>
-                  <p className="text-sm text-gray-500">
-                    <i className="fas fa-clock mr-1"></i>
-                    Responde {member.responseTime}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    <i className="fas fa-check-circle mr-1"></i>
-                    {member.completedProjects} projetos concluídos
-                  </p>
+                
+                  <div className="flex flex-col md:items-end mt-4 md:mt-0">
+                    <div className="flex items-center mb-2">
+                      <div className="flex mr-2">
+                        {renderStars(member.rating)}
+                      </div>
+                      <span className="text-sm text-gray-600">({member.reviewCount} avaliações)</span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      <i className="fas fa-clock mr-1"></i>
+                      Responde {member.responseTime}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <i className="fas fa-check-circle mr-1"></i>
+                      {member.completedProjects} projetos concluídos
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
           
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
-            <button
-              onClick={() => setShowContactModal(true)}
-              className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
-            >
-              <i className="fas fa-envelope mr-2"></i>
-              Contactar
-            </button>
+            {isOwnProfile ? (
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+                <i className="fas fa-edit mr-2"></i>
+                Editar Perfil
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowContactModal(true)}
+                className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+              >
+                <i className="fas fa-envelope mr-2"></i>
+                Contactar
+              </button>
+            )}
             <a
               href={`tel:${member.phone}`}
               className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
