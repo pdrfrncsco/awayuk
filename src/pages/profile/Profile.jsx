@@ -201,10 +201,14 @@ const MemberProfile = () => {
   // Função para salvar as informações básicas do perfil
   const handleSaveProfile = async (profileFormData) => {
     try {
-      // Aqui você faria a chamada para a API para salvar os dados
-      // const updatedProfile = await profileService.updateBasicProfile(memberId, profileFormData);
+      console.log('Dados a serem salvos:', profileFormData);
       
-      // Por enquanto, vamos atualizar o estado local
+      // Fazer a chamada para a API para salvar os dados
+      const updatedProfile = await profileService.updateProfile(profileFormData);
+      
+      console.log('Resposta da API:', updatedProfile);
+      
+      // Atualizar o estado local com os dados retornados da API
       setProfileData(prev => ({
         ...prev,
         first_name: profileFormData.first_name,
