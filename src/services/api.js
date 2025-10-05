@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Base URL configurável via variável de ambiente Vite
+const API_BASE_URL = (import.meta?.env?.VITE_API_URL) || 'http://127.0.0.1:8000/api';
+
 /**
  * Serviço base de API para comunicação com o backend
  * Fornece configurações comuns e métodos utilitários usando Axios
@@ -57,7 +60,7 @@ class ApiClient {
   constructor(config = {}) {
     // Configuração base do Axios
     this.axiosInstance = axios.create({
-      baseURL: 'http://127.0.0.1:8000/api',
+      baseURL: API_BASE_URL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
