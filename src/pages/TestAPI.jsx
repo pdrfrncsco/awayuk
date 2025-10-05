@@ -32,6 +32,17 @@ const TestAPI = () => {
       test: () => authService.login('testuser', 'testpass123')
     },
     {
+      name: 'Refresh Token',
+      test: () => authService.refreshAccessToken()
+    },
+    {
+      name: 'Logout',
+      test: async () => {
+        await authService.logout();
+        return { message: 'Logout efetuado. Tokens limpos.' };
+      }
+    },
+    {
       name: 'Profile Test',
       test: () => authService.getProfile()
     },
