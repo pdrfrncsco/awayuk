@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { authService, profileService } from '../services';
 
+// Mostrar a URL real da API lida do .env
+const API_URL = (import.meta?.env?.VITE_API_URL) || 'http://127.0.0.1:8000/api';
+
 const TestAPI = () => {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState({});
@@ -55,6 +58,12 @@ const TestAPI = () => {
       test: () => profileService.getUserPortfolio(2)
     }
   ];
+
+  // Adicionar teste para perfil do usuário autenticado
+  tests.unshift({
+    name: 'Authenticated Profile Test',
+    test: () => profileService.getUserProfile()
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -113,7 +122,7 @@ const TestAPI = () => {
               Informações da API
             </h3>
             <div className="text-blue-700 space-y-1">
-              <p><strong>Backend URL:</strong> http://127.0.0.1:8000/api</p>
+              <p><strong>Backend URL:</strong> {API_URL}</p>
               <p><strong>Frontend URL:</strong> http://localhost:5174</p>
               <p><strong>Status:</strong> Ambos os servidores estão rodando</p>
             </div>

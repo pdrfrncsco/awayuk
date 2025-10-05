@@ -10,13 +10,19 @@ class ProfileService {
   }
 
   /**
-   * Obter perfil detalhado de um usuário
-   * @param {number} userId - ID do usuário
-   * @returns {Promise<Object>} Dados detalhados do perfil
+   * Obter perfil de usuário
+   * - Se userId for fornecido, retorna perfil detalhado desse usuário
+   * - Caso contrário, retorna o perfil do usuário autenticado
+   * @param {number} [userId] - ID do usuário (opcional)
+   * @returns {Promise<Object>} Dados do perfil
    */
-  async getUserProfile(userId) {
+  async getUserProfile(userId = null) {
     try {
-      return await this.apiClient.get(`/accounts/profile/${userId}/`);
+      if (userId) {
+        return await this.apiClient.get(`/accounts/profile/${userId}/`);
+      }
+      // Perfil do usuário autenticado
+      return await this.apiClient.get('/auth/profile/');
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao buscar perfil do usuário',
