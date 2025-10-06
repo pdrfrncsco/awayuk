@@ -66,7 +66,10 @@ const MemberProfile = () => {
 
       // Carregar perfil detalhado
       console.log('Carregando perfil para memberId:', memberId);
-      const profileResponse = await profileService.getUserProfile(memberId);
+      // Se for o próprio perfil, usar o endpoint autenticado (/auth/profile/)
+      const profileResponse = isOwnProfile
+        ? await profileService.getUserProfile()
+        : await profileService.getUserProfile(memberId);
       console.log('Resposta da API getUserProfile:', profileResponse);
       
       // Verificar se a resposta contém dados válidos

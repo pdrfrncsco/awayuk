@@ -130,13 +130,18 @@ export const PermissionsProvider = ({ children }) => {
   
   const userRole = useMemo(() => {
     if (!user) return ROLES.GUEST;
-    // Temporariamente, todos os utilizadores autenticados são admins para desenvolvimento
-    return user ? ROLES.ADMIN : ROLES.GUEST;
+    if (user.role) return user.role;
+    if (user.is_admin) return ROLES.ADMIN;
+    if (Array.isArray(user.roles) && user.roles.length > 0) return user.roles[0];
+    return ROLES.MEMBER;
   }, [user]);
   
   const userPermissions = useMemo(() => {
+    if (Array.isArray(user?.permissions) && user.permissions.length > 0) {
+      return user.permissions;
+    }
     return ROLE_PERMISSIONS[userRole] || [];
-  }, [userRole]);
+  }, [user, userRole]);
   
   const hasPermission = (permission) => {
     return userPermissions.includes(permission);
@@ -151,8 +156,7 @@ export const PermissionsProvider = ({ children }) => {
   };
   
   const canAccessDashboard = () => {
-    // Temporariamente permite acesso a todos os utilizadores autenticados
-    return !!user;
+    return hasPermission(PERMISSIONS.VIEW_DASHBOARD);
   };
   
   const canManageMembers = () => {

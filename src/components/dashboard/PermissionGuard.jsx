@@ -62,11 +62,8 @@ export const RouteGuard = ({
 }) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions();
   
-  // Temporariamente permite acesso a todas as rotas para desenvolvimento
-  let hasAccess = true;
+  let hasAccess = false;
   
-  // Código original comentado para futura implementação
-  /*
   if (permission) {
     hasAccess = hasPermission(permission);
   } else if (permissions) {
@@ -76,7 +73,6 @@ export const RouteGuard = ({
   } else {
     hasAccess = true;
   }
-  */
   
   if (hasAccess) {
     return children;

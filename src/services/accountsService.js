@@ -63,6 +63,19 @@ class AccountsService {
     }
   }
 
+  // Current user permissions and roles
+  async getCurrentUserPermissions() {
+    try {
+      // This endpoint returns the authenticated user's permissions/roles
+      const data = await apiClient.get('/accounts/permissions');
+      // Expected shape: { permissions: [], roles: [], is_admin, is_business_user, is_premium_user }
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar permissões do utilizador:', error);
+      throw error;
+    }
+  }
+
   async getRolePermissions(roleId) {
     try {
       const response = await apiClient.get(`/accounts/roles/${roleId}/permissions`);

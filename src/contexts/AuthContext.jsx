@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, TokenManager } from '../services';
+import { authService, TokenManager, accountsService } from '../services';
 
 const AuthContext = createContext();
 
@@ -26,7 +26,9 @@ export const AuthProvider = ({ children }) => {
           // Token válido, buscar dados do utilizador
           try {
             const userData = await authService.getProfile();
-            setUser(userData);
+            const permsData = await accountsService.getCurrentUserPermissions();
+            const mergedUser = mergeUserWithPermissions(userData, permsData);
+            setUser(mergedUser);
             setIsAuthenticated(true);
           } catch (error) {
             console.error('Erro ao buscar dados do utilizador:', error);
@@ -51,7 +53,9 @@ export const AuthProvider = ({ children }) => {
         if (refreshToken) {
           await authService.refreshAccessToken();
           const userData = await authService.getProfile();
-          setUser(userData);
+          const permsData = await accountsService.getCurrentUserPermissions();
+          const mergedUser = mergeUserWithPermissions(userData, permsData);
+          setUser(mergedUser);
           setIsAuthenticated(true);
         } else {
           await logout();
@@ -72,11 +76,13 @@ export const AuthProvider = ({ children }) => {
       
       const response = await authService.login(username, password);
       
-      if (response.user) {
-        setUser(response.user);
-        setIsAuthenticated(true);
-        return { success: true, user: response.user };
-      }
+      // Após login, buscar perfil e permissões do utilizador
+      const userData = await authService.getProfile();
+      const permsData = await accountsService.getCurrentUserPermissions();
+      const mergedUser = mergeUserWithPermissions(userData, permsData);
+      setUser(mergedUser);
+      setIsAuthenticated(true);
+      return { success: true, user: mergedUser };
       
       return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
       
@@ -165,11 +171,13 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.updateProfile(updatedData);
       
       if (response) {
-        // Buscar dados atualizados do utilizador
+        // Buscar dados atualizados do utilizador e permissões
         const userData = await authService.getProfile();
-        setUser(userData);
+        const permsData = await accountsService.getCurrentUserPermissions();
+        const mergedUser = mergeUserWithPermissions(userData, permsData);
+        setUser(mergedUser);
         
-        return { success: true, user: userData };
+        return { success: true, user: mergedUser };
       }
       
       return { success: false, error: 'Erro ao atualizar perfil.' };
@@ -341,6 +349,26 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Helper para combinar perfil com roles/permissões do backend
+const mergeUserWithPermissions = (userData, permsData) => {
+  const roles = Array.isArray(permsData?.roles) ? permsData.roles : [];
+  const permissions = Array.isArray(permsData?.permissions) ? permsData.permissions : [];
+  const isAdmin = !!permsData?.is_admin;
+  const derivedRole = isAdmin
+    ? 'admin'
+    : (roles[0] || userData?.role || 'member');
+
+  return {
+    ...userData,
+    roles,
+    permissions,
+    role: derivedRole,
+    is_admin: isAdmin,
+    is_business_user: !!permsData?.is_business_user,
+    is_premium_user: !!permsData?.is_premium_user
+  };
 };
 
 export default AuthContext;
