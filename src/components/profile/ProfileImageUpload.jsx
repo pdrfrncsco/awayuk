@@ -7,7 +7,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import { ApiClient, profileService } from '../../services';
+import { profileService } from '../../services';
 
 const ProfileImageUpload = ({ 
   currentImage, 
@@ -15,7 +15,6 @@ const ProfileImageUpload = ({
   size = 'large' 
 }) => {
   const { user } = useAuth();
-  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
@@ -66,21 +65,12 @@ const ProfileImageUpload = ({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', 'Foto de perfil');
-      formData.append('alt_text', `Foto de perfil de ${user?.first_name || user?.username}`);
-      formData.append('is_public', 'true');
+      const updatedUser = await profileService.uploadProfileImage(file, 'profile');
 
-      const result = await apiClient.upload('/uploads/files/upload/', formData);
-      
-      // Update user profile with new image
-      await profileService.updateProfile({ profile_image: result.id });
-      
       setSuccess('Foto de perfil atualizada com sucesso!');
-      onImageUpdate?.(result);
-      
-      // Clear preview after success
+      // Atualiza imagem mostrada externamente, se o parent precisar
+      onImageUpdate?.(updatedUser?.profile_image || null);
+
       setTimeout(() => {
         setPreview(null);
         setSuccess('');

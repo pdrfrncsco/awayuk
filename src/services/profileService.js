@@ -203,27 +203,22 @@ class ProfileService {
   }
 
   /**
-   * Upload de imagem para perfil e atualização do usuário
+   * Upload direto de imagem para perfil via PATCH multipart
    * @param {File} imageFile - Arquivo de imagem
    * @param {string} imageType - Tipo da imagem ('profile' ou 'cover')
-   * @returns {Promise<Object>} Dados do arquivo enviado
+   * @returns {Promise<Object>} Usuário atualizado (UserSerializer)
    */
   async uploadProfileImage(imageFile, imageType = 'profile') {
     try {
       const formData = new FormData();
-      formData.append('file', imageFile);
-      formData.append('title', imageType === 'cover' ? 'Imagem de capa' : 'Foto de perfil');
-      formData.append('alt_text', imageType === 'cover' ? 'Imagem de capa do usuário' : 'Foto de perfil do usuário');
-      formData.append('is_public', 'true');
+      const key = imageType === 'cover' ? 'cover_image' : 'profile_image';
+      formData.append(key, imageFile);
 
-      const uploadResult = await this.apiClient.upload('/uploads/files/upload/', formData);
-
-      const payload = imageType === 'cover'
-        ? { cover_image: uploadResult.id }
-        : { profile_image: uploadResult.id };
-
-      await this.updateProfile(payload);
-      return uploadResult;
+      // PATCH multipart directly to user profile endpoint
+      const updatedUser = await this.apiClient.patch('/accounts/profile/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return updatedUser;
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao fazer upload da imagem',

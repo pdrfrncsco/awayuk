@@ -7,7 +7,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import { ApiClient, profileService } from '../../services';
+import { profileService } from '../../services';
 
 const CoverImageUpload = ({ 
   currentImage, 
@@ -15,7 +15,6 @@ const CoverImageUpload = ({
   height = 'h-48'
 }) => {
   const { user } = useAuth();
-  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
@@ -52,21 +51,11 @@ const CoverImageUpload = ({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', 'Foto de capa');
-      formData.append('alt_text', `Foto de capa de ${user?.first_name || user?.username}`);
-      formData.append('is_public', 'true');
+      const updatedUser = await profileService.uploadProfileImage(file, 'cover');
 
-      const result = await apiClient.upload('/uploads/files/upload/', formData);
-      
-      // Update user profile with new cover image
-      await profileService.updateProfile({ cover_image: result.id });
-      
       setSuccess('Foto de capa atualizada com sucesso!');
-      onImageUpdate?.(result);
-      
-      // Clear preview after success
+      onImageUpdate?.(updatedUser?.cover_image || null);
+
       setTimeout(() => {
         setPreview(null);
         setSuccess('');
