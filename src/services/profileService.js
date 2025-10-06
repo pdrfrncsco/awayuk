@@ -203,18 +203,27 @@ class ProfileService {
   }
 
   /**
-   * Upload de imagem para perfil
+   * Upload de imagem para perfil e atualização do usuário
    * @param {File} imageFile - Arquivo de imagem
    * @param {string} imageType - Tipo da imagem ('profile' ou 'cover')
-   * @returns {Promise<Object>} URL da imagem
+   * @returns {Promise<Object>} Dados do arquivo enviado
    */
   async uploadProfileImage(imageFile, imageType = 'profile') {
     try {
       const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('type', imageType);
-      
-      return await this.apiClient.upload('/accounts/profile/upload-image/', formData);
+      formData.append('file', imageFile);
+      formData.append('title', imageType === 'cover' ? 'Imagem de capa' : 'Foto de perfil');
+      formData.append('alt_text', imageType === 'cover' ? 'Imagem de capa do usuário' : 'Foto de perfil do usuário');
+      formData.append('is_public', 'true');
+
+      const uploadResult = await this.apiClient.upload('/uploads/files/upload/', formData);
+
+      const payload = imageType === 'cover'
+        ? { cover_image: uploadResult.id }
+        : { profile_image: uploadResult.id };
+
+      await this.updateProfile(payload);
+      return uploadResult;
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao fazer upload da imagem',

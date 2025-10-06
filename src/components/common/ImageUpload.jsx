@@ -6,7 +6,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
+import { ApiClient } from '../../services';
 
 const ImageUpload = ({
   onUploadSuccess,
@@ -19,7 +19,7 @@ const ImageUpload = ({
   showPreview = true,
   category = null
 }) => {
-  const { token } = useAuth();
+  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -52,20 +52,7 @@ const ImageUpload = ({
     formData.append('is_public', 'true');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/uploads/files/upload/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Erro no upload');
-      }
-
-      const result = await response.json();
+      const result = await apiClient.upload('/uploads/files/upload/', formData);
       return result;
     } catch (error) {
       throw error;

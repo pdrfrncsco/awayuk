@@ -15,7 +15,7 @@ import {
   ListBulletIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
+import { ApiClient } from '../../services';
 import useFileUpload from '../../hooks/useFileUpload';
 
 const FileGallery = ({ 
@@ -26,7 +26,7 @@ const FileGallery = ({
   category = null,
   showUpload = true
 }) => {
-  const { token } = useAuth();
+  const apiClient = new ApiClient();
   const { formatFileSize } = useFileUpload();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,28 +45,12 @@ const FileGallery = ({
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      let url = 'http://127.0.0.1:8000/api/uploads/files/';
-      const params = new URLSearchParams();
-      
-      if (category) params.append('category', category);
-      if (filterType !== 'all') params.append('file_type', filterType);
-      if (searchTerm) params.append('search', searchTerm);
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
+      const params = {};
+      if (category) params.category = category;
+      if (filterType !== 'all') params.file_type = filterType;
+      if (searchTerm) params.search = searchTerm;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar arquivos');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get('/uploads/files/', { params });
       setFiles(data.results || data);
     } catch (err) {
       setError(err.message);
@@ -99,17 +83,7 @@ const FileGallery = ({
     if (!confirm('Tem certeza que deseja excluir este arquivo?')) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/uploads/files/${fileId}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir arquivo');
-      }
-
+      await apiClient.delete(`/uploads/files/${fileId}/`);
       setFiles(prev => prev.filter(f => f.id !== fileId));
     } catch (err) {
       setError(err.message);
@@ -118,17 +92,9 @@ const FileGallery = ({
 
   const handleDownloadFile = async (file) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/uploads/files/${file.id}/download/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const blob = await apiClient.get(`/uploads/files/${file.id}/download/`, {
+        responseType: 'blob'
       });
-
-      if (!response.ok) {
-        throw new Error('Erro ao baixar arquivo');
-      }
-
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

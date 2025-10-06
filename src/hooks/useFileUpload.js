@@ -1,15 +1,15 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { ApiClient } from '../services';
 
 const useFileUpload = () => {
-  const { token } = useAuth();
+  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
 
   const uploadFile = useCallback(async (file, options = {}) => {
     const {
-      endpoint = '/api/uploads/files/upload/',
+      endpoint = '/uploads/files/upload/',
       title = '',
       description = '',
       altText = '',
@@ -32,47 +32,16 @@ const useFileUpload = () => {
       if (category) formData.append('category', category);
       formData.append('is_public', isPublic.toString());
 
-      const xhr = new XMLHttpRequest();
-
-      return new Promise((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
+      const result = await apiClient.upload(endpoint, formData, {
+        onUploadProgress: (e) => {
+          if (e.total) {
             const percentComplete = (e.loaded / e.total) * 100;
             setProgress(percentComplete);
             onProgress?.(percentComplete);
           }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const result = JSON.parse(xhr.responseText);
-              resolve(result);
-            } catch (e) {
-              reject(new Error('Erro ao processar resposta do servidor'));
-            }
-          } else {
-            try {
-              const errorData = JSON.parse(xhr.responseText);
-              reject(new Error(errorData.detail || `Erro HTTP ${xhr.status}`));
-            } catch (e) {
-              reject(new Error(`Erro HTTP ${xhr.status}`));
-            }
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Erro de rede durante o upload'));
-        });
-
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload cancelado'));
-        });
-
-        xhr.open('POST', `http://127.0.0.1:8000${endpoint}`);
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.send(formData);
+        }
       });
+      return result;
 
     } catch (err) {
       setError(err.message);
@@ -81,7 +50,7 @@ const useFileUpload = () => {
       setUploading(false);
       setProgress(0);
     }
-  }, [token]);
+  }, [apiClient]);
 
   const uploadMultipleFiles = useCallback(async (files, options = {}) => {
     const results = [];

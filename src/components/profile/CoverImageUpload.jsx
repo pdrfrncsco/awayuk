@@ -7,27 +7,29 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { ApiClient, profileService } from '../../services';
 
 const CoverImageUpload = ({ 
   currentImage, 
   onImageUpdate,
   height = 'h-48'
 }) => {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
+  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const validateFile = (file) => {
-    const maxSize = 10 * 1024 * 1024; // 10MB para foto de capa
+    const maxSize = 1 * 1024 * 1024; // 10MB para foto de capa
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!acceptedTypes.includes(file.type)) {
       return 'Tipo de arquivo não suportado. Use JPEG, PNG ou WebP.';
     }
     if (file.size > maxSize) {
-      return 'Arquivo muito grande. Tamanho máximo: 10MB';
+      return 'Arquivo muito grande. Tamanho máximo: 1MB';
     }
     return null;
   };
@@ -56,23 +58,10 @@ const CoverImageUpload = ({
       formData.append('alt_text', `Foto de capa de ${user?.first_name || user?.username}`);
       formData.append('is_public', 'true');
 
-      const response = await fetch('http://127.0.0.1:8000/api/uploads/files/upload/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Erro no upload');
-      }
-
-      const result = await response.json();
+      const result = await apiClient.upload('/uploads/files/upload/', formData);
       
       // Update user profile with new cover image
-      await updateUserProfile(result.id);
+      await profileService.updateProfile({ cover_image: result.id });
       
       setSuccess('Foto de capa atualizada com sucesso!');
       onImageUpdate?.(result);
@@ -91,26 +80,7 @@ const CoverImageUpload = ({
     }
   };
 
-  const updateUserProfile = async (imageId) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/accounts/profile/', {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cover_image: imageId
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar perfil');
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
-    }
-  };
+  // Atualização de perfil agora é feita via profileService.updateProfile
 
   const handleFileInputChange = (e) => {
     const file = e.target.files?.[0];

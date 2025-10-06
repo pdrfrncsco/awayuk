@@ -8,7 +8,7 @@ import {
   CheckCircleIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
+import { ApiClient } from '../../services';
 
 const EventImageUpload = ({ 
   eventId,
@@ -17,7 +17,7 @@ const EventImageUpload = ({
   maxImages = 5,
   featured = false
 }) => {
-  const { token } = useAuth();
+  const apiClient = new ApiClient();
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState(existingImages);
   const [dragOver, setDragOver] = useState(false);
@@ -25,14 +25,14 @@ const EventImageUpload = ({
   const [success, setSuccess] = useState('');
 
   const validateFile = (file) => {
-    const maxSize = 10 * 1024 * 1024; // 10MB for events
+    const maxSize = 1 * 1024 * 1024; // 10MB for events
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!acceptedTypes.includes(file.type)) {
       return 'Tipo de arquivo não suportado. Use JPEG, PNG ou WebP.';
     }
     if (file.size > maxSize) {
-      return 'Arquivo muito grande. Tamanho máximo: 10MB';
+      return 'Arquivo muito grande. Tamanho máximo: 1MB';
     }
     return null;
   };
@@ -45,20 +45,7 @@ const EventImageUpload = ({
     formData.append('is_public', 'true');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/uploads/files/upload/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Erro no upload');
-      }
-
-      return await response.json();
+      return await apiClient.upload('/uploads/files/upload/', formData);
     } catch (error) {
       throw error;
     }
