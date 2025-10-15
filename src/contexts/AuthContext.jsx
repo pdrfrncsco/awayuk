@@ -226,7 +226,8 @@ export const AuthProvider = ({ children }) => {
 
   // Função para verificar se o email está verificado
   const isEmailVerified = () => {
-    return user?.is_active || false;
+    // Utiliza o campo correto fornecido pelo backend
+    return user?.is_verified || false;
   };
 
   // Função para reenviar email de verificação

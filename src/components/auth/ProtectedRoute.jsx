@@ -49,7 +49,7 @@ const ProtectedRoute = ({
   if (requireEmailVerification && !isEmailVerified()) {
     return (
       <Navigate 
-        to="/verify-email" 
+        to="/verificar-email" 
         state={{ from: location.pathname }} 
         replace 
       />
@@ -64,7 +64,7 @@ const ProtectedRoute = ({
     if (!userRole || !roles.includes(userRole)) {
       return (
         <Navigate 
-          to="/unauthorized" 
+          to="/nao-autorizado" 
           state={{ from: location.pathname }} 
           replace 
         />
@@ -84,7 +84,7 @@ const ProtectedRoute = ({
     if (!hasAllPermissions) {
       return (
         <Navigate 
-          to="/unauthorized" 
+          to="/nao-autorizado" 
           state={{ from: location.pathname }} 
           replace 
         />

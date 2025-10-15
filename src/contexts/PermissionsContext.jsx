@@ -12,6 +12,8 @@ const ROLES = {
 const PERMISSIONS = {
   // Dashboard geral
   VIEW_DASHBOARD: 'view_dashboard',
+  // Gestão de utilizadores (usado em rotas de Roles)
+  MANAGE_USERS: 'manage_users',
   
   // Membros
   VIEW_MEMBERS: 'view_members',
@@ -137,10 +139,17 @@ export const PermissionsProvider = ({ children }) => {
   }, [user]);
   
   const userPermissions = useMemo(() => {
-    if (Array.isArray(user?.permissions) && user.permissions.length > 0) {
-      return user.permissions;
+    // Começa com permissões do backend se existirem,
+    // caso contrário cai para permissões por papel
+    const base = (Array.isArray(user?.permissions) && user.permissions.length > 0)
+      ? [...user.permissions]
+      : [...(ROLE_PERMISSIONS[userRole] || [])];
+
+    // Garantir acesso ao dashboard para utilizadores autenticados
+    if (user && !base.includes(PERMISSIONS.VIEW_DASHBOARD)) {
+      base.push(PERMISSIONS.VIEW_DASHBOARD);
     }
-    return ROLE_PERMISSIONS[userRole] || [];
+    return base;
   }, [user, userRole]);
   
   const hasPermission = (permission) => {
