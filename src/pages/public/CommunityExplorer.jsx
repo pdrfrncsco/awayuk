@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 
 const CommunityExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +16,7 @@ const CommunityExplorer = () => {
       profession: "Designer de Interiores",
       location: "Londres",
       category: "Design & Criatividade",
-      avatar: "https://picsum.photos/80/80?random=10",
+      profile_image: "https://picsum.photos/80/80?random=10",
       coverImage: "https://picsum.photos/400/200?random=20",
       rating: 4.8,
       reviewCount: 23,
@@ -31,7 +32,7 @@ const CommunityExplorer = () => {
       profession: "Consultor Financeiro",
       location: "Manchester",
       category: "Finanças & Negócios",
-      avatar: "https://picsum.photos/80/80?random=11",
+      profile_image: "https://picsum.photos/80/80?random=11",
       coverImage: "https://picsum.photos/400/200?random=21",
       rating: 4.9,
       reviewCount: 45,
@@ -47,7 +48,7 @@ const CommunityExplorer = () => {
       profession: "Chef de Cozinha",
       location: "Birmingham",
       category: "Alimentação & Bebidas",
-      avatar: "https://picsum.photos/80/80?random=12",
+      profile_image: "https://picsum.photos/80/80?random=12",
       coverImage: "https://picsum.photos/400/200?random=22",
       rating: 4.7,
       reviewCount: 67,
@@ -63,7 +64,7 @@ const CommunityExplorer = () => {
       profession: "Desenvolvedor de Software",
       location: "Edimburgo",
       category: "Tecnologia",
-      avatar: "https://picsum.photos/80/80?random=13",
+      profile_image: "https://picsum.photos/80/80?random=13",
       coverImage: "https://picsum.photos/400/200?random=23",
       rating: 4.6,
       reviewCount: 34,
@@ -79,7 +80,7 @@ const CommunityExplorer = () => {
       profession: "Advogada de Imigração",
       location: "Londres",
       category: "Serviços Legais",
-      avatar: "https://picsum.photos/80/80?random=14",
+      profile_image: "https://picsum.photos/80/80?random=14",
       coverImage: "https://picsum.photos/400/200?random=24",
       rating: 4.9,
       reviewCount: 89,
@@ -95,7 +96,7 @@ const CommunityExplorer = () => {
       profession: "Personal Trainer",
       location: "Liverpool",
       category: "Saúde & Fitness",
-      avatar: "https://picsum.photos/80/80?random=15",
+      profile_image: "https://picsum.photos/80/80?random=15",
       coverImage: "https://picsum.photos/400/200?random=25",
       rating: 4.5,
       reviewCount: 28,
@@ -162,7 +163,7 @@ const CommunityExplorer = () => {
       <div className="p-4">
         <div className="flex items-center mb-3">
           <img 
-            src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')} 
+            src={getProfileImageUrl({ profile_image: member.profile_image, avatar: member.avatar, name: member.name })} 
             alt={member.name}
             className="w-12 h-12 rounded-full border-2 border-gray-200"
           />
@@ -230,7 +231,7 @@ const CommunityExplorer = () => {
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
       <div className="flex items-start space-x-4">
         <img 
-          src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')} 
+          src={getProfileImageUrl({ profile_image: member.profile_image, avatar: member.avatar, name: member.name })} 
           alt={member.name}
           className="w-16 h-16 rounded-full border-2 border-gray-200"
         />

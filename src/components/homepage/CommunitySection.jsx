@@ -1,31 +1,33 @@
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
+
 const CommunitySection = () => {
   const members = [
     {
       name: "Ana Kiala",
       profession: "Designer de Interiores",
       location: "Londres",
-      avatar: "https://picsum.photos/40/40?random=3",
+      profile_image: "https://picsum.photos/40/40?random=3",
       image: "https://picsum.photos/634/400?random=10"
     },
     {
       name: "João Manuel",
       profession: "Consultor Financeiro",
       location: "Manchester",
-      avatar: "https://picsum.photos/40/40?random=4",
+      profile_image: "https://picsum.photos/40/40?random=4",
       image: "https://picsum.photos/634/400?random=11"
     },
     {
       name: "Luísa Domingos",
       profession: "Chef de Cozinha",
       location: "Birmingham",
-      avatar: "https://picsum.photos/40/40?random=5",
+      profile_image: "https://picsum.photos/40/40?random=5",
       image: "https://picsum.photos/634/400?random=12"
     },
     {
       name: "Pedro Santos",
       profession: "Desenvolvedor de Software",
       location: "Edimburgo",
-      avatar: "https://picsum.photos/40/40?random=6",
+      profile_image: "https://picsum.photos/40/40?random=6",
       image: "https://picsum.photos/634/400?random=13"
     }
   ];
@@ -51,7 +53,11 @@ const CommunitySection = () => {
               <div className="p-4">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <img className="h-10 w-10 rounded-full" src={member.avatar} alt="Avatar" />
+                    <img
+                      className="h-10 w-10 rounded-full"
+                      src={getProfileImageUrl({ profile_image: member.profile_image, name: member.name })}
+                      alt={member.name}
+                    />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">{member.name}</p>

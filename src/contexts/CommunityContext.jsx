@@ -37,7 +37,7 @@ const CommunityProvider = ({ children }) => {
       bio: 'Apaixonada por tecnologia e inovação. Especialista em React e Node.js.',
       skills: ['React', 'Node.js', 'JavaScript', 'Python'],
       interests: ['Tecnologia', 'Empreendedorismo', 'Viagens'],
-      avatar: 'https://picsum.photos/150/150?random=20',
+      profile_image: 'https://picsum.photos/150/150?random=20',
       joinedDate: '2023-01-15',
       isOnline: true,
       mutualConnections: 5,
@@ -53,7 +53,7 @@ const CommunityProvider = ({ children }) => {
       bio: 'Designer com foco em experiência do utilizador e interfaces intuitivas.',
       skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping'],
       interests: ['Design', 'Arte', 'Fotografia'],
-      avatar: 'https://picsum.photos/150/150?random=21',
+      profile_image: 'https://picsum.photos/150/150?random=21',
       joinedDate: '2023-02-20',
       isOnline: false,
       mutualConnections: 3,
@@ -69,7 +69,7 @@ const CommunityProvider = ({ children }) => {
       bio: 'Especialista em gestão de projetos ágeis e transformação digital.',
       skills: ['Scrum', 'Agile', 'Project Management', 'Leadership'],
       interests: ['Gestão', 'Liderança', 'Inovação'],
-      avatar: 'https://picsum.photos/150/150?random=22',
+      profile_image: 'https://picsum.photos/150/150?random=22',
       joinedDate: '2023-03-10',
       isOnline: true,
       mutualConnections: 8,
@@ -85,7 +85,7 @@ const CommunityProvider = ({ children }) => {
       bio: 'Transformo dados em insights valiosos para negócios.',
       skills: ['Python', 'SQL', 'Machine Learning', 'Tableau'],
       interests: ['Data Science', 'IA', 'Estatística'],
-      avatar: 'https://picsum.photos/150/150?random=23',
+      profile_image: 'https://picsum.photos/150/150?random=23',
       joinedDate: '2023-04-05',
       isOnline: false,
       mutualConnections: 2,
@@ -101,7 +101,7 @@ const CommunityProvider = ({ children }) => {
       bio: 'Especialista em estratégias de marketing digital e growth hacking.',
       skills: ['SEO', 'Google Ads', 'Social Media', 'Analytics'],
       interests: ['Marketing', 'Empreendedorismo', 'Redes Sociais'],
-      avatar: 'https://picsum.photos/150/150?random=24',
+      profile_image: 'https://picsum.photos/150/150?random=24',
       joinedDate: '2023-05-12',
       isOnline: true,
       mutualConnections: 6,
@@ -116,7 +116,7 @@ const CommunityProvider = ({ children }) => {
         id: 6,
         name: 'Carlos Mendes',
         profession: 'Desenvolvedor Frontend',
-        avatar: 'https://picsum.photos/150/150?random=25'
+        profile_image: 'https://picsum.photos/150/150?random=25'
       },
       message: 'Olá! Gostaria de conectar contigo para trocar experiências sobre React.',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
@@ -128,7 +128,7 @@ const CommunityProvider = ({ children }) => {
         id: 7,
         name: 'Luisa Rodrigues',
         profession: 'Product Manager',
-        avatar: 'https://picsum.photos/150/150?random=26'
+        profile_image: 'https://picsum.photos/150/150?random=26'
       },
       message: 'Vi o teu perfil e achei interessante a tua experiência. Vamos conectar?',
       timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 horas atrás

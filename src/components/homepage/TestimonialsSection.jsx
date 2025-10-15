@@ -1,23 +1,25 @@
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
+
 const TestimonialsSection = () => {
   const testimonials = [
     {
       name: "Teresa Silva",
       profession: "Empreendedora - Catering",
-      avatar: "https://picsum.photos/50/50?random=7",
+      profile_image: "https://picsum.photos/50/50?random=7",
       testimonial: "Graças à Angolan Way UK, consegui clientes regulares para meu negócio de catering. Em 3 meses, meu faturamento aumentou 40%!",
       rating: 5
     },
     {
       name: "Miguel Costa",
       profession: "Engenheiro Civil",
-      avatar: "https://picsum.photos/50/50?random=8",
+      profile_image: "https://picsum.photos/50/50?random=8",
       testimonial: "Encontrei meu primeiro emprego no UK através da plataforma. A rede de contatos que construí aqui foi fundamental para minha carreira.",
       rating: 4.5
     },
     {
       name: "Ana Paula",
       profession: "Estudante Universitária",
-      avatar: "https://picsum.photos/50/50?random=9",
+      profile_image: "https://picsum.photos/50/50?random=9",
       testimonial: "Como estudante, a plataforma me ajudou a encontrar acomodação segura e acessível, além de um grupo de estudo com outros angolanos.",
       rating: 5
     }
@@ -56,7 +58,11 @@ const TestimonialsSection = () => {
             <div key={index} className="bg-gray-50 p-6 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <img className="h-12 w-12 rounded-full" src={testimonial.avatar} alt="Testimonial" />
+                  <img
+                    className="h-12 w-12 rounded-full"
+                    src={getProfileImageUrl({ profile_image: testimonial.profile_image, name: testimonial.name })}
+                    alt={testimonial.name}
+                  />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-900">{testimonial.name}</p>

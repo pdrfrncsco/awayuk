@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCommunity } from '../../contexts/CommunityContext';
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -247,7 +248,7 @@ const CommunityExplorer = () => {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="relative">
                   <img
-                    src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')}
+                    src={getProfileImageUrl({ profile_image: member.profile_image, avatar: member.avatar, name: member.name })}
                     alt={member.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
@@ -330,7 +331,7 @@ const CommunityExplorer = () => {
               
               <div className="flex items-center space-x-3 mb-4">
                 <img
-                  src={selectedMember.profile_image || selectedMember.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedMember.name || '') + '&background=f59e0b&color=fff')}
+                  src={getProfileImageUrl({ profile_image: selectedMember.profile_image, avatar: selectedMember.avatar, name: selectedMember.name })}
                   alt={selectedMember.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />

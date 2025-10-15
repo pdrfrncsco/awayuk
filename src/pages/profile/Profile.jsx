@@ -9,6 +9,7 @@ import ServicesManager from '../../components/profile/ServicesManager';
 import PortfolioManager from '../../components/profile/PortfolioManager';
 import ProfileEditor from '../../components/profile/ProfileEditor';
 import { useToast } from '../../components/common/Toast';
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 
 const MemberProfile = () => {
   const { id } = useParams();
@@ -246,7 +247,7 @@ const MemberProfile = () => {
     profession: profileData.profession || 'Profissional',
     location: profileData.location || 'Localização não informada',
     category: profileData.category || 'Geral',
-    avatar: profileData.profile_image || "https://picsum.photos/150/150?random=10",
+    profile_image: profileData.profile_image || "https://picsum.photos/150/150?random=10",
     coverImage: profileData.cover_image || "https://picsum.photos/1200/400?random=20",
     rating: profileData.rating || 0,
     reviewCount: profileData.review_count || 0,
@@ -270,7 +271,7 @@ const MemberProfile = () => {
     profession: "Designer de Interiores",
     location: "Londres",
     category: "Design & Criatividade",
-    avatar: "https://picsum.photos/150/150?random=10",
+    profile_image: "https://picsum.photos/150/150?random=10",
     coverImage: "https://picsum.photos/1200/400?random=20",
     rating: 4.8,
     reviewCount: 23,
@@ -624,7 +625,7 @@ const MemberProfile = () => {
             <div className="relative">
               {isOwnProfile ? (
               <ProfileImageUpload
-                currentImage={member.avatar}
+                currentImage={getProfileImageUrl({ profile_image: member.profile_image, name: member.name })}
                 onImageUpdate={(newImage) => {
                   setProfileData(prev => ({
                     ...prev,
@@ -635,7 +636,7 @@ const MemberProfile = () => {
               />
               ) : (
                 <img 
-                  src={member.avatar} 
+                  src={getProfileImageUrl({ profile_image: member.profile_image, name: member.name })}
                   alt={member.name}
                   className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg"
                 />

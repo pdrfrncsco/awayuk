@@ -17,6 +17,7 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { membersService } from '../../services';
+import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 
 const MembersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -366,11 +367,11 @@ const MembersManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
-                              {(member.profile_image || member.avatar) ? (
-                                <img className="h-10 w-10 rounded-full" src={member.profile_image || member.avatar} alt="" />
-                              ) : (
-                                <UserCircleIcon className="h-10 w-10 text-gray-400" />
-                              )}
+                              <img
+                                className="h-10 w-10 rounded-full"
+                                src={getProfileImageUrl({ profile_image: member.profile_image, avatar: member.avatar, name: member.name })}
+                                alt={member.name}
+                              />
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{member.name}</div>
