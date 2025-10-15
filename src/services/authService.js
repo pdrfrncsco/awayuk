@@ -96,7 +96,8 @@ class AuthService {
    */
   async getProfile() {
     try {
-      return await this.apiClient.get('/auth/profile/');
+      // Unificar endpoint: utilizar /accounts/profile/ para perfil autenticado
+      return await this.apiClient.get('/accounts/profile/');
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter perfil',
@@ -113,7 +114,8 @@ class AuthService {
    */
   async updateProfile(profileData) {
     try {
-      return await this.apiClient.patch('/auth/profile/', profileData);
+      // Unificar endpoint: atualizar perfil via /accounts/profile/
+      return await this.apiClient.patch('/accounts/profile/', profileData);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao atualizar perfil',

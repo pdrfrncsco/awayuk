@@ -92,11 +92,16 @@ const Navigation = () => {
                    className="flex items-center space-x-2 text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                  >
                    <img
-                     src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName + ' ' + user?.lastName)}&background=f59e0b&color=fff`}
-                     alt={`${user?.firstName} ${user?.lastName}`}
+                     src={
+                       user?.profile_image ||
+                       `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                         (user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Utilizador')
+                       )}&background=f59e0b&color=fff`
+                     }
+                     alt={user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Utilizador'}
                      className="h-8 w-8 rounded-full"
                    />
-                   <span>{user?.firstName}</span>
+                   <span>{user?.full_name || user?.first_name}</span>
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                    </svg>
@@ -230,12 +235,17 @@ const Navigation = () => {
                    <div className="space-y-1">
                      <div className="flex items-center px-3 py-2">
                        <img
-                         src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName + ' ' + user?.lastName)}&background=f59e0b&color=fff`}
-                         alt={`${user?.firstName} ${user?.lastName}`}
+                         src={
+                           user?.profile_image ||
+                           `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                             (user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Utilizador')
+                           )}&background=f59e0b&color=fff`
+                         }
+                         alt={user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Utilizador'}
                          className="h-10 w-10 rounded-full mr-3"
                        />
                        <div>
-                         <div className="text-base font-medium text-gray-800">{user?.firstName} {user?.lastName}</div>
+                         <div className="text-base font-medium text-gray-800">{user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim()}</div>
                          <div className="text-sm text-gray-500">{user?.email}</div>
                        </div>
                      </div>
