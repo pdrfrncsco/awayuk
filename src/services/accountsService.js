@@ -253,7 +253,7 @@ class AccountsService {
         id: userRole.user?.id || userRole.user_id,
         name: userRole.user?.name,
         email: userRole.user?.email,
-        avatar: userRole.user?.avatar
+        avatar: userRole.user?.profile_image || userRole.user?.avatar
       },
       role: {
         id: userRole.role?.id || userRole.role_id,

@@ -366,8 +366,8 @@ const MembersManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
-                              {member.avatar ? (
-                                <img className="h-10 w-10 rounded-full" src={member.avatar} alt="" />
+                              {(member.profile_image || member.avatar) ? (
+                                <img className="h-10 w-10 rounded-full" src={member.profile_image || member.avatar} alt="" />
                               ) : (
                                 <UserCircleIcon className="h-10 w-10 text-gray-400" />
                               )}

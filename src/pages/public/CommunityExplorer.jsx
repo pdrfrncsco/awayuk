@@ -162,7 +162,7 @@ const CommunityExplorer = () => {
       <div className="p-4">
         <div className="flex items-center mb-3">
           <img 
-            src={member.avatar} 
+            src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')} 
             alt={member.name}
             className="w-12 h-12 rounded-full border-2 border-gray-200"
           />
@@ -230,7 +230,7 @@ const CommunityExplorer = () => {
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
       <div className="flex items-start space-x-4">
         <img 
-          src={member.avatar} 
+          src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')} 
           alt={member.name}
           className="w-16 h-16 rounded-full border-2 border-gray-200"
         />

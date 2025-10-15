@@ -275,7 +275,7 @@ const EventDetail = () => {
                 {/* Organizador */}
                 <div className="flex items-center space-x-3 mb-4">
                   <img
-                    src={event.organizer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(event.organizer?.first_name + ' ' + event.organizer?.last_name)}&background=f59e0b&color=fff`}
+                    src={event.organizer?.profile_image || event.organizer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(event.organizer?.first_name + ' ' + event.organizer?.last_name)}&background=f59e0b&color=fff`}
                     alt={`${event.organizer?.first_name} ${event.organizer?.last_name}`}
                     className="h-10 w-10 rounded-full"
                   />
@@ -361,7 +361,7 @@ const EventDetail = () => {
                   <div key={comment.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                     <div className="flex items-start space-x-3">
                       <img
-                        src={comment.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.first_name + ' ' + comment.user?.last_name)}&background=f59e0b&color=fff`}
+                        src={comment.user?.profile_image || comment.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.first_name + ' ' + comment.user?.last_name)}&background=f59e0b&color=fff`}
                         alt={`${comment.user?.first_name} ${comment.user?.last_name}`}
                         className="h-8 w-8 rounded-full"
                       />

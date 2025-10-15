@@ -247,7 +247,7 @@ const CommunityExplorer = () => {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="relative">
                   <img
-                    src={member.avatar}
+                    src={member.profile_image || member.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(member.name || '') + '&background=f59e0b&color=fff')}
                     alt={member.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
@@ -330,7 +330,7 @@ const CommunityExplorer = () => {
               
               <div className="flex items-center space-x-3 mb-4">
                 <img
-                  src={selectedMember.avatar}
+                  src={selectedMember.profile_image || selectedMember.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedMember.name || '') + '&background=f59e0b&color=fff')}
                   alt={selectedMember.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />

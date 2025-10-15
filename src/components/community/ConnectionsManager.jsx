@@ -126,7 +126,7 @@ const ConnectionsManager = () => {
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={connection.avatar}
+                          src={connection.profile_image || connection.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(connection.name || '') + '&background=f59e0b&color=fff')}
                           alt={connection.name}
                           className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                         />
@@ -197,7 +197,7 @@ const ConnectionsManager = () => {
                 <div key={request.id} className="bg-white p-6 rounded-lg border border-gray-200">
                   <div className="flex items-start space-x-4">
                     <img
-                      src={request.fromUser.avatar}
+                      src={request.fromUser.profile_image || request.fromUser.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(request.fromUser.name || '') + '&background=f59e0b&color=fff')}
                       alt={request.fromUser.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -260,7 +260,7 @@ const ConnectionsManager = () => {
               
               <div className="flex items-center space-x-3 mb-6">
                 <img
-                  src={selectedConnection.avatar}
+                  src={selectedConnection.profile_image || selectedConnection.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedConnection.name || '') + '&background=f59e0b&color=fff')}
                   alt={selectedConnection.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />

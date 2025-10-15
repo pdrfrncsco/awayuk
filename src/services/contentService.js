@@ -273,7 +273,7 @@ class ContentService {
       category: data.category,
       status: data.status,
       author: data.author?.name || data.author,
-      authorAvatar: data.author?.avatar || '/api/placeholder/32/32',
+      authorAvatar: (data.author?.profile_image || data.author?.avatar || '/api/placeholder/32/32'),
       excerpt: data.excerpt,
       content: data.content,
       featuredImage: data.featured_image || data.featuredImage,
@@ -459,3 +459,4 @@ class ContentService {
 const contentService = new ContentService();
 export { ContentService, contentService };
 export default contentService;
+
