@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { usePermissions } from '../../contexts/PermissionsContext';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 /**
@@ -27,6 +28,7 @@ const ProtectedRoute = ({
   fallback = null
 }) => {
   const { user, isAuthenticated, isLoading, isEmailVerified } = useAuth();
+  const { userRole, hasPermission, hasAllPermissions, hasAnyPermission } = usePermissions();
   const location = useLocation();
 
   // Mostrar loading enquanto verifica autenticação
@@ -59,9 +61,9 @@ const ProtectedRoute = ({
   // Verificar papéis necessários
   if (requiredRoles) {
     const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    const userRole = user?.role;
-    
-    if (!userRole || !roles.includes(userRole)) {
+    const roleToCheck = userRole || user?.role;
+
+    if (!roleToCheck || !roles.includes(roleToCheck)) {
       return (
         <Navigate 
           to="/nao-autorizado" 
@@ -75,13 +77,8 @@ const ProtectedRoute = ({
   // Verificar permissões necessárias
   if (requiredPermissions) {
     const permissions = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
-    const userPermissions = user?.permissions || [];
-    
-    const hasAllPermissions = permissions.every(permission => 
-      userPermissions.includes(permission)
-    );
-    
-    if (!hasAllPermissions) {
+    const ok = hasAllPermissions(permissions);
+    if (!ok) {
       return (
         <Navigate 
           to="/nao-autorizado" 

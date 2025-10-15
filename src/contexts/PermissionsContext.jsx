@@ -125,6 +125,26 @@ const ROLE_PERMISSIONS = {
   ]
 };
 
+const BACKEND_PERMISSION_MAP = {
+  can_view_analytics: 'view_statistics',
+  can_export_data: 'export_data',
+  can_manage_user_roles: 'manage_users',
+  can_verify_users: 'manage_users',
+  can_view_user_details: 'view_members',
+  can_create_events: 'create_event',
+  can_approve_events: 'edit_event',
+  can_manage_event_registrations: 'manage_event_participants',
+  can_post_opportunities: 'create_opportunity',
+  can_approve_opportunities: 'edit_opportunity',
+  can_view_applications: 'manage_applications',
+  can_create_blog_posts: 'create_content',
+  can_publish_content: 'publish_content',
+  can_manage_media: 'edit_content',
+  can_moderate_posts: 'edit_content',
+  can_ban_users: 'manage_member_roles',
+  can_manage_groups: 'manage_member_roles'
+};
+
 const PermissionsContext = createContext();
 
 export const PermissionsProvider = ({ children }) => {
@@ -132,24 +152,42 @@ export const PermissionsProvider = ({ children }) => {
   
   const userRole = useMemo(() => {
     if (!user) return ROLES.GUEST;
-    if (user.role) return user.role;
     if (user.is_admin) return ROLES.ADMIN;
-    if (Array.isArray(user.roles) && user.roles.length > 0) return user.roles[0];
+    const r = user.role || (Array.isArray(user.roles) ? user.roles[0] : null);
+    if (!r) return ROLES.MEMBER;
+    if (r === 'super_admin') return ROLES.ADMIN;
+    if (['community_moderator', 'event_organizer', 'content_creator'].includes(r)) return ROLES.MODERATOR;
     return ROLES.MEMBER;
   }, [user]);
   
   const userPermissions = useMemo(() => {
-    // Começa com permissões do backend se existirem,
-    // caso contrário cai para permissões por papel
-    const base = (Array.isArray(user?.permissions) && user.permissions.length > 0)
+    const normalizedBase = (Array.isArray(user?.normalized_permissions) && user.normalized_permissions.length > 0)
+      ? [...user.normalized_permissions]
+      : null;
+    const base = (!normalizedBase && Array.isArray(user?.permissions) && user.permissions.length > 0)
       ? [...user.permissions]
       : [...(ROLE_PERMISSIONS[userRole] || [])];
 
-    // Garantir acesso ao dashboard para utilizadores autenticados
-    if (user && !base.includes(PERMISSIONS.VIEW_DASHBOARD)) {
-      base.push(PERMISSIONS.VIEW_DASHBOARD);
+    const normalized = new Set();
+
+    if (normalizedBase) {
+      for (const p of normalizedBase) {
+        normalized.add(p);
+      }
+    } else {
+      for (const p of base) {
+        normalized.add(p);
+        const mapped = BACKEND_PERMISSION_MAP[p];
+        if (Array.isArray(mapped)) {
+          for (const mp of mapped) normalized.add(mp);
+        } else if (typeof mapped === 'string') {
+          normalized.add(mapped);
+        }
+      }
     }
-    return base;
+
+    if (user) normalized.add(PERMISSIONS.VIEW_DASHBOARD);
+    return Array.from(normalized);
   }, [user, userRole]);
   
   const hasPermission = (permission) => {

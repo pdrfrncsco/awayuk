@@ -356,6 +356,9 @@ export const AuthProvider = ({ children }) => {
 const mergeUserWithPermissions = (userData, permsData) => {
   const roles = Array.isArray(permsData?.roles) ? permsData.roles : [];
   const permissions = Array.isArray(permsData?.permissions) ? permsData.permissions : [];
+  const normalizedPermissions = Array.isArray(permsData?.normalized_permissions)
+    ? permsData.normalized_permissions
+    : [];
   const isAdmin = !!permsData?.is_admin;
   const derivedRole = isAdmin
     ? 'admin'
@@ -365,6 +368,7 @@ const mergeUserWithPermissions = (userData, permsData) => {
     ...userData,
     roles,
     permissions,
+    normalized_permissions: normalizedPermissions,
     role: derivedRole,
     is_admin: isAdmin,
     is_business_user: !!permsData?.is_business_user,
