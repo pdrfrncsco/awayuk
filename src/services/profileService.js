@@ -21,8 +21,8 @@ class ProfileService {
       if (userId) {
         return await this.apiClient.get(`/accounts/profile/${userId}/`);
       }
-      // Perfil do usuário autenticado
-      return await this.apiClient.get('/auth/profile/');
+      // Perfil do usuário autenticado (usar serializer de contas para incluir profile_image/cover_image)
+      return await this.apiClient.get('/accounts/profile/');
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao buscar perfil do usuário',

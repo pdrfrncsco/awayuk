@@ -597,7 +597,7 @@ const MemberProfile = () => {
             onImageUpdate={(newImage) => {
               setProfileData(prev => ({
                 ...prev,
-                cover_image: newImage.file_url
+                cover_image: newImage || prev?.cover_image
               }));
             }}
             height="h-64 md:h-80"
@@ -620,16 +620,16 @@ const MemberProfile = () => {
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
             <div className="relative">
               {isOwnProfile ? (
-                <ProfileImageUpload
-                  currentImage={member.avatar}
-                  onImageUpdate={(newImage) => {
-                    setProfileData(prev => ({
-                      ...prev,
-                      profile_image: newImage.file_url
-                    }));
-                  }}
-                  size="large"
-                />
+              <ProfileImageUpload
+                currentImage={member.avatar}
+                onImageUpdate={(newImage) => {
+                  setProfileData(prev => ({
+                    ...prev,
+                    profile_image: newImage || prev?.profile_image
+                  }));
+                }}
+                size="large"
+              />
               ) : (
                 <img 
                   src={member.avatar} 
