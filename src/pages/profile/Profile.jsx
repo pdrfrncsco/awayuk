@@ -142,7 +142,10 @@ const MemberProfile = () => {
       const extendedPayload = {
         website: formData.website?.trim() || '',
         qualifications: formData.qualifications || [],
-        languages: formData.languages || []
+        languages: formData.languages || [],
+        linkedin: formData.linkedin?.trim() || '',
+        twitter: formData.twitter?.trim() || '',
+        social_media: formData.socialMedia || {}
       };
 
       let updatedExtended = null;
@@ -261,6 +264,8 @@ const MemberProfile = () => {
     phone: profileData.phone || '',
     email: profileData.email || '',
     website: (profileData.profile && profileData.profile.website) || '',
+    linkedin: (profileData.profile && profileData.profile.linkedin) || '',
+    twitter: (profileData.profile && profileData.profile.twitter) || '',
     socialMedia: (profileData.profile && profileData.profile.social_media) || {},
     services: services,
     portfolio: portfolio,
@@ -393,6 +398,25 @@ const MemberProfile = () => {
     }
 
     return stars;
+  };
+
+  const buildSocialUrl = (platform, value) => {
+    if (!value) return '#';
+    const v = value.trim();
+    if (/^https?:\/\//i.test(v)) return v;
+    const handle = v.replace(/^@+/, '');
+    switch (platform) {
+      case 'instagram':
+        return `https://instagram.com/${handle}`;
+      case 'facebook':
+        return `https://facebook.com/${handle}`;
+      case 'linkedin':
+        return v.startsWith('linkedin.com') ? `https://${v}` : `https://www.linkedin.com/in/${handle}`;
+      case 'twitter':
+        return `https://twitter.com/${handle}`;
+      default:
+        return v;
+    }
   };
 
   const handleContactSubmit = async (e) => {
@@ -789,7 +813,10 @@ const MemberProfile = () => {
                       languages: member.languages,
                       email: member.email,
                       phone: member.phone,
-                      website: member.website
+                      website: member.website,
+                      linkedin: member.linkedin,
+                      twitter: member.twitter,
+                      socialMedia: member.socialMedia
                     }}
                     onSave={handleSaveAbout}
                     onCancel={handleCancelAbout}
@@ -858,15 +885,26 @@ const MemberProfile = () => {
                         
                         <h4 className="font-semibold text-gray-900 mb-3 mt-6">Redes Sociais</h4>
                         <div className="flex space-x-3">
-                          <a href="#" className="text-pink-600 hover:text-pink-800">
-                            <i className="fab fa-instagram text-xl"></i>
-                          </a>
-                          <a href="#" className="text-blue-600 hover:text-blue-800">
-                            <i className="fab fa-linkedin text-xl"></i>
-                          </a>
-                          <a href="#" className="text-blue-700 hover:text-blue-900">
-                            <i className="fab fa-facebook text-xl"></i>
-                          </a>
+                          {member.socialMedia && member.socialMedia.instagram && (
+                            <a href={buildSocialUrl('instagram', member.socialMedia.instagram)} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-800">
+                              <i className="fab fa-instagram text-xl"></i>
+                            </a>
+                          )}
+                          {member.linkedin && (
+                            <a href={buildSocialUrl('linkedin', member.linkedin)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                              <i className="fab fa-linkedin text-xl"></i>
+                            </a>
+                          )}
+                          {member.socialMedia && member.socialMedia.facebook && (
+                            <a href={buildSocialUrl('facebook', member.socialMedia.facebook)} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:text-blue-900">
+                              <i className="fab fa-facebook text-xl"></i>
+                            </a>
+                          )}
+                          {member.twitter && (
+                            <a href={buildSocialUrl('twitter', member.twitter)} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                              <i className="fab fa-twitter text-xl"></i>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>

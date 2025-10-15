@@ -9,7 +9,13 @@ const AboutTabEditor = ({ profileData, onSave, onCancel }) => {
     languages: [],
     email: '',
     phone: '',
-    website: ''
+    website: '',
+    linkedin: '',
+    twitter: '',
+    socialMedia: {
+      instagram: '',
+      facebook: ''
+    }
   });
 
   const [newQualification, setNewQualification] = useState('');
@@ -25,7 +31,13 @@ const AboutTabEditor = ({ profileData, onSave, onCancel }) => {
         languages: profileData.languages || [],
         email: profileData.email || '',
         phone: profileData.phone || '',
-        website: profileData.website || ''
+        website: profileData.website || '',
+        linkedin: profileData.linkedin || '',
+        twitter: profileData.twitter || '',
+        socialMedia: {
+          instagram: (profileData.socialMedia && profileData.socialMedia.instagram) || '',
+          facebook: (profileData.socialMedia && profileData.socialMedia.facebook) || ''
+        }
       });
     }
   }, [profileData]);
@@ -64,6 +76,16 @@ const AboutTabEditor = ({ profileData, onSave, onCancel }) => {
         [field]: ''
       }));
     }
+  };
+
+  const handleSocialChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: {
+        ...prev.socialMedia,
+        [field]: value
+      }
+    }));
   };
 
   const addQualification = () => {
@@ -293,6 +315,55 @@ const AboutTabEditor = ({ profileData, onSave, onCancel }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
             placeholder="www.seusite.com"
           />
+        </div>
+
+        {/* Social Media */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Redes Sociais
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">LinkedIn</label>
+              <input
+                type="url"
+                value={formData.linkedin}
+                onChange={(e) => handleInputChange('linkedin', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="https://www.linkedin.com/in/seu-perfil"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Twitter</label>
+              <input
+                type="url"
+                value={formData.twitter}
+                onChange={(e) => handleInputChange('twitter', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="https://twitter.com/seu-perfil"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Instagram</label>
+              <input
+                type="text"
+                value={formData.socialMedia.instagram}
+                onChange={(e) => handleSocialChange('instagram', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="@seuusuario ou URL completa"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Facebook</label>
+              <input
+                type="text"
+                value={formData.socialMedia.facebook}
+                onChange={(e) => handleSocialChange('facebook', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="Página ou URL completa"
+              />
+            </div>
+          </div>
         </div>
       </form>
     </div>
