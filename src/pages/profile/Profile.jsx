@@ -12,17 +12,18 @@ import { useToast } from '../../components/common/Toast';
 
 const MemberProfile = () => {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { ToastContainer } = useToast();
   const navigate = useNavigate();
   
   // Se não há ID na URL e o usuário está autenticado, redirecionar para o próprio perfil
   useEffect(() => {
-    if (!id && user?.id) {
+    // Esperar o estado de autenticação resolver antes de redirecionar
+    if (!isLoading && !id && user?.id) {
       navigate(`/perfil/${user.id}`, { replace: true });
       return;
     }
-  }, [id, user?.id, navigate]);
+  }, [id, user?.id, navigate, isLoading]);
   
   const memberId = id ? parseInt(id) : null;
   const [activeTab, setActiveTab] = useState('sobre');
@@ -118,10 +119,12 @@ const MemberProfile = () => {
 
   // useEffect para chamar a função de carregamento
   useEffect(() => {
-    if (memberId) {
-      loadProfileData();
-    }
-  }, [memberId, loadProfileData]);
+    // Evitar chamada inicial incorreta enquanto Auth ainda está a carregar.
+    // Se o utilizador não está autenticado (isLoading === false e user === null), pode carregar por ID.
+    if (!memberId) return;
+    if (isLoading) return;
+    loadProfileData();
+  }, [memberId, loadProfileData, isLoading]);
 
   // Função para salvar as informações da aba "Sobre"
   const handleSaveAbout = async (formData) => {
