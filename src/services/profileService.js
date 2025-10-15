@@ -50,6 +50,39 @@ class ProfileService {
   }
 
   /**
+   * Obter perfil estendido do usuário autenticado
+   * @returns {Promise<Object>} Dados do perfil estendido
+   */
+  async getExtendedProfile() {
+    try {
+      return await this.apiClient.get('/accounts/profile/extended/');
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao buscar perfil estendido',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Atualizar perfil estendido do usuário autenticado
+   * @param {Object} extendedData - Dados do perfil estendido para atualizar
+   * @returns {Promise<Object>} Perfil estendido atualizado
+   */
+  async updateExtendedProfile(extendedData) {
+    try {
+      return await this.apiClient.patch('/accounts/profile/extended/', extendedData);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao atualizar perfil estendido',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
    * Obter serviços do usuário autenticado
    * @returns {Promise<Array>} Lista de serviços
    */

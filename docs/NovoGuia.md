@@ -6,6 +6,7 @@ Objectivo Da Plataforma
 - Facilitar networking confiável entre membros, profissionais, empresas e organizações.
 - Promover visibilidade de talento (portfólio, serviços, testemunhos) e circulação de informação útil.
 - Garantir uma experiência segura, moderada e inclusiva, com multilínguas e acessibilidade.
+
 Perfis E Papéis
 
 - Visitante: navega conteúdos públicos, pesquisa básica, visualiza perfis limitados.
@@ -14,6 +15,7 @@ Perfis E Papéis
 - Moderador: triagem de denúncias, revisão de conteúdos, ações limitadas de moderação.
 - Admin: gestão completa (utilizadores, papéis, conteúdos, categorias), analytics e segurança.
 - Super Admin: acesso total a configurações sensíveis e auditoria; uso restrito.
+
 Fluxos De Usuário
 
 - Visitante
@@ -29,6 +31,7 @@ Fluxos De Usuário
 - Moderador/Admin
   - Painel: vê filas de moderação, conteúdo denunciado, métricas.
   - Ações: aprova/recusa, bloqueia, ajusta categorias, gere papéis e verificação.
+
 Matriz De Acesso
 
 - Visitante
@@ -43,6 +46,7 @@ Matriz De Acesso
 - Moderador/Admin
   - Acesso: moderação e gestão, analytics, definição de categorias e normas, gestão de papéis.
   - Restrição: auditoria e rastreabilidade obrigatórias; ações sensíveis registradas.
+
 Onboarding E Verificação
 
 - Registo com verificação de email; opcional MFA para maior segurança.
@@ -55,17 +59,20 @@ Networking E Conteúdos
 - Portfólio: projetos, mídia otimizada, categorias; controle de visibilidade.
 - Testemunhos: pedidos e aprovação; moderação automática/manual para evitar abuso.
 - Seguir/Conectar: pedidos com contexto, anti‑spam, limites diários e reputação.
+
 Oportunidades E Eventos
 
 - Oportunidades: filtros (setor, localização, remoto/presencial), requisitos, prazos; candidaturas com CV/portfólio.
 - Eventos: calendário, inscrições, lista de participantes visível aos inscritos; opções de networking.
 - Processos: aprovação de publicações por moderadores; regras contra fraudes e scams.
 - Relatórios: desempenho de posts, taxas de resposta, conversões.
+
 Mensagens E Notificações
 
 - Mensagens: 1‑a‑1 e grupos pequenos com consentimento; rate limit e detecção de abuso.
 - Notificações: email e in‑app; preferências, silenciar threads, digests semanais.
 - Alertas: novas oportunidades/eventos relevantes, atualizações de candidaturas, respostas a mensagens.
+
 Segurança E Privacidade
 
 - Autenticação: JWT com refresh; rotação e blacklist no logout; sessões por dispositivo.
@@ -73,18 +80,21 @@ Segurança E Privacidade
 - Proteções: rate limit, throttling, CAPTCHA em registo/login, verificação de domínio de email para organizadores.
 - Dados: GDPR/UK DPA — consentimento, exportação, eliminação, políticas de retenção claras.
 - Conteúdos: moderação (palavras-chave, reputação), botão de denúncia, resposta rápida e transparente.
+
 Administração E Moderação
 
 - Painel: filas (denúncias, pendentes de aprovação), métricas de engajamento e abuso.
 - Ferramentas: ações em massa, histórico de alterações, logs de auditoria.
 - Categorias/Taxonomias: gestão central de setores, tags e cidades/países.
 - Regras: políticas visíveis, aplicação consistente, feedback ao utilizador.
+
 Observações Técnicas (baseadas no código atual)
 
 - Autenticação: endpoints /api/auth/login/ , /api/auth/profile/ , /api/auth/refresh/ com SimpleJWT; recomendo ativar blacklist e rotação de refresh.
 - Perfis/Serviços/Portfólio: rotas em accounts como /accounts/profile/ , /accounts/services/ , /accounts/portfolio/ ; já suportam CRUD e podem limitar por papel.
 - Eventos/Oportunidades/Notificações/Analytics: apps dedicados presentes; é viável aplicar RBAC por Group / Permission e criar IsOrganizer / IsEmployer .
 - Frontend: VITE_API_URL já parametrizado; mantenha perfis com visibilidade controlada e paginados; i18n existente deve ser reforçado.
+
 Sugestões De Implementação
 
 - Papéis e Permissões: usar Group + permissões DRF custom ( IsOwnerOrReadOnly , IsAdminUser , IsOrganizer ) em cada view.
@@ -93,6 +103,7 @@ Sugestões De Implementação
 - Moderation Pipeline: flag automático + fila manual; aprovação para eventos/oportunidades de novos utilizadores.
 - Anti‑Spam: throttling DRF, limites por dia, verificação de conta antes de mensagens em massa.
 - Auditoria: logging estruturado (ação, actor, alvo, timestamp) para todas ações administrativas.
+
 Próximos Passos
 
 - Definir claramente a política de papéis e o mapa de permissões por módulo.

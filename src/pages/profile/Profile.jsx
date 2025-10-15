@@ -14,7 +14,7 @@ import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 const MemberProfile = () => {
   const { id } = useParams();
   const { user, isLoading } = useAuth();
-  const { ToastContainer } = useToast();
+  const { ToastContainer, showToast } = useToast();
   const navigate = useNavigate();
   
   // Se não há ID na URL e o usuário está autenticado, redirecionar para o próprio perfil
@@ -130,26 +130,42 @@ const MemberProfile = () => {
   // Função para salvar as informações da aba "Sobre"
   const handleSaveAbout = async (formData) => {
     try {
-      // Aqui você faria a chamada para a API para salvar os dados
-      // const updatedProfile = await profileService.updateProfile(memberId, formData);
-      
-      // Por enquanto, vamos atualizar o estado local
+      // Atualizar campos principais do usuário (bio, email, phone)
+      const userPayload = {
+        bio: formData.description?.trim() || '',
+        email: formData.email?.trim() || '',
+        phone: formData.phone?.trim() || ''
+      };
+      const updatedUser = await profileService.updateProfile(userPayload);
+
+      // Atualizar campos estendidos (website, qualifications, languages)
+      const extendedPayload = {
+        website: formData.website?.trim() || '',
+        qualifications: formData.qualifications || [],
+        languages: formData.languages || []
+      };
+
+      let updatedExtended = null;
+      try {
+        updatedExtended = await profileService.updateExtendedProfile(extendedPayload);
+      } catch (err) {
+        console.warn('Falha ao atualizar perfil estendido:', err?.message || err);
+      }
+
+      // Mesclar respostas no estado local
       setProfileData(prev => ({
-        ...prev,
-        bio: formData.description,
-        qualifications: formData.qualifications,
-        languages: formData.languages,
-        email: formData.email,
-        phone: formData.phone,
-        website: formData.website
+        ...updatedUser,
+        profile: {
+          ...(updatedUser?.profile || prev?.profile || {}),
+          ...(updatedExtended || {})
+        }
       }));
-      
+
       setIsEditingAbout(false);
-      
-      // Mostrar feedback de sucesso
-      console.log('Informações salvas com sucesso!');
+      showToast('Informações atualizadas com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao salvar informações:', error);
+      showToast('Erro ao salvar informações. Tente novamente.', 'error');
       throw error;
     }
   };
@@ -208,29 +224,15 @@ const MemberProfile = () => {
   // Função para salvar as informações básicas do perfil
   const handleSaveProfile = async (profileFormData) => {
     try {
-      console.log('Dados a serem salvos:', profileFormData);
-      
-      // Fazer a chamada para a API para salvar os dados
+      // Salvar dados do perfil e usar resposta da API para atualizar estado
       const updatedProfile = await profileService.updateProfile(profileFormData);
-      
-      console.log('Resposta da API:', updatedProfile);
-      
-      // Atualizar o estado local com os dados retornados da API
-      setProfileData(prev => ({
-        ...prev,
-        first_name: profileFormData.first_name,
-        last_name: profileFormData.last_name,
-        profession: profileFormData.profession,
-        location: profileFormData.location,
-        category: profileFormData.category
-      }));
-      
+      setProfileData(updatedProfile);
+
       setIsEditingProfile(false);
-      
-      // Mostrar feedback de sucesso
-      console.log('Perfil salvo com sucesso!');
+      showToast('Perfil atualizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao salvar perfil:', error);
+      showToast('Erro ao salvar perfil. Tente novamente.', 'error');
       throw error;
     }
   };
@@ -258,13 +260,13 @@ const MemberProfile = () => {
     description: profileData.bio || 'Biografia não informada',
     phone: profileData.phone || '',
     email: profileData.email || '',
-    website: profileData.website || '',
-    socialMedia: profileData.social_media || {},
+    website: (profileData.profile && profileData.profile.website) || '',
+    socialMedia: (profileData.profile && profileData.profile.social_media) || {},
     services: services,
     portfolio: portfolio,
     testimonials: testimonials,
-    qualifications: profileData.qualifications || [],
-    languages: profileData.languages || []
+    qualifications: (profileData.profile && profileData.profile.qualifications) || [],
+    languages: (profileData.profile && profileData.profile.languages) || []
   } : {
     id: 1,
     name: "Ana Kiala",
@@ -651,7 +653,7 @@ const MemberProfile = () => {
             <div className="flex-1">
               {isEditingProfile && isOwnProfile ? (
                 <ProfileEditor
-                  initialData={{
+                  profileData={{
                     first_name: profileData?.first_name || '',
                     last_name: profileData?.last_name || '',
                     profession: profileData?.profession || '',
@@ -660,6 +662,7 @@ const MemberProfile = () => {
                   }}
                   onSave={handleSaveProfile}
                   onCancel={handleCancelProfile}
+                  isOwnProfile={isOwnProfile}
                 />
               ) : (
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
