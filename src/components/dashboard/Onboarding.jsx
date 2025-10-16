@@ -17,6 +17,7 @@ const Onboarding = () => {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [form, setForm] = useState({
     application_type: 'organizer',
     company_name: '',
@@ -67,6 +68,20 @@ const Onboarding = () => {
     loadApplications();
   }, []);
 
+  const openCreateForm = () => {
+    setError(null);
+    setForm({
+      application_type: 'organizer',
+      company_name: '',
+      tax_id: '',
+      contact_email: '',
+      phone: '',
+      address: '',
+      website: ''
+    });
+    setShowCreateForm(true);
+  };
+
   const handleCreate = async () => {
     try {
       setCreating(true);
@@ -93,6 +108,7 @@ const Onboarding = () => {
       });
       setApplications(prev => [created, ...prev]);
       setSelectedAppId(created.id);
+      setShowCreateForm(false);
     } catch (err) {
       console.error('Erro ao criar aplicação:', err);
       setError(formatApiError(err, 'Erro ao criar aplicação.'));
@@ -219,18 +235,71 @@ const Onboarding = () => {
           <h1 className="text-2xl font-bold text-gray-900">Onboarding</h1>
           <p className="mt-2 text-sm text-gray-700">Crie e acompanhe a sua aplicação para se tornar organizador ou empregador.</p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={creating}
-            className="inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-          >
-            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-            Nova Aplicação
-          </button>
+      <div className="mt-4 sm:mt-0 flex space-x-3">
+        <button
+          type="button"
+          onClick={openCreateForm}
+          disabled={creating}
+          className="inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+        >
+          <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+          Nova Aplicação
+        </button>
+      </div>
+    </div>
+
+    {/* Formulário de criação rápida */}
+    {showCreateForm && (
+      <div className="bg-white shadow rounded-lg">
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Nova Aplicação</h2>
+          <p className="text-sm text-gray-600">Preencha os campos mínimos para criar o rascunho.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tipo de Aplicação</label>
+              <select
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                value={form.application_type}
+                onChange={(e) => setForm(prev => ({ ...prev, application_type: e.target.value }))}
+              >
+                {(onboarding.applicationTypes || []).map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Empresa</label>
+              <input
+                type="text"
+                value={form.company_name}
+                onChange={(e) => setForm(prev => ({ ...prev, company_name: e.target.value }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={creating}
+              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+            >
+              Criar
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowCreateForm(false); setError(null); }}
+              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
+    )}
 
       {/* Lista de aplicações */}
       <div className="bg-white shadow rounded-lg">
