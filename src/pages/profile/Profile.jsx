@@ -82,9 +82,20 @@ const MemberProfile = () => {
       
       setProfileData(profileResponse);
 
-      // Carregar testemunhos
+      // Carregar e normalizar testemunhos
       const testimonialsResponse = await profileService.getUserTestimonials(memberId);
-      setTestimonials(testimonialsResponse || []);
+      const testimonialsList = Array.isArray(testimonialsResponse)
+        ? testimonialsResponse
+        : (testimonialsResponse?.results || []);
+      const normalizedTestimonials = (testimonialsList || []).map(t => ({
+        id: t.id,
+        name: t.reviewer_name || t.reviewer_username || 'Anônimo',
+        rating: t.rating || 0,
+        comment: t.comment || '',
+        project: t.project || '',
+        date: t.created_at ? new Date(t.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : ''
+      }));
+      setTestimonials(normalizedTestimonials);
 
       // Se for o próprio perfil, carregar serviços e portfólio editáveis
       if (isOwnProfile) {
@@ -92,12 +103,38 @@ const MemberProfile = () => {
           profileService.getUserServices(),
           profileService.getUserPortfolio()
         ]);
-        setServices(servicesResponse || []);
-        setPortfolio(portfolioResponse || []);
+        const servicesList = Array.isArray(servicesResponse)
+          ? servicesResponse
+          : (servicesResponse?.results || []);
+        setServices(servicesList || []);
+        const portfolioList = Array.isArray(portfolioResponse)
+          ? portfolioResponse
+          : (portfolioResponse?.results || []);
+        const mappedPortfolio = (portfolioList || []).map(p => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          image: p.image,
+          category: p.category_display || p.category,
+          completedDate: p.project_date || null,
+          client: p.client || '',
+          is_featured: !!p.is_featured
+        }));
+        setPortfolio(mappedPortfolio);
       } else {
         // Para outros perfis, usar os dados do perfil detalhado
         setServices(profileResponse?.services || []);
-        setPortfolio(profileResponse?.portfolio_items || []);
+        const mappedPortfolio = (profileResponse?.portfolio_items || []).map(p => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          image: p.image,
+          category: p.category_display || p.category,
+          completedDate: p.project_date || null,
+          client: p.client || '',
+          is_featured: !!p.is_featured
+        }));
+        setPortfolio(mappedPortfolio);
       }
 
     } catch (err) {
@@ -181,17 +218,64 @@ const MemberProfile = () => {
   // Função para salvar os serviços
   const handleSaveServices = async (servicesData) => {
     try {
-      // Aqui você faria a chamada para a API para salvar os serviços
-      // const updatedServices = await profileService.updateServices(memberId, servicesData);
-      
-      // Por enquanto, vamos atualizar o estado local
-      setServices(servicesData);
+      // Sincroniza com backend: criar, atualizar e deletar conforme alterações
+      const current = services || [];
+      const currentIds = new Set(current.map(s => s.id).filter(Boolean));
+      const incomingIds = new Set((servicesData || []).map(s => s.id).filter(Boolean));
+
+      // Deletar serviços removidos
+      const toDelete = current.filter(s => s.id && !incomingIds.has(s.id));
+      for (const svc of toDelete) {
+        try {
+          await profileService.deleteService(svc.id);
+        } catch (err) {
+          console.warn('Falha ao deletar serviço', svc.id, err?.message || err);
+        }
+      }
+
+      // Atualizar serviços existentes
+      const toUpdate = (servicesData || []).filter(s => s.id && currentIds.has(s.id));
+      for (const svc of toUpdate) {
+        const payload = {
+          name: svc.name || '',
+          description: svc.description || '',
+          price: svc.price || '',
+          duration: svc.duration || '',
+          is_active: true
+        };
+        try {
+          await profileService.updateService(svc.id, payload);
+        } catch (err) {
+          console.warn('Falha ao atualizar serviço', svc.id, err?.message || err);
+        }
+      }
+
+      // Criar novos serviços (image é opcional e não obrigatória)
+      const toCreate = (servicesData || []).filter(s => !s.id || !currentIds.has(s.id));
+      for (const svc of toCreate) {
+        const payload = {
+          name: svc.name || '',
+          description: svc.description || '',
+          price: svc.price || '',
+          duration: svc.duration || '',
+          is_active: true
+        };
+        try {
+          await profileService.createService(payload);
+        } catch (err) {
+          console.warn('Falha ao criar serviço', svc?.name, err?.message || err);
+        }
+      }
+
+      // Recarrega do backend para refletir IDs reais
+      const refreshed = await profileService.getUserServices();
+      const refreshedList = Array.isArray(refreshed) ? refreshed : (refreshed?.results || []);
+      setServices(refreshedList || []);
       setIsEditingServices(false);
-      
-      // Mostrar feedback de sucesso
-      console.log('Serviços salvos com sucesso!');
+      showToast('Serviços atualizados com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao salvar serviços:', error);
+      showToast('Erro ao salvar serviços. Tente novamente.', 'error');
       throw error;
     }
   };
@@ -204,17 +288,99 @@ const MemberProfile = () => {
   // Função para salvar o portfólio
   const handleSavePortfolio = async (portfolioData) => {
     try {
-      // Aqui você faria a chamada para a API para salvar os dados
-      // const updatedPortfolio = await profileService.updatePortfolio(memberId, portfolioData);
-      
-      // Por enquanto, vamos atualizar o estado local
-      setPortfolio(portfolioData);
+      // Mapeia labels de categoria para choices do backend
+      const mapCategory = (label) => {
+        const t = (label || '').toLowerCase();
+        // Suporta labels pt-BR/pt-PT: 'Residencial', 'Comercial', 'Industrial', 'Outro'
+        if (t.includes('resid')) return 'residential';
+        if (t.includes('comerc')) return 'commercial';
+        if (t.includes('indust')) return 'industrial';
+        if (t.includes('outro')) return 'other';
+        return 'other';
+      };
+
+      const current = portfolio || [];
+      const currentIds = new Set(current.map(p => p.id).filter(Boolean));
+      const incomingIds = new Set((portfolioData || []).map(p => p.id).filter(Boolean));
+
+      // Deletar projetos removidos
+      const toDelete = current.filter(p => p.id && !incomingIds.has(p.id));
+      for (const proj of toDelete) {
+        try {
+          await profileService.deletePortfolioItem(proj.id);
+        } catch (err) {
+          console.warn('Falha ao deletar projeto', proj.id, err?.message || err);
+        }
+      }
+
+      // Atualizar projetos existentes
+      const toUpdate = (portfolioData || []).filter(p => p.id && currentIds.has(p.id));
+      for (const proj of toUpdate) {
+        const basePayload = {
+          title: proj.title || '',
+          description: proj.description || '',
+          category: mapCategory(proj.category),
+          project_date: proj.completedDate || null,
+          is_featured: !!proj.is_featured
+        };
+        try {
+          if (proj.imageFile) {
+            await profileService.updatePortfolioItemMultipart(proj.id, {
+              ...basePayload,
+              imageFile: proj.imageFile,
+            });
+          } else {
+            await profileService.updatePortfolioItem(proj.id, basePayload);
+          }
+        } catch (err) {
+          console.warn('Falha ao atualizar projeto', proj.id, err?.message || err);
+        }
+      }
+
+      // Criar novos projetos — requer upload de imagem (ImageField obrigatório)
+      const toCreate = (portfolioData || []).filter(p => !p.id || !currentIds.has(p.id));
+      for (const proj of toCreate) {
+        const basePayload = {
+          title: proj.title || '',
+          description: proj.description || '',
+          category: mapCategory(proj.category),
+          project_date: proj.completedDate || null,
+          is_featured: !!proj.is_featured
+        };
+        try {
+          if (proj.imageFile) {
+            await profileService.createPortfolioItemMultipart({
+              ...basePayload,
+              imageFile: proj.imageFile,
+            });
+          } else {
+            // Sem imagem não é possível criar
+            showToast('Imagem é obrigatória para novos projetos.', 'error');
+          }
+        } catch (err) {
+          console.warn('Falha ao criar projeto', proj?.title, err?.message || err);
+        }
+      }
+
+      // Recarrega portfólio do backend e normaliza para UI
+      const refreshed = await profileService.getUserPortfolio();
+      const refreshedList = Array.isArray(refreshed) ? refreshed : (refreshed?.results || []);
+      const mappedPortfolio = (refreshedList || []).map(p => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        image: p.image,
+        category: p.category_display || p.category,
+        completedDate: p.project_date || null,
+        client: p.client || '',
+        is_featured: !!p.is_featured
+      }));
+      setPortfolio(mappedPortfolio);
       setIsEditingPortfolio(false);
-      
-      // Mostrar feedback de sucesso
-      console.log('Portfólio salvo com sucesso!');
+      showToast('Portfólio atualizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao salvar portfólio:', error);
+      showToast('Erro ao salvar portfólio. Tente novamente.', 'error');
       throw error;
     }
   };
@@ -941,7 +1107,7 @@ const MemberProfile = () => {
                       {member && member.services && member.services.map(service => (
                         <div key={service.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                           <img 
-                            src={service.image} 
+                            src={service.image || `https://picsum.photos/400/300?random=${service.id || Math.floor(Math.random()*1000)}`}
                             alt={service.name}
                             className="w-full h-48 object-cover"
                           />
@@ -1018,7 +1184,7 @@ const MemberProfile = () => {
                           <div className="p-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                {project.category}
+                                {project.category_display || project.category}
                               </span>
                             </div>
                             <h4 className="font-semibold text-gray-900 mb-2">{project.title}</h4>

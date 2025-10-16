@@ -11,19 +11,17 @@ const PortfolioManager = ({ portfolio, onSave, onCancel, isOwnProfile }) => {
     description: '',
     category: '',
     image: '',
+    imageFile: null,
     completedDate: '',
     client: ''
   });
   const [errors, setErrors] = useState({});
 
   const categories = [
-    'Design de Interiores',
-    'Arquitetura',
-    'Decoração',
-    'Consultoria',
-    'Reforma',
-    'Paisagismo',
-    'Outros'
+    'Residencial',
+    'Comercial',
+    'Industrial',
+    'Outro'
   ];
 
   const resetForm = () => {
@@ -32,6 +30,7 @@ const PortfolioManager = ({ portfolio, onSave, onCancel, isOwnProfile }) => {
       description: '',
       category: '',
       image: '',
+      imageFile: null,
       completedDate: '',
       client: ''
     });
@@ -53,6 +52,11 @@ const PortfolioManager = ({ portfolio, onSave, onCancel, isOwnProfile }) => {
 
     if (!formData.category.trim()) {
       newErrors.category = 'Categoria é obrigatória';
+    }
+
+    // Para novos projetos, a imagem de ficheiro é obrigatória (backend ImageField)
+    if (!editingProject && !formData.imageFile) {
+      newErrors.image = 'Imagem é obrigatória (carregue um ficheiro)';
     }
 
     setErrors(newErrors);
@@ -113,6 +117,7 @@ const PortfolioManager = ({ portfolio, onSave, onCancel, isOwnProfile }) => {
       description: project.description,
       category: project.category,
       image: project.image || '',
+      imageFile: project.imageFile || null,
       completedDate: project.completedDate || '',
       client: project.client || ''
     });
@@ -266,15 +271,19 @@ const PortfolioManager = ({ portfolio, onSave, onCancel, isOwnProfile }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL da Imagem (opcional)
+                Imagem do Projeto (ficheiro obrigatório para novos projetos)
               </label>
               <input
-                type="url"
-                value={formData.image}
-                onChange={(e) => handleInputChange('image', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                placeholder="https://exemplo.com/imagem.jpg"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleInputChange('imageFile', e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  errors.image ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {errors.image && (
+                <p className="mt-1 text-sm text-red-600">{errors.image}</p>
+              )}
             </div>
 
             <div className="flex space-x-2">

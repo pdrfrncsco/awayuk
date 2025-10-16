@@ -184,6 +184,37 @@ class ProfileService {
   }
 
   /**
+   * Criar novo item do portfólio (multipart com imagem obrigatória)
+   * @param {Object} portfolioData - { title, description, category, project_date, is_featured, imageFile }
+   * @returns {Promise<Object>} Item do portfólio criado
+   */
+  async createPortfolioItemMultipart(portfolioData) {
+    try {
+      const formData = new FormData();
+      if (portfolioData.imageFile) {
+        formData.append('image', portfolioData.imageFile);
+      }
+      if (portfolioData.title) formData.append('title', portfolioData.title);
+      if (portfolioData.description) formData.append('description', portfolioData.description);
+      if (portfolioData.category) formData.append('category', portfolioData.category);
+      if (portfolioData.project_date) formData.append('project_date', portfolioData.project_date);
+      if (typeof portfolioData.is_featured !== 'undefined') {
+        formData.append('is_featured', portfolioData.is_featured ? 'true' : 'false');
+      }
+
+      return await this.apiClient.post('/accounts/portfolio/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao criar item do portfólio (multipart)',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
    * Atualizar item do portfólio
    * @param {number} portfolioId - ID do item do portfólio
    * @param {Object} portfolioData - Dados do item do portfólio
@@ -195,6 +226,38 @@ class ProfileService {
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao atualizar item do portfólio',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Atualizar item do portfólio com nova imagem (multipart)
+   * @param {number} portfolioId - ID do item do portfólio
+   * @param {Object} portfolioData - { title?, description?, category?, project_date?, is_featured?, imageFile }
+   * @returns {Promise<Object>} Item do portfólio atualizado
+   */
+  async updatePortfolioItemMultipart(portfolioId, portfolioData) {
+    try {
+      const formData = new FormData();
+      if (portfolioData.imageFile) {
+        formData.append('image', portfolioData.imageFile);
+      }
+      if (portfolioData.title) formData.append('title', portfolioData.title);
+      if (portfolioData.description) formData.append('description', portfolioData.description);
+      if (portfolioData.category) formData.append('category', portfolioData.category);
+      if (portfolioData.project_date) formData.append('project_date', portfolioData.project_date);
+      if (typeof portfolioData.is_featured !== 'undefined') {
+        formData.append('is_featured', portfolioData.is_featured ? 'true' : 'false');
+      }
+
+      return await this.apiClient.patch(`/accounts/portfolio/${portfolioId}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao atualizar item do portfólio (multipart)',
         error.status || 500,
         error.data
       );
