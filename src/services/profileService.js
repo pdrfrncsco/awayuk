@@ -299,6 +299,61 @@ class ProfileService {
   }
 
   /**
+   * Listar testemunhos pendentes de aprovação (moderadores/admin)
+   * @param {Object} [params] - Parâmetros opcionais, ex: { user_id }
+   * @returns {Promise<Array>} Lista de testemunhos pendentes
+   */
+  async getPendingTestimonials(params = {}) {
+    try {
+      const query = new URLSearchParams(params).toString();
+      const url = query ? `/accounts/testimonials/pending/?${query}` : '/accounts/testimonials/pending/';
+      return await this.apiClient.get(url);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao buscar testemunhos pendentes',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Moderar testemunho (aprovar/rejeitar)
+   * @param {number} testimonialId - ID do testemunho
+   * @param {boolean} isApproved - Estado de aprovação
+   * @returns {Promise<Object>} Testemunho atualizado
+   */
+  async moderateTestimonial(testimonialId, isApproved) {
+    try {
+      return await this.apiClient.patch(`/accounts/testimonials/${testimonialId}/moderate/`, { is_approved: isApproved });
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao moderar testemunho',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Criar testemunho para um usuário
+   * @param {number} userId - ID do usuário alvo
+   * @param {Object} data - { rating, comment?, project? }
+   * @returns {Promise<Object>} Testemunho criado (pendente de aprovação)
+   */
+  async createTestimonial(userId, data) {
+    try {
+      return await this.apiClient.post(`/accounts/testimonials/${userId}/create/`, data);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao criar testemunho',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
    * Upload direto de imagem para perfil via PATCH multipart
    * @param {File} imageFile - Arquivo de imagem
    * @param {string} imageType - Tipo da imagem ('profile' ou 'cover')

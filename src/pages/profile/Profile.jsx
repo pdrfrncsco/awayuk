@@ -48,6 +48,9 @@ const MemberProfile = () => {
   const [isEditingServices, setIsEditingServices] = useState(false);
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  // Estado para submissão de avaliação
+  const [newTestimonial, setNewTestimonial] = useState({ rating: 5, project: '', comment: '' });
+  const [isSubmittingTestimonial, setIsSubmittingTestimonial] = useState(false);
 
   // Verificar se é o próprio perfil do usuário (memoizado para evitar re-renders)
   const isOwnProfile = useMemo(() => {
@@ -163,6 +166,39 @@ const MemberProfile = () => {
     if (isLoading) return;
     loadProfileData();
   }, [memberId, loadProfileData, isLoading]);
+
+  // Submeter novo testemunho
+  const handleSubmitTestimonial = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      showToast('Precisa de iniciar sessão para avaliar.', 'error');
+      return;
+    }
+    if (isOwnProfile) {
+      showToast('Não pode avaliar o seu próprio perfil.', 'error');
+      return;
+    }
+    try {
+      setIsSubmittingTestimonial(true);
+      const payload = {
+        rating: Number(newTestimonial.rating) || 5,
+        comment: (newTestimonial.comment || '').trim(),
+        project: (newTestimonial.project || '').trim() || null,
+      };
+      await profileService.createTestimonial(memberId, payload);
+      // Mensagem e limpar
+      showToast('Obrigado! Avaliação enviada e aguarda moderação.', 'success');
+      setNewTestimonial({ rating: 5, project: '', comment: '' });
+      // Recarregar dados do perfil para atualizar métricas (review_count/rating)
+      await loadProfileData();
+    } catch (err) {
+      console.error('Erro ao enviar avaliação:', err);
+      const msg = err?.data?.detail || err?.message || 'Erro ao enviar avaliação.';
+      showToast(msg, 'error');
+    } finally {
+      setIsSubmittingTestimonial(false);
+    }
+  };
 
   // Função para salvar as informações da aba "Sobre"
   const handleSaveAbout = async (formData) => {
@@ -1232,6 +1268,59 @@ const MemberProfile = () => {
                     <p className="text-gray-600">{member.reviewCount} avaliações</p>
                   </div>
                 </div>
+
+                {/* Formulário para adicionar avaliação (apenas para visitantes autenticados) */}
+                {!isOwnProfile && user && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h4 className="font-semibold text-gray-900 mb-4">Adicionar uma avaliação</h4>
+                    <form onSubmit={handleSubmitTestimonial} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Classificação *</label>
+                        <select
+                          value={newTestimonial.rating}
+                          onChange={(e) => setNewTestimonial({ ...newTestimonial, rating: Number(e.target.value) })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                          required
+                        >
+                          {[1,2,3,4,5].map(n => (
+                            <option key={n} value={n}>{n} estrela{n>1?'s':''}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Projeto (opcional)</label>
+                        <input
+                          type="text"
+                          value={newTestimonial.project}
+                          onChange={(e) => setNewTestimonial({ ...newTestimonial, project: e.target.value })}
+                          placeholder="Ex: Consultoria de Decoração"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Comentário *</label>
+                        <textarea
+                          rows={4}
+                          value={newTestimonial.comment}
+                          onChange={(e) => setNewTestimonial({ ...newTestimonial, comment: e.target.value })}
+                          required
+                          placeholder="Partilhe a sua experiência..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="submit"
+                          disabled={isSubmittingTestimonial}
+                          className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90 disabled:opacity-60"
+                        >
+                          {isSubmittingTestimonial ? 'A enviar...' : 'Enviar avaliação'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">A sua avaliação ficará visível após aprovação.</p>
+                    </form>
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   {member.testimonials && member.testimonials.map(testimonial => (

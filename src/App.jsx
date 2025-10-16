@@ -42,6 +42,7 @@ import {
   // StatisticsManagement,
   RolesManagement
 } from './components/dashboard';
+import { TestimonialsModeration } from './components/dashboard';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
 import CommunityPage from './pages/dashboard/CommunityPage';
 import ConnectionsPage from './pages/dashboard/ConnectionsPage';
@@ -161,6 +162,11 @@ function App() {
               <Route path="conteudos" element={
                 <RouteGuard permission={PERMISSIONS.VIEW_CONTENT}>
                   <ContentManagement />
+                </RouteGuard>
+              } />
+              <Route path="testemunhos" element={
+                <RouteGuard permission={PERMISSIONS.EDIT_CONTENT}>
+                  <TestimonialsModeration />
                 </RouteGuard>
               } />
               <Route path="estatisticas" element={

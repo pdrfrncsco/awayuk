@@ -15,7 +15,8 @@ import {
   BellIcon,
   UserCircleIcon,
   UserGroupIcon,
-  LinkIcon
+  LinkIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions, PERMISSIONS } from '../../contexts/PermissionsContext';
@@ -67,6 +68,12 @@ const DashboardLayout = () => {
       href: '/dashboard/conteudos', 
       icon: DocumentTextIcon,
       permission: PERMISSIONS.VIEW_CONTENT
+    },
+    { 
+      name: 'Avaliações', 
+      href: '/dashboard/testemunhos', 
+      icon: ChatBubbleLeftRightIcon,
+      permission: PERMISSIONS.EDIT_CONTENT
     },
     { 
       name: 'Estatísticas', 
