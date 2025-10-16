@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   UsersIcon,
   CalendarIcon,
@@ -13,10 +14,13 @@ import {
 import { dashboardService } from '../../services';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Utilizador';
 
   useEffect(() => {
     loadDashboardData();
@@ -202,8 +206,8 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Visão geral da comunidade AWAYSUK</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">Bem-vindo(a), {displayName}</h1>
+          <p className="text-gray-600">Aqui está a sua visão geral da comunidade AWAYSUK</p>
           
           {error && (
             <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-4">

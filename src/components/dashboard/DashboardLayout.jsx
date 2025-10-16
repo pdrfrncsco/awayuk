@@ -32,6 +32,7 @@ const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const { userRole, canAccessDashboard } = usePermissions();
   const { unreadCount } = useNotifications();
+  const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Utilizador';
   
   // Se o utilizador não tem acesso ao dashboard, não renderiza nada
   if (!canAccessDashboard()) {
@@ -171,7 +172,7 @@ const DashboardLayout = () => {
             <div className="flex items-center">
               <UserCircleIcon className="h-10 w-10 text-gray-400" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{user?.name || 'Utilizador'}</p>
+                <p className="text-sm font-medium text-gray-700">{displayName}</p>
                 <p className="text-xs font-medium text-gray-500">{user?.email}</p>
                 <p className="text-xs font-medium text-red-600 capitalize">{userRole}</p>
               </div>
@@ -221,7 +222,7 @@ const DashboardLayout = () => {
             <div className="flex items-center w-full">
               <UserCircleIcon className="h-10 w-10 text-gray-400" />
               <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-gray-700">{user?.name || 'Utilizador'}</p>
+                <p className="text-sm font-medium text-gray-700">{displayName}</p>
                 <p className="text-xs font-medium text-gray-500">{user?.email}</p>
                 <p className="text-xs font-medium text-red-600 capitalize">{userRole}</p>
               </div>
