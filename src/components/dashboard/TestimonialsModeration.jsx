@@ -67,7 +67,7 @@ const TestimonialsModeration = () => {
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <span>De: {t.reviewer_name || t.reviewer_username || 'Anónimo'}</span>
                     <span>•</span>
-                    <span>Para usuário ID: {t.user || 'Anónimo'}</span>
+                    <span>Para: {t.user_full_name || t.user_username || (t.user ? `ID ${t.user}` : 'Anónimo')}</span>
                     {t.created_at && (
                       <>
                         <span>•</span>
