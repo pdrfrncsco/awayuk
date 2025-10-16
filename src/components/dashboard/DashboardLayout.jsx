@@ -47,6 +47,12 @@ const DashboardLayout = () => {
       permission: PERMISSIONS.VIEW_DASHBOARD
     },
     { 
+      name: 'Onboarding', 
+      href: '/dashboard/onboarding', 
+      icon: DocumentTextIcon,
+      permission: PERMISSIONS.VIEW_DASHBOARD
+    },
+    { 
       name: 'Membros', 
       href: '/dashboard/membros', 
       icon: UsersIcon,

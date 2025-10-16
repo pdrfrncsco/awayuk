@@ -9,3 +9,4 @@ export { default as ContentManagement } from './ContentManagement';
 export { default as RolesManagement } from './RolesManagement';
 export { default as TestimonialsModeration } from './TestimonialsModeration';
 export { default as PermissionGuard, RouteGuard, PermissionCheck } from './PermissionGuard';
+export { default as Onboarding } from './Onboarding';

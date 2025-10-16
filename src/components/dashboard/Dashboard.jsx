@@ -263,7 +263,7 @@ const Dashboard = () => {
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Acções Rápidas</h3>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 gap-4">

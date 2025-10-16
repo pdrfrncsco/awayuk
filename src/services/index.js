@@ -19,6 +19,7 @@ import opportunitiesServiceInstance, { OpportunitiesService } from './opportunit
 import analyticsServiceInstance, { AnalyticsService } from './analyticsService.js';
 import contentServiceInstance, { ContentService } from './contentService.js';
 import accountsServiceInstance, { AccountsService } from './accountsService.js';
+import onboardingServiceInstance, { OnboardingService } from './onboardingService.js';
 
 // Exportar serviços específicos
 export { default as authService, AuthService } from './authService.js';
@@ -33,6 +34,7 @@ export { default as opportunitiesService, OpportunitiesService } from './opportu
 export { default as analyticsService, AnalyticsService } from './analyticsService.js';
 export { default as contentService, ContentService } from './contentService.js';
 export { default as accountsService, AccountsService } from './accountsService.js';
+export { default as onboardingService, OnboardingService } from './onboardingService.js';
 
 /**
  * Objeto com todos os serviços para importação conveniente
@@ -58,7 +60,8 @@ export const services = {
   opportunitiesService: opportunitiesServiceInstance,
   analytics: analyticsServiceInstance,
   content: contentServiceInstance,
-  accounts: accountsServiceInstance
+  accounts: accountsServiceInstance,
+  onboarding: onboardingServiceInstance
 };
 
 /**
