@@ -344,6 +344,19 @@ const Onboarding = () => {
               </div>
             </div>
 
+            {/* Notas do revisor quando precisa de informação */}
+            {selectedApp.status === 'needs_more_info' && selectedApp.rejectionReason && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-800"><strong>Notas do revisor:</strong> {selectedApp.rejectionReason}</p>
+                    <p className="mt-1 text-xs text-yellow-700">Atualize a aplicação e volte a submeter para revisão.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Tipo de Aplicação</label>

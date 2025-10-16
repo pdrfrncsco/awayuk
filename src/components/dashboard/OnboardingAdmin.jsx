@@ -18,6 +18,17 @@ const TYPE_OPTIONS = [
   { value: 'employer', label: 'Empregador' },
 ];
 
+const ORDER_FIELD_OPTIONS = [
+  { value: 'created_at', label: 'Data' },
+  { value: 'company_name', label: 'Empresa' },
+  { value: 'status', label: 'Estado' },
+];
+
+const ORDER_DIR_OPTIONS = [
+  { value: 'desc', label: 'Descendente' },
+  { value: 'asc', label: 'Ascendente' },
+];
+
 const OnboardingAdmin = () => {
   const [applications, setApplications] = useState([]);
   const [selectedAppId, setSelectedAppId] = useState(null);
@@ -25,6 +36,11 @@ const OnboardingAdmin = () => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ status: 'submitted', application_type: 'all', search: '' });
   const [moderation, setModeration] = useState({ action: '', reason: '' });
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [orderingField, setOrderingField] = useState('created_at');
+  const [orderingDir, setOrderingDir] = useState('desc');
+  const PAGE_SIZE = 20; // alinhado com DRF settings
 
   const selectedApp = useMemo(() => applications.find(a => a.id === selectedAppId) || null, [applications, selectedAppId]);
 
@@ -36,10 +52,13 @@ const OnboardingAdmin = () => {
       if (filters.status && filters.status !== 'all') params.status = filters.status;
       if (filters.application_type && filters.application_type !== 'all') params.application_type = filters.application_type;
       if (filters.search) params.search = filters.search;
-      const list = await onboarding.getAllApplications(params);
-      setApplications(list);
-      if (!selectedAppId && list.length > 0) {
-        setSelectedAppId(list[0].id);
+      const ordering = orderingDir === 'desc' ? `-${orderingField}` : orderingField;
+      const list = await onboarding.getAllApplications({ ...params, page, ordering });
+      const results = list.results || [];
+      setApplications(results);
+      setTotalCount(list.count || results.length || 0);
+      if (!selectedAppId && results.length > 0) {
+        setSelectedAppId(results[0].id);
       }
     } catch (err) {
       console.error('Erro ao carregar aplicações (admin):', err);
@@ -52,10 +71,11 @@ const OnboardingAdmin = () => {
   useEffect(() => {
     loadApplications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.status, filters.application_type]);
+  }, [filters.status, filters.application_type, page, orderingField, orderingDir]);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setPage(1);
     loadApplications();
   };
 
@@ -80,6 +100,12 @@ const OnboardingAdmin = () => {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((totalCount || 0) / PAGE_SIZE));
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -91,7 +117,7 @@ const OnboardingAdmin = () => {
 
       {/* Filtros */}
       <div className="bg-white shadow rounded-lg p-4 mb-6">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700">Estado</label>
             <select
@@ -128,6 +154,26 @@ const OnboardingAdmin = () => {
                 />
               </div>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ordenar por</label>
+            <select
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+              value={orderingField}
+              onChange={(e) => { setOrderingField(e.target.value); setPage(1); }}
+            >
+              {ORDER_FIELD_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Direção</label>
+            <select
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+              value={orderingDir}
+              onChange={(e) => { setOrderingDir(e.target.value); setPage(1); }}
+            >
+              {ORDER_DIR_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+            </select>
           </div>
           <button
             type="submit"
@@ -172,6 +218,42 @@ const OnboardingAdmin = () => {
               <li className="p-4 text-sm text-gray-500">Sem resultados para os filtros selecionados.</li>
             )}
           </ul>
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-600">Total: {totalCount} • Página {page} de {totalPages}</div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    className="px-2 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  {[...Array(totalPages)].map((_, idx) => {
+                    const p = idx + 1;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className={`px-3 py-1 text-sm rounded-md border ${p === page ? 'bg-red-50 border-red-500 text-red-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="px-2 py-1 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Próximo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Detalhes e ações */}

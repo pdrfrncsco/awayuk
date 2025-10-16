@@ -43,7 +43,11 @@ class OnboardingService {
   // Listar todas as aplicações (admin)
   async getAllApplications(params = {}) {
     const data = await apiClient.get('/accounts/onboarding/applications/admin/', { params });
-    return Array.isArray(data) ? data.map(this.transformApplication) : (data.results || []).map(this.transformApplication);
+    if (Array.isArray(data)) {
+      return { results: data.map(this.transformApplication), count: data.length, next: null, previous: null };
+    }
+    const results = (data.results || []).map(this.transformApplication);
+    return { results, count: data.count || results.length, next: data.next || null, previous: data.previous || null };
   }
 
   // Criar nova aplicação de onboarding
