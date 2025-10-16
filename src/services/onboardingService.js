@@ -40,6 +40,12 @@ class OnboardingService {
     return Array.isArray(data) ? data.map(this.transformApplication) : (data.results || []).map(this.transformApplication);
   }
 
+  // Listar todas as aplicações (admin)
+  async getAllApplications(params = {}) {
+    const data = await apiClient.get('/accounts/onboarding/applications/admin/', { params });
+    return Array.isArray(data) ? data.map(this.transformApplication) : (data.results || []).map(this.transformApplication);
+  }
+
   // Criar nova aplicação de onboarding
   async createApplication(payload) {
     const data = await apiClient.post('/accounts/onboarding/applications/', payload);
@@ -61,6 +67,15 @@ class OnboardingService {
   // Submeter aplicação para revisão
   async submitApplication(id) {
     const data = await apiClient.post(`/accounts/onboarding/applications/${id}/submit/`);
+    return this.transformApplication(data);
+  }
+
+  // Moderar aplicação (admin)
+  async moderateApplication(id, { action, rejection_reason = '' }) {
+    const data = await apiClient.patch(`/accounts/onboarding/applications/${id}/moderate/`, {
+      action,
+      rejection_reason
+    });
     return this.transformApplication(data);
   }
 

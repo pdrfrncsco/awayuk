@@ -41,7 +41,8 @@ import {
   ContentManagement,
   // StatisticsManagement,
   RolesManagement,
-  Onboarding
+  Onboarding,
+  OnboardingAdmin
 } from './components/dashboard';
 import { TestimonialsModeration } from './components/dashboard';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
@@ -168,6 +169,11 @@ function App() {
               <Route path="onboarding" element={
                 <RouteGuard permission={PERMISSIONS.VIEW_DASHBOARD}>
                   <Onboarding />
+                </RouteGuard>
+              } />
+              <Route path="onboarding-admin" element={
+                <RouteGuard permission={PERMISSIONS.MANAGE_APPLICATIONS}>
+                  <OnboardingAdmin />
                 </RouteGuard>
               } />
               <Route path="testemunhos" element={

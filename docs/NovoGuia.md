@@ -234,3 +234,44 @@ Se quiser, desenho um quadro detalhado de permissões por endpoint (visitante/me
  - OCR para extrair CRN/VRN e datas de seguros.
  - Integração com Companies House, HMRC, seguradoras para validação automática.
  - Fluxo escalonado: verificação básica imediata, avançada sob demanda e limites.
+
+
+
+ Estados e Regras
+
+draft (Rascunho): pode editar todos os campos e anexar documentos.
+submitted (Submetida): edição bloqueada; continua a poder anexar documentos.
+needs_more_info (Precisa de Informação): volta a permitir edição para corrigir/completar; pode voltar a submeter.
+approved (Aprovada): marca o utilizador como verificado (is_verified = True), regista approved_by e verified_at.
+rejected (Rejeitada): mostra motivo; não permite edição. Pode criar nova aplicação se necessário.
+Fluxo do Utilizador
+
+Criação do rascunho: preenche “Empresa” e tipo; adiciona outros dados e documentos.
+Submissão: clica “Submeter”; o estado passa a submitted. A edição dos campos fica bloqueada, mas pode continuar a anexar documentos se surgirem comprovativos adicionais.
+Se pedirem mais informação: o estado muda para needs_more_info com uma nota; corrige/completa os dados e documentos, guarda e volta a submeter.
+Resultado: aprovação (approved) verifica a conta e dá acesso alargado; rejeição (rejected) mostra o motivo e encerra a aplicação.
+Fluxo de Equipa/Admin
+
+Revisão: avalia dados e documentos da aplicação submetida.
+Ações de moderação:
+Aprovar: action = "approve" → estado approved, define verified_at, approved_by, e marca o utilizador como verificado.
+Rejeitar: action = "reject" + rejection_reason → estado rejected com motivo.
+Pedir mais informação: action = "request_info" + rejection_reason (nota) → estado needs_more_info para o utilizador editar e resubmeter.
+Endpoints Envolvidos
+
+Listar/Criar: GET/POST /api/accounts/onboarding/applications/
+Detalhe/Atualizar: GET/PATCH /api/accounts/onboarding/applications/:id/ (apenas edição em draft/needs_more_info)
+Submeter: POST /api/accounts/onboarding/applications/:id/submit/
+Anexar documento: POST /api/accounts/onboarding/applications/:id/documents/ (permite anexar em qualquer estado)
+Moderação (staff/admin): PATCH /api/accounts/onboarding/applications/:id/moderate/ com {"action":"approve|reject|request_info","rejection_reason":"...optional..."}
+Comportamento no Dashboard
+
+Após “Submeter”, mostra badge “Submetida”, desativa botões de edição de campos, mantém a secção “Anexar documento” ativa.
+Em “Precisa de Informação”, mostra a nota do revisor e reativa a edição + botão “Submeter novamente”.
+Em “Aprovada”, indica verificação concluída; em “Rejeitada”, apresenta o motivo.
+Próximos Passos Sugeridos
+
+Notificações: enviar email/alerta quando pedem mais informação, aprovam ou rejeitam.
+Regras de documentos: se necessário, exigir tipos mínimos por application_type antes de permitir “Submeter”.
+Permissões pós-aprovação: atribuir automaticamente roles/permissions conforme organizer ou employer (hoje apenas is_verified é atualizado no backend).
+Se quiser, eu adiciono ao frontend a visualização da nota de revisão e um botão de “Submeter novamente” visível apenas em needs_more_info, para fechar o ciclo de forma clara.
