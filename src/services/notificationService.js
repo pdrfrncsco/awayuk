@@ -60,31 +60,10 @@ class NotificationService {
    */
   async markAsRead(notificationId) {
     try {
-      return await this.apiClient.patch(`/notifications/${notificationId}/`, {
-        is_read: true
-      });
+      return await this.apiClient.post(`/notifications/${notificationId}/mark-read/`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao marcar notificação como lida',
-        error.status || 400,
-        error.data
-      );
-    }
-  }
-
-  /**
-   * Marca uma notificação como não lida
-   * @param {number} notificationId - ID da notificação
-   * @returns {Promise<Object>} Notificação atualizada
-   */
-  async markAsUnread(notificationId) {
-    try {
-      return await this.apiClient.patch(`/notifications/${notificationId}/`, {
-        is_read: false
-      });
-    } catch (error) {
-      throw new ApiError(
-        error.message || 'Erro ao marcar notificação como não lida',
         error.status || 400,
         error.data
       );
@@ -141,15 +120,16 @@ class NotificationService {
   }
 
   /**
-   * Obtém o contador de notificações não lidas
-   * @returns {Promise<Object>} Contador de notificações
+   * Obtém estatísticas de notificações
+   * @returns {Promise<Object>} Estatísticas
    */
-  async getUnreadCount() {
+  async getNotificationStats(params = {}) {
     try {
-      return await this.apiClient.get('/notifications/unread-count/');
+      const queryParams = new URLSearchParams(params);
+      return await this.apiClient.get(`/notifications/stats/?${queryParams}`);
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao obter contador de notificações',
+        error.message || 'Erro ao obter estatísticas de notificações',
         error.status || 400,
         error.data
       );
@@ -157,12 +137,29 @@ class NotificationService {
   }
 
   /**
-   * Obtém configurações de notificação do usuário
-   * @returns {Promise<Object>} Configurações de notificação
+   * Obtém resumo de notificações
+   * @returns {Promise<Object>} Resumo
+   */
+  async getNotificationSummary(params = {}) {
+    try {
+      const queryParams = new URLSearchParams(params);
+      return await this.apiClient.get(`/notifications/summary/?${queryParams}`);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao obter resumo de notificações',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Obtém configurações/preferências de notificação do usuário
+   * @returns {Promise<Object>} Preferências de notificação
    */
   async getNotificationSettings() {
     try {
-      return await this.apiClient.get('/notifications/settings/');
+      return await this.apiClient.get('/notifications/preferences/');
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter configurações de notificação',
@@ -173,33 +170,8 @@ class NotificationService {
   }
 
   /**
-   * Atualiza configurações de notificação do usuário
-   * @param {Object} settings - Novas configurações
-   * @param {boolean} settings.email_notifications - Notificações por email
-   * @param {boolean} settings.push_notifications - Notificações push
-   * @param {boolean} settings.event_notifications - Notificações de eventos
-   * @param {boolean} settings.opportunity_notifications - Notificações de oportunidades
-   * @returns {Promise<Object>} Configurações atualizadas
-   */
-  async updateNotificationSettings(settings) {
-    try {
-      return await this.apiClient.patch('/notifications/settings/', settings);
-    } catch (error) {
-      throw new ApiError(
-        error.message || 'Erro ao atualizar configurações de notificação',
-        error.status || 400,
-        error.data
-      );
-    }
-  }
-
-  /**
    * Cria uma nova notificação (para admins)
    * @param {Object} notificationData - Dados da notificação
-   * @param {string} notificationData.title - Título da notificação
-   * @param {string} notificationData.message - Mensagem da notificação
-   * @param {string} notificationData.type - Tipo da notificação
-   * @param {number} notificationData.user_id - ID do usuário destinatário
    * @returns {Promise<Object>} Notificação criada
    */
   async createNotification(notificationData) {
@@ -217,10 +189,6 @@ class NotificationService {
   /**
    * Envia notificação em massa (para admins)
    * @param {Object} notificationData - Dados da notificação
-   * @param {string} notificationData.title - Título da notificação
-   * @param {string} notificationData.message - Mensagem da notificação
-   * @param {string} notificationData.type - Tipo da notificação
-   * @param {Array} notificationData.user_ids - IDs dos usuários destinatários
    * @returns {Promise<Object>} Resultado do envio
    */
   async sendBulkNotification(notificationData) {
@@ -229,26 +197,6 @@ class NotificationService {
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao enviar notificações em massa',
-        error.status || 400,
-        error.data
-      );
-    }
-  }
-
-  /**
-   * Obtém estatísticas de notificações (para admins)
-   * @param {Object} params - Parâmetros de consulta
-   * @param {string} params.start_date - Data de início (YYYY-MM-DD)
-   * @param {string} params.end_date - Data de fim (YYYY-MM-DD)
-   * @returns {Promise<Object>} Estatísticas de notificações
-   */
-  async getNotificationStats(params = {}) {
-    try {
-      const queryParams = new URLSearchParams(params);
-      return await this.apiClient.get(`/notifications/stats/?${queryParams}`);
-    } catch (error) {
-      throw new ApiError(
-        error.message || 'Erro ao obter estatísticas de notificações',
         error.status || 400,
         error.data
       );
@@ -285,6 +233,22 @@ class NotificationService {
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao cancelar subscrição de notificações push',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Envia uma notificação de teste para o utilizador autenticado
+   * @returns {Promise<Object>} Resultado do envio
+   */
+  async sendTestNotification() {
+    try {
+      return await this.apiClient.post('/notifications/test/', {});
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao enviar notificação de teste',
         error.status || 400,
         error.data
       );

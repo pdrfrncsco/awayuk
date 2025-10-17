@@ -39,28 +39,22 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       notifications: notifications 
     },
     { 
-      id: NOTIFICATION_CATEGORIES.EVENTS, 
+      id: NOTIFICATION_CATEGORIES.EVENT, 
       name: 'Eventos', 
       icon: CalendarIcon, 
-      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.EVENTS) 
+      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.EVENT) 
     },
     { 
-      id: NOTIFICATION_CATEGORIES.OPPORTUNITIES, 
+      id: NOTIFICATION_CATEGORIES.OPPORTUNITY, 
       name: 'Oportunidades', 
       icon: BriefcaseIcon, 
-      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.OPPORTUNITIES) 
+      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.OPPORTUNITY) 
     },
     { 
-      id: NOTIFICATION_CATEGORIES.MESSAGES, 
-      name: 'Mensagens', 
-      icon: ChatBubbleLeftIcon, 
-      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.MESSAGES) 
-    },
-    { 
-      id: NOTIFICATION_CATEGORIES.COMMUNITY, 
+      id: NOTIFICATION_CATEGORIES.MEMBER, 
       name: 'Comunidade', 
       icon: UserGroupIcon, 
-      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.COMMUNITY) 
+      notifications: getNotificationsByCategory(NOTIFICATION_CATEGORIES.MEMBER) 
     },
     { 
       id: NOTIFICATION_CATEGORIES.SYSTEM, 
@@ -70,22 +64,27 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     }
   ];
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case NOTIFICATION_TYPES.EVENT:
+  const getNotificationIcon = (category) => {
+    switch (category) {
+      case 'event':
         return <CalendarIcon className="h-5 w-5 text-purple-500" />;
-      case NOTIFICATION_TYPES.OPPORTUNITY:
+      case 'opportunity':
         return <BriefcaseIcon className="h-5 w-5 text-indigo-500" />;
-      case NOTIFICATION_TYPES.MESSAGE:
-        return <ChatBubbleLeftIcon className="h-5 w-5 text-pink-500" />;
-      case NOTIFICATION_TYPES.SYSTEM:
+      case 'member':
+        return <UserGroupIcon className="h-5 w-5 text-pink-500" />;
+      case 'system':
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
       default:
         return <BellIcon className="h-5 w-5 text-blue-500" />;
     }
   };
 
-  const formatTimeAgo = (date) => {
+  const formatTimeAgo = (dateInput) => {
+    if (!dateInput) return '';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) :
+      dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (isNaN(date.getTime())) return '';
+
     const now = new Date();
     const diffInMinutes = Math.floor((now - date) / (1000 * 60));
     
@@ -102,7 +101,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   };
 
   const handleNotificationClick = (notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
       markAsRead(notification.id);
     }
     
@@ -113,13 +112,8 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSettingsChange = (category, enabled) => {
-    updateSettings({
-      categories: {
-        ...settings.categories,
-        [category]: enabled
-      }
-    });
+  const handleSettingsChange = (key, enabled) => {
+    updateSettings(key, enabled);
   };
 
   return (
@@ -224,15 +218,21 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                       </div>
                       <div className="pt-2 border-t border-gray-200">
                         <p className="text-xs text-gray-500 mb-2">Categorias:</p>
-                        {Object.entries(settings.categories).map(([category, enabled]) => (
-                          <div key={category} className="flex items-center justify-between py-1">
+                        {/* Updated: reflect flat settings keys */}
+                        {[
+                          { key: 'system', label: 'Sistema' },
+                          { key: 'events', label: 'Eventos' },
+                          { key: 'opportunities', label: 'Oportunidades' },
+                          { key: 'member', label: 'Comunidade' }
+                        ].map(({ key, label }) => (
+                          <div key={key} className="flex items-center justify-between py-1">
                             <span className="text-sm text-gray-700 capitalize">
-                              {category.replace('_', ' ')}
+                              {label}
                             </span>
                             <input
                               type="checkbox"
-                              checked={enabled}
-                              onChange={(e) => handleSettingsChange(category, e.target.checked)}
+                              checked={!!settings[key]}
+                              onChange={(e) => handleSettingsChange(key, e.target.checked)}
                               className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
                             />
                           </div>
@@ -259,9 +259,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                         <div className="flex items-center justify-center space-x-2">
                           <category.icon className="h-4 w-4" />
                           <span>{category.name}</span>
-                          {category.notifications.filter(n => !n.isRead).length > 0 && (
+                          {category.notifications.filter(n => !n.read).length > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
-                              {category.notifications.filter(n => !n.isRead).length}
+                              {category.notifications.filter(n => !n.read).length}
                             </span>
                           )}
                         </div>
@@ -283,7 +283,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                               <div
                                 key={notification.id}
                                 className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                                  notification.isRead
+                                  notification.read
                                     ? 'bg-white border-gray-200 hover:bg-gray-50'
                                     : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
                                 }`}
@@ -291,27 +291,27 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                               >
                                 <div className="flex items-start space-x-3">
                                   <div className="flex-shrink-0">
-                                    {getNotificationIcon(notification.type)}
+                                    {getNotificationIcon(notification.category)}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1">
                                         <p className={`text-sm font-medium ${
-                                          notification.isRead ? 'text-gray-900' : 'text-gray-900'
+                                          notification.read ? 'text-gray-900' : 'text-gray-900'
                                         }`}>
                                           {notification.title}
                                         </p>
                                         <p className={`mt-1 text-sm ${
-                                          notification.isRead ? 'text-gray-500' : 'text-gray-600'
+                                          notification.read ? 'text-gray-500' : 'text-gray-600'
                                         }`}>
                                           {notification.message}
                                         </p>
                                         <p className="mt-2 text-xs text-gray-400">
-                                          {formatTimeAgo(notification.createdAt)}
+                                          {formatTimeAgo(notification.timestamp)}
                                         </p>
                                       </div>
                                       <div className="flex items-center space-x-2 ml-4">
-                                        {!notification.isRead && (
+                                        {!notification.read && (
                                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                         )}
                                         <button
