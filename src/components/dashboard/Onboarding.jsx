@@ -427,7 +427,7 @@ const Onboarding = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={selectedApp.status !== 'draft' || submitting}
+                disabled={!(selectedApp.status === 'draft' || selectedApp.status === 'needs_more_info') || submitting}
                 className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
                 Submeter
