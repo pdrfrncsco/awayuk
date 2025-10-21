@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import membersService from '../services/membersService.js';
 
 const CommunityContext = createContext();
 
@@ -24,194 +25,89 @@ const CommunityProvider = ({ children }) => {
     searchTerm: ''
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock data para demonstração
-  const mockMembers = [
-    {
-      id: 1,
-      name: 'Ana Silva',
-      email: 'ana.silva@email.com',
-      location: 'Lisboa, Portugal',
-      profession: 'Engenheira de Software',
-      company: 'Tech Solutions',
-      bio: 'Apaixonada por tecnologia e inovação. Especialista em React e Node.js.',
-      skills: ['React', 'Node.js', 'JavaScript', 'Python'],
-      interests: ['Tecnologia', 'Empreendedorismo', 'Viagens'],
-      profile_image: 'https://picsum.photos/150/150?random=20',
-      joinedDate: '2023-01-15',
-      isOnline: true,
-      mutualConnections: 5,
-      connectionStatus: 'none' // none, pending, connected, blocked
-    },
-    {
-      id: 2,
-      name: 'João Santos',
-      email: 'joao.santos@email.com',
-      location: 'Porto, Portugal',
-      profession: 'Designer UX/UI',
-      company: 'Creative Agency',
-      bio: 'Designer com foco em experiência do utilizador e interfaces intuitivas.',
-      skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping'],
-      interests: ['Design', 'Arte', 'Fotografia'],
-      profile_image: 'https://picsum.photos/150/150?random=21',
-      joinedDate: '2023-02-20',
-      isOnline: false,
-      mutualConnections: 3,
-      connectionStatus: 'connected'
-    },
-    {
-      id: 3,
-      name: 'Maria Costa',
-      email: 'maria.costa@email.com',
-      location: 'Coimbra, Portugal',
-      profession: 'Gestora de Projetos',
-      company: 'Innovation Hub',
-      bio: 'Especialista em gestão de projetos ágeis e transformação digital.',
-      skills: ['Scrum', 'Agile', 'Project Management', 'Leadership'],
-      interests: ['Gestão', 'Liderança', 'Inovação'],
-      profile_image: 'https://picsum.photos/150/150?random=22',
-      joinedDate: '2023-03-10',
-      isOnline: true,
-      mutualConnections: 8,
-      connectionStatus: 'pending'
-    },
-    {
-      id: 4,
-      name: 'Pedro Oliveira',
-      email: 'pedro.oliveira@email.com',
-      location: 'Braga, Portugal',
-      profession: 'Analista de Dados',
-      company: 'Data Insights',
-      bio: 'Transformo dados em insights valiosos para negócios.',
-      skills: ['Python', 'SQL', 'Machine Learning', 'Tableau'],
-      interests: ['Data Science', 'IA', 'Estatística'],
-      profile_image: 'https://picsum.photos/150/150?random=23',
-      joinedDate: '2023-04-05',
-      isOnline: false,
-      mutualConnections: 2,
-      connectionStatus: 'none'
-    },
-    {
-      id: 5,
-      name: 'Sofia Ferreira',
-      email: 'sofia.ferreira@email.com',
-      location: 'Aveiro, Portugal',
-      profession: 'Marketing Digital',
-      company: 'Digital Growth',
-      bio: 'Especialista em estratégias de marketing digital e growth hacking.',
-      skills: ['SEO', 'Google Ads', 'Social Media', 'Analytics'],
-      interests: ['Marketing', 'Empreendedorismo', 'Redes Sociais'],
-      profile_image: 'https://picsum.photos/150/150?random=24',
-      joinedDate: '2023-05-12',
-      isOnline: true,
-      mutualConnections: 6,
-      connectionStatus: 'none'
+  const isRecentlyActive = (lastLogin) => {
+    try {
+      if (!lastLogin) return false;
+      const last = new Date(lastLogin).getTime();
+      if (!Number.isFinite(last)) return false;
+      const THIRTY_MIN_MS = 30 * 60 * 1000;
+      return (Date.now() - last) < THIRTY_MIN_MS;
+    } catch {
+      return false;
     }
-  ];
+  };
 
-  const mockConnectionRequests = [
-    {
-      id: 1,
-      fromUser: {
-        id: 6,
-        name: 'Carlos Mendes',
-        profession: 'Desenvolvedor Frontend',
-        profile_image: 'https://picsum.photos/150/150?random=25'
-      },
-      message: 'Olá! Gostaria de conectar contigo para trocar experiências sobre React.',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-      status: 'pending'
-    },
-    {
-      id: 2,
-      fromUser: {
-        id: 7,
-        name: 'Luisa Rodrigues',
-        profession: 'Product Manager',
-        profile_image: 'https://picsum.photos/150/150?random=26'
-      },
-      message: 'Vi o teu perfil e achei interessante a tua experiência. Vamos conectar?',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 horas atrás
-      status: 'pending'
+  const fetchMembers = async (filters = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        search: filters.searchTerm || '',
+        location: filters.location || '',
+        limit: 50,
+        ordering: 'first_name'
+      };
+
+      const result = await membersService.getMembers(params);
+      let list = result.results || [];
+
+      // Filtros client-side para campos não suportados pelo backend
+      if (filters.profession) {
+        const q = filters.profession.toLowerCase();
+        list = list.filter(m => (m.profession || '').toLowerCase().includes(q));
+      }
+      if (Array.isArray(filters.skills) && filters.skills.length > 0) {
+        list = list.filter(m => (m.skills || []).some(skill =>
+          filters.skills.some(filterSkill => (skill || '').toLowerCase().includes(filterSkill.toLowerCase()))
+        ));
+      }
+      if (Array.isArray(filters.interests) && filters.interests.length > 0) {
+        list = list.filter(m => (m.interests || []).some(interest => 
+          filters.interests.some(filterInterest => (interest || '').toLowerCase().includes(filterInterest.toLowerCase()))
+        ));
+      }
+
+      // Enriquecer com campos esperados pela UI
+      list = list.map(m => ({
+        ...m,
+        isOnline: isRecentlyActive(m.lastLogin),
+        mutualConnections: 0,
+        connectionStatus: 'none'
+      }));
+
+      setMembers(list);
+    } catch (e) {
+      setError(e?.message || 'Erro ao obter membros');
+      setMembers([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setLoading(true);
-    setTimeout(() => {
-      setMembers(mockMembers);
-      setConnectionRequests(mockConnectionRequests);
-      setConnections(mockMembers.filter(m => m.connectionStatus === 'connected'));
-      setLoading(false);
-    }, 1000);
+    fetchMembers(searchFilters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const searchMembers = (filters) => {
     setSearchFilters(filters);
-    setLoading(true);
-    
-    // Simular busca
-    setTimeout(() => {
-      let filtered = mockMembers;
-      
-      if (filters.searchTerm) {
-        filtered = filtered.filter(member => 
-          member.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-          member.profession.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-          member.company.toLowerCase().includes(filters.searchTerm.toLowerCase())
-        );
-      }
-      
-      if (filters.location) {
-        filtered = filtered.filter(member => 
-          member.location.toLowerCase().includes(filters.location.toLowerCase())
-        );
-      }
-      
-      if (filters.profession) {
-        filtered = filtered.filter(member => 
-          member.profession.toLowerCase().includes(filters.profession.toLowerCase())
-        );
-      }
-      
-      if (filters.skills.length > 0) {
-        filtered = filtered.filter(member => 
-          member.skills.some(skill => 
-            filters.skills.some(filterSkill => 
-              skill.toLowerCase().includes(filterSkill.toLowerCase())
-            )
-          )
-        );
-      }
-      
-      if (filters.interests.length > 0) {
-        filtered = filtered.filter(member => 
-          member.interests.some(interest => 
-            filters.interests.some(filterInterest => 
-              interest.toLowerCase().includes(filterInterest.toLowerCase())
-            )
-          )
-        );
-      }
-      
-      setMembers(filtered);
-      setLoading(false);
-    }, 500);
+    fetchMembers(filters);
   };
 
   const sendConnectionRequest = (memberId, message = '') => {
-    setMembers(prev => prev.map(member => 
-      member.id === memberId 
+    // TODO: Integrar com endpoint real de pedidos de conexão quando disponível
+    console.log(`Pedido de conexão enviado para o membro ${memberId}:`, message);
+    setMembers(prev => prev.map(member =>
+      member.id === memberId
         ? { ...member, connectionStatus: 'pending' }
         : member
     ));
-    
-    // Simular envio de pedido
-    console.log(`Pedido de conexão enviado para o membro ${memberId}:`, message);
   };
 
   const acceptConnectionRequest = (requestId) => {
+    // TODO: Integrar com endpoint real de aceitar pedido
     const request = connectionRequests.find(req => req.id === requestId);
     if (request) {
       setConnections(prev => [...prev, request.fromUser]);
@@ -220,37 +116,35 @@ const CommunityProvider = ({ children }) => {
   };
 
   const rejectConnectionRequest = (requestId) => {
+    // TODO: Integrar com endpoint real de rejeitar pedido
     setConnectionRequests(prev => prev.filter(req => req.id !== requestId));
   };
 
   const removeConnection = (memberId) => {
+    // TODO: Integrar com endpoint real de remoção de conexão
     setConnections(prev => prev.filter(conn => conn.id !== memberId));
-    setMembers(prev => prev.map(member => 
-      member.id === memberId 
+    setMembers(prev => prev.map(member =>
+      member.id === memberId
         ? { ...member, connectionStatus: 'none' }
         : member
     ));
   };
 
-  const getMemberById = (id) => {
-    return members.find(member => member.id === id);
-  };
+  const getMemberById = (id) => members.find(member => member.id === id);
 
   const getConnectionStatus = (memberId) => {
     const member = getMemberById(memberId);
-    return member ? member.connectionStatus : 'none';
+    return member ? member.connectionStatus || 'none' : 'none';
   };
 
   const getMutualConnections = (memberId) => {
     const member = getMemberById(memberId);
-    return member ? member.mutualConnections : 0;
+    return member ? (member.mutualConnections || 0) : 0;
   };
 
   const getRecommendedMembers = () => {
-    // Simular algoritmo de recomendação baseado em conexões mútuas e interesses
-    return mockMembers
-      .filter(member => member.connectionStatus === 'none')
-      .sort((a, b) => b.mutualConnections - a.mutualConnections)
+    return members
+      .filter(member => (member.connectionStatus || 'none') === 'none')
       .slice(0, 5);
   };
 
@@ -261,14 +155,15 @@ const CommunityProvider = ({ children }) => {
     connectionRequests,
     searchFilters,
     loading,
-    
+    error,
+
     // Ações
     searchMembers,
     sendConnectionRequest,
     acceptConnectionRequest,
     rejectConnectionRequest,
     removeConnection,
-    
+
     // Utilitários
     getMemberById,
     getConnectionStatus,
