@@ -17,6 +17,7 @@ const ConnectionsManager = () => {
   const {
     connections,
     connectionRequests,
+    sentConnectionRequests,
     acceptConnectionRequest,
     rejectConnectionRequest,
     removeConnection
@@ -65,6 +66,12 @@ const ConnectionsManager = () => {
       name: 'Pedidos',
       icon: InboxIcon,
       count: connectionRequests.length
+    },
+    {
+      id: 'sent',
+      name: 'Pedidos Enviados',
+      icon: EnvelopeIcon,
+      count: sentConnectionRequests.length
     }
   ];
 
@@ -153,11 +160,11 @@ const ConnectionsManager = () => {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
-                      {connection.location}
+                      {connection.location || 'Localização não disponível'}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <BriefcaseIcon className="h-4 w-4 mr-2" />
-                      {connection.company}
+                      {connection.company || (connection.profile?.company ?? 'Empresa não disponível')}
                     </div>
                   </div>
 
@@ -232,6 +239,54 @@ const ConnectionsManager = () => {
                           <XMarkIcon className="h-4 w-4 mr-2" />
                           Rejeitar
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Sent Connection Requests Tab */}
+      {activeTab === 'sent' && (
+        <div className="space-y-4">
+          {sentConnectionRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <EnvelopeIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum pedido enviado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Os pedidos de conexão que enviares aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sentConnectionRequests.map((request) => (
+                <div key={request.id} className="bg-white p-6 rounded-lg border border-gray-200">
+                  <div className="flex items-start space-x-4">
+                    <img
+                      src={getProfileImageUrl({ profile_image: request.toUser.profile_image, avatar: request.toUser.avatar, name: request.toUser.name })}
+                      alt={request.toUser.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{request.toUser.name}</h3>
+                          <p className="text-sm text-gray-500">{request.toUser.profession}</p>
+                        </div>
+                        <span className="text-sm text-gray-500">{formatTime(request.timestamp)}</span>
+                      </div>
+                      {request.message && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                          <p className="text-sm text-gray-700">{request.message}</p>
+                        </div>
+                      )}
+                      <div className="mt-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {request.status === 'pending' ? 'Pendente' : request.status === 'accepted' ? 'Aceite' : 'Rejeitado'}
+                        </span>
                       </div>
                     </div>
                   </div>

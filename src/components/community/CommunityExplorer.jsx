@@ -112,8 +112,8 @@ const CommunityExplorer = () => {
     }
   };
 
-  const allSkills = [...new Set(members.flatMap(m => m.skills))];
-  const allInterests = [...new Set(members.flatMap(m => m.interests))];
+  const allSkills = [...new Set(members.flatMap(m => Array.isArray(m.skills) ? m.skills : []))];
+  const allInterests = [...new Set(members.flatMap(m => Array.isArray(m.interests) ? m.interests : (m.profile?.interests || [])))];
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -265,11 +265,11 @@ const CommunityExplorer = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-sm text-gray-600">
                   <MapPinIcon className="h-4 w-4 mr-2" />
-                  {member.location}
+                  {member.location || 'Localização não disponível'}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <BriefcaseIcon className="h-4 w-4 mr-2" />
-                  {member.company}
+                  {member.company || (member.profile?.company ?? 'Empresa não disponível')}
                 </div>
                 {getMutualConnections(member.id) > 0 && (
                   <div className="flex items-center text-sm text-blue-600">
@@ -283,7 +283,7 @@ const CommunityExplorer = () => {
 
               <div className="mb-4">
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {member.skills.slice(0, 3).map(skill => (
+                  {(Array.isArray(member.skills) ? member.skills.slice(0, 3) : []).map(skill => (
                     <span
                       key={skill}
                       className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border border-blue-200"
@@ -291,7 +291,7 @@ const CommunityExplorer = () => {
                       {skill}
                     </span>
                   ))}
-                  {member.skills.length > 3 && (
+                  {Array.isArray(member.skills) && member.skills.length > 3 && (
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                       +{member.skills.length - 3}
                     </span>

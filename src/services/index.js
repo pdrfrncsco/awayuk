@@ -20,6 +20,7 @@ import analyticsServiceInstance, { AnalyticsService } from './analyticsService.j
 import contentServiceInstance, { ContentService } from './contentService.js';
 import accountsServiceInstance, { AccountsService } from './accountsService.js';
 import onboardingServiceInstance, { OnboardingService } from './onboardingService.js';
+import communityServiceInstance from './communityService.js';
 
 // Exportar serviços específicos
 export { default as authService, AuthService } from './authService.js';
@@ -35,6 +36,7 @@ export { default as analyticsService, AnalyticsService } from './analyticsServic
 export { default as contentService, ContentService } from './contentService.js';
 export { default as accountsService, AccountsService } from './accountsService.js';
 export { default as onboardingService, OnboardingService } from './onboardingService.js';
+export { default as communityService } from './communityService.js';
 
 /**
  * Objeto com todos os serviços para importação conveniente
@@ -61,7 +63,8 @@ export const services = {
   analytics: analyticsServiceInstance,
   content: contentServiceInstance,
   accounts: accountsServiceInstance,
-  onboarding: onboardingServiceInstance
+  onboarding: onboardingServiceInstance,
+  community: communityServiceInstance,
 };
 
 /**
