@@ -111,31 +111,42 @@ const CommunityProvider = ({ children }) => {
     try {
       const data = await communityService.listConnections();
       const currentId = user?.id;
-      const others = (Array.isArray(data) ? data : []).map(conn => {
+      
+      // Verificar se os dados estão paginados ou são um array direto
+      const dataArray = data?.results || (Array.isArray(data) ? data : []);
+      
+      const others = dataArray.map(conn => {
         const other = conn?.user?.id === currentId ? conn?.connected_user : conn?.user;
         return transformUserToMember(other);
       }).filter(o => !!o?.id);
+      
       setConnections(others);
+      
       // Atualizar status de conexão nos membros
       setMembers(prev => prev.map(m => ({
         ...m,
         connectionStatus: others.some(o => o.id === m.id) ? 'connected' : m.connectionStatus
       })));
     } catch (e) {
-      console.warn('Erro ao obter conexões:', e?.message || e);
+      console.error('❌ [CommunityContext] Erro ao obter conexões:', e?.message || e);
     }
   };
 
   const fetchConnectionRequests = async () => {
     try {
       const data = await communityService.listConnectionRequests('incoming');
-      const incoming = (Array.isArray(data) ? data : []).map(req => ({
+      
+      // Verificar se os dados estão paginados ou são um array direto
+      const dataArray = data?.results || (Array.isArray(data) ? data : []);
+      
+      const incoming = dataArray.map(req => ({
         id: req.id,
         fromUser: transformUserToMember(req.from_user),
         message: req.message,
         timestamp: req.created_at,
         status: req.status,
       })).filter(r => !!r.fromUser?.id);
+      
       setConnectionRequests(incoming);
       // Marcar pendentes nos membros para pedidos recebidos
       setMembers(prev => prev.map(m => ({
@@ -150,7 +161,11 @@ const CommunityProvider = ({ children }) => {
   const fetchSentConnectionRequests = async () => {
     try {
       const data = await communityService.listConnectionRequests('outgoing');
-      const outgoing = (Array.isArray(data) ? data : []).map(req => ({
+      
+      // Verificar se os dados estão paginados ou são um array direto
+      const dataArray = data?.results || (Array.isArray(data) ? data : []);
+      
+      const outgoing = dataArray.map(req => ({
         id: req.id,
         toUser: transformUserToMember(req.to_user),
         message: req.message,
@@ -169,10 +184,12 @@ const CommunityProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchMembers(searchFilters);
-    fetchConnections();
-    fetchConnectionRequests();
-    fetchSentConnectionRequests();
+    if (user?.id) {
+      fetchMembers(searchFilters);
+      fetchConnections();
+      fetchConnectionRequests();
+      fetchSentConnectionRequests();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
