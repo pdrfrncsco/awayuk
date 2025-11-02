@@ -67,9 +67,9 @@ class AccountsService {
   async getCurrentUserPermissions() {
     try {
       // This endpoint returns the authenticated user's permissions/roles
-      const data = await apiClient.get('/accounts/permissions');
+      const response = await apiClient.get('/accounts/permissions');
       // Expected shape: { permissions: [], roles: [], is_admin, is_business_user, is_premium_user }
-      return data;
+      return response.data;
     } catch (error) {
       console.error('Erro ao buscar permissões do utilizador:', error);
       throw error;
@@ -111,11 +111,15 @@ class AccountsService {
 
   async assignRole(userId, roleId, options = {}) {
     try {
-      const response = await apiClient.post('/accounts/user-roles', {
-        userId,
-        roleId,
-        ...options
-      });
+      // Backend endpoint: POST /accounts/assign-role/ with { user_id, role_id, expires_at }
+      const payload = {
+        user_id: userId,
+        role_id: roleId,
+      };
+      if (options?.expiresAt) {
+        payload.expires_at = options.expiresAt;
+      }
+      const response = await apiClient.post('/accounts/assign-role', payload);
       return this.transformUserRoleResponse(response.data);
     } catch (error) {
       console.error('Erro ao atribuir role:', error);
@@ -133,9 +137,10 @@ class AccountsService {
     }
   }
 
-  async revokeRole(userRoleId) {
+  async revokeRoleByUserAndRole(userId, roleId) {
     try {
-      await apiClient.delete(`/accounts/user-roles/${userRoleId}`);
+      // Backend endpoint: DELETE /accounts/remove-role/<user_id>/<role_id>/
+      await apiClient.delete(`/accounts/remove-role/${userId}/${roleId}`);
       return { success: true };
     } catch (error) {
       console.error('Erro ao revogar role:', error);
@@ -187,7 +192,15 @@ class AccountsService {
 
   // Data transformation methods
   transformRolesResponse(data) {
-    if (data.roles) {
+    // Handle both array and object shapes
+    if (Array.isArray(data)) {
+      return {
+        roles: data.map(role => this.transformRole(role)),
+        pagination: {},
+        total: data.length
+      };
+    }
+    if (data && data.roles) {
       return {
         roles: data.roles.map(role => this.transformRole(role)),
         pagination: data.pagination || {},
@@ -216,10 +229,19 @@ class AccountsService {
   }
 
   transformPermissionsResponse(data) {
+    // Backend /accounts/permissions returns an object with permission strings
     if (Array.isArray(data)) {
       return data.map(permission => this.transformPermission(permission));
     }
-    return data.permissions ? data.permissions.map(permission => this.transformPermission(permission)) : [];
+    if (data && Array.isArray(data.permissions)) {
+      return data.permissions.map((perm) =>
+        typeof perm === 'string' ? { id: perm, name: perm } : this.transformPermission(perm)
+      );
+    }
+    if (data && Array.isArray(data.normalized_permissions)) {
+      return data.normalized_permissions.map((perm) => ({ id: perm, name: perm }));
+    }
+    return [];
   }
 
   transformPermission(permission) {
@@ -232,7 +254,15 @@ class AccountsService {
   }
 
   transformUserRolesResponse(data) {
-    if (data.userRoles) {
+    // Handle both array and object shapes
+    if (Array.isArray(data)) {
+      return {
+        userRoles: data.map(userRole => this.transformUserRole(userRole)),
+        pagination: {},
+        total: data.length
+      };
+    }
+    if (data && data.userRoles) {
       return {
         userRoles: data.userRoles.map(userRole => this.transformUserRole(userRole)),
         pagination: data.pagination || {},

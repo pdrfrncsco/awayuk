@@ -23,6 +23,18 @@ const RolesManagement = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: 'member',
+    display_name: '',
+    description: '',
+    is_active: true
+  });
+  const [assignForm, setAssignForm] = useState({
+    userId: '',
+    roleId: '',
+    expiresAt: ''
+  });
+  const [users, setUsers] = useState([]);
 
   // Estados para dados da API
   const [roles, setRoles] = useState([]);
@@ -162,10 +174,10 @@ const RolesManagement = () => {
     }
   };
 
-  const handleRevokeRole = async (userRoleId) => {
+  const handleRevokeRole = async (userRole) => {
     if (window.confirm('Tem certeza que deseja revogar esta role?')) {
       try {
-        await services.accounts.revokeRole(userRoleId);
+        await services.accounts.revokeRoleByUserAndRole(userRole.user.id, userRole.role.id);
         await loadUserRoles();
       } catch (err) {
         console.error('Erro ao revogar role:', err);
@@ -351,6 +363,7 @@ const RolesManagement = () => {
                       <button
                         className="p-2 text-gray-400 hover:text-red-600"
                         title="Eliminar"
+                        onClick={() => handleDeleteRole(role.id)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -419,6 +432,7 @@ const RolesManagement = () => {
                       <button
                         className="p-2 text-gray-400 hover:text-red-600"
                         title="Revogar"
+                        onClick={() => handleRevokeRole(userRole)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -430,6 +444,142 @@ const RolesManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Modal: Criar Role */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold">Criar Role</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome (interno)</label>
+                <select
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                >
+                  {[
+                    'member',
+                    'premium_member',
+                    'business_basic',
+                    'business_premium',
+                    'community_moderator',
+                    'event_organizer',
+                    'content_creator',
+                    'admin',
+                    'super_admin'
+                  ].map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome de exibição</label>
+                <input
+                  type="text"
+                  value={createForm.display_name}
+                  onChange={(e) => setCreateForm({ ...createForm, display_name: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descrição</label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="create_is_active"
+                  type="checkbox"
+                  checked={createForm.is_active}
+                  onChange={(e) => setCreateForm({ ...createForm, is_active: e.target.checked })}
+                  className="h-4 w-4 text-yellow-600 border-gray-300 rounded"
+                />
+                <label htmlFor="create_is_active" className="ml-2 block text-sm text-gray-700">Ativo</label>
+              </div>
+            </div>
+            <div className="p-6 border-t flex justify-end space-x-2">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 rounded-md border bg-white text-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleCreateRole(createForm)}
+                className="px-4 py-2 rounded-md bg-yellow-600 text-white"
+              >
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Atribuir Role */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold">Atribuir Role a Utilizador</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Utilizador</label>
+                <input
+                  type="number"
+                  placeholder="ID do utilizador"
+                  value={assignForm.userId}
+                  onChange={(e) => setAssignForm({ ...assignForm, userId: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <select
+                  value={assignForm.roleId}
+                  onChange={(e) => setAssignForm({ ...assignForm, roleId: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                >
+                  <option value="">Selecione uma role</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>{r.displayName || r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Expira em (opcional)</label>
+                <input
+                  type="datetime-local"
+                  value={assignForm.expiresAt}
+                  onChange={(e) => setAssignForm({ ...assignForm, expiresAt: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t flex justify-end space-x-2">
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="px-4 py-2 rounded-md border bg-white text-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleAssignRole(Number(assignForm.userId), Number(assignForm.roleId), { expiresAt: assignForm.expiresAt || undefined })}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white"
+                disabled={!assignForm.userId || !assignForm.roleId}
+              >
+                Atribuir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
