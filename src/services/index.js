@@ -21,6 +21,7 @@ import contentServiceInstance, { ContentService } from './contentService.js';
 import accountsServiceInstance, { AccountsService } from './accountsService.js';
 import onboardingServiceInstance, { OnboardingService } from './onboardingService.js';
 import communityServiceInstance from './communityService.js';
+import messageServiceInstance from './messageService.js';
 
 // Exportar serviços específicos
 export { default as authService, AuthService } from './authService.js';
@@ -37,6 +38,7 @@ export { default as contentService, ContentService } from './contentService.js';
 export { default as accountsService, AccountsService } from './accountsService.js';
 export { default as onboardingService, OnboardingService } from './onboardingService.js';
 export { default as communityService } from './communityService.js';
+export { default as messageService } from './messageService.js';
 
 /**
  * Objeto com todos os serviços para importação conveniente
@@ -65,6 +67,7 @@ export const services = {
   accounts: accountsServiceInstance,
   onboarding: onboardingServiceInstance,
   community: communityServiceInstance,
+  messageService: messageServiceInstance,
 };
 
 /**
@@ -80,6 +83,7 @@ export const configureServices = (config) => {
     eventServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     profileServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
+    messageServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
   }
 
   // Configurar timeout se fornecido
@@ -89,6 +93,7 @@ export const configureServices = (config) => {
     eventServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     profileServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
+    messageServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
   }
 
   // Configurar headers globais se fornecidos
@@ -98,6 +103,7 @@ export const configureServices = (config) => {
     Object.assign(eventServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(opportunityServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(profileServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
+    Object.assign(messageServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
   }
 };
 

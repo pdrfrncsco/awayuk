@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { services } from '../../services';
 import { useCommunity } from '../../contexts/CommunityContext';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 import {
@@ -26,6 +27,12 @@ const ConnectionsManager = () => {
   const [activeTab, setActiveTab] = useState('connections');
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageContent, setMessageContent] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageError, setMessageError] = useState(null);
+  const [messageSuccess, setMessageSuccess] = useState(null);
 
   const formatTime = (timestamp) => {
     const now = new Date();
@@ -51,6 +58,56 @@ const ConnectionsManager = () => {
       removeConnection(selectedConnection.id);
       setSelectedConnection(null);
       setShowRemoveModal(false);
+    }
+  };
+
+  const openMessageModal = (connection) => {
+    setSelectedConnection(connection);
+    setMessageSubject('');
+    setMessageContent('');
+    setMessageError(null);
+    setMessageSuccess(null);
+    setShowMessageModal(true);
+  };
+
+  const closeMessageModal = () => {
+    setShowMessageModal(false);
+    setMessageSubject('');
+    setMessageContent('');
+    setMessageError(null);
+    setMessageSuccess(null);
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedConnection?.id) return;
+    if (!messageContent.trim()) {
+      setMessageError('Por favor, escreve uma mensagem.');
+      return;
+    }
+    setSendingMessage(true);
+    setMessageError(null);
+    try {
+      await services.messageService.sendMessage({
+        recipient_id: selectedConnection.id,
+        subject: messageSubject?.trim() || '',
+        content: messageContent.trim(),
+      });
+      setMessageSuccess('Mensagem enviada com sucesso!');
+      setTimeout(() => {
+        closeMessageModal();
+      }, 1000);
+    } catch (e) {
+      const data = e?.response?.data;
+      let msg = e?.message || 'Erro ao enviar mensagem';
+      if (data) {
+        if (typeof data === 'string') msg = data;
+        else if (data.detail) msg = data.detail;
+        else if (data.non_field_errors) msg = Array.isArray(data.non_field_errors) ? data.non_field_errors.join(' ') : String(data.non_field_errors);
+        else if (data.recipient_id) msg = Array.isArray(data.recipient_id) ? data.recipient_id.join(' ') : String(data.recipient_id);
+      }
+      setMessageError(msg);
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -171,7 +228,7 @@ const ConnectionsManager = () => {
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{connection.bio}</p>
 
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                    <button className="flex-1 inline-flex items-center justify-center px-3 py-2.5 border border-gray-300 shadow-sm text-xs sm:text-sm leading-4 font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                    <button onClick={() => openMessageModal(connection)} className="flex-1 inline-flex items-center justify-center px-3 py-2.5 border border-gray-300 shadow-sm text-xs sm:text-sm leading-4 font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                       <ChatBubbleLeftIcon className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Mensagem</span>
                       <span className="sm:hidden">Chat</span>
@@ -327,7 +384,7 @@ const ConnectionsManager = () => {
               </div>
 
               <div className="space-y-3">
-                <button className="w-full text-left px-4 py-3 rounded-md hover:bg-gray-50 flex items-center">
+                <button onClick={() => { setShowMessageModal(true); }} className="w-full text-left px-4 py-3 rounded-md hover:bg-gray-50 flex items-center">
                   <ChatBubbleLeftIcon className="h-5 w-5 mr-3 text-gray-400" />
                   <span className="text-gray-700">Enviar mensagem</span>
                 </button>
@@ -369,6 +426,78 @@ const ConnectionsManager = () => {
                 </button>
                 <button
                   onClick={() => setShowRemoveModal(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Message Modal */}
+      {showMessageModal && selectedConnection && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div className="mt-1">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Enviar Mensagem</h3>
+                <button onClick={closeMessageModal} className="text-gray-400 hover:text-gray-600">
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-3 mb-4">
+                <img
+                  src={getProfileImageUrl({ profile_image: selectedConnection.profile_image, avatar: selectedConnection.avatar, name: selectedConnection.name })}
+                  alt={selectedConnection.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <p className="font-medium text-gray-900">Para: {selectedConnection.name}</p>
+                  <p className="text-sm text-gray-500">{selectedConnection.profession}</p>
+                </div>
+              </div>
+
+              {messageError && (
+                <div className="mb-3 p-2.5 rounded-md bg-red-50 text-red-700 text-sm">
+                  {messageError}
+                </div>
+              )}
+              {messageSuccess && (
+                <div className="mb-3 p-2.5 rounded-md bg-green-50 text-green-700 text-sm">
+                  {messageSuccess}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Assunto (opcional)"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={messageSubject}
+                  onChange={(e) => setMessageSubject(e.target.value)}
+                />
+                <textarea
+                  rows={5}
+                  placeholder="Escreve a tua mensagem..."
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                />
+              </div>
+
+              <div className="mt-4 flex space-x-3">
+                <button
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage}
+                  className={`flex-1 px-4 py-2 rounded-md text-white ${sendingMessage ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {sendingMessage ? 'A enviar...' : 'Enviar'}
+                </button>
+                <button
+                  onClick={closeMessageModal}
                   className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                 >
                   Cancelar
