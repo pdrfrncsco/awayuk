@@ -12,13 +12,9 @@ class OpportunitiesService {
       
       if (filters.search) params.append('search', filters.search);
       if (filters.status) params.append('status', filters.status);
-      if (filters.type) params.append('job_type', filters.type);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.type) params.append('type', filters.type);
       if (filters.location) params.append('location', filters.location);
-      if (filters.experience) params.append('experience_level', filters.experience);
-      if (filters.salary_min) params.append('salary_min', filters.salary_min);
-      if (filters.salary_max) params.append('salary_max', filters.salary_max);
-      if (filters.remote !== undefined) params.append('remote', filters.remote);
-      if (filters.featured !== undefined) params.append('featured', filters.featured);
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('page_size', filters.limit);
       if (filters.ordering) params.append('ordering', filters.ordering);
@@ -27,7 +23,7 @@ class OpportunitiesService {
       
       // Transformar dados da API para o formato esperado pelo frontend
       return {
-        results: response.data.results.map(this.transformOpportunityFromAPI),
+        results: response.data.results.map(item => this.transformOpportunityFromAPI(item)),
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous
@@ -42,7 +38,7 @@ class OpportunitiesService {
   // Buscar oportunidade específica por ID
   async getOpportunity(opportunityId) {
     try {
-      const response = await this.apiClient.get(`/api/opportunities/${opportunityId}/`);
+      const response = await this.apiClient.get(`/opportunities/${opportunityId}/`);
       return this.transformOpportunityFromAPI(response.data);
     } catch (error) {
       console.error('Erro ao buscar oportunidade:', error);
@@ -54,7 +50,7 @@ class OpportunitiesService {
   async createOpportunity(opportunityData) {
     try {
       const transformedData = this.transformOpportunityToAPI(opportunityData);
-      const response = await this.apiClient.post('/api/opportunities/', transformedData);
+      const response = await this.apiClient.post('/opportunities/', transformedData);
       return this.transformOpportunityFromAPI(response.data);
     } catch (error) {
       console.error('Erro ao criar oportunidade:', error);
@@ -152,6 +148,23 @@ class OpportunitiesService {
       throw error;
     }
   }
+  
+  // Buscar tipos de trabalho
+  async getJobTypes() {
+    try {
+      const response = await this.apiClient.get('/api/opportunities/job-types/');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar tipos de trabalho:', error);
+      return [
+        { id: 'full-time', name: 'Tempo Integral' },
+        { id: 'part-time', name: 'Meio Período' },
+        { id: 'contract', name: 'Contrato' },
+        { id: 'internship', name: 'Estágio' },
+        { id: 'temporary', name: 'Temporário' }
+      ];
+    }
+  }
 
   // Exportar oportunidades
   async exportOpportunities(filters = {}, format = 'csv') {
@@ -182,6 +195,29 @@ class OpportunitiesService {
     } catch (error) {
       console.error('Erro ao exportar oportunidades:', error);
       throw error;
+    }
+  }
+  
+  // Buscar localizações
+  async getLocations() {
+    try {
+      const response = await this.apiClient.get('/api/opportunities/locations/');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar localizações:', error);
+      // Retornar dados mock em caso de erro
+      return [
+        'Londres',
+        'Manchester',
+        'Birmingham',
+        'Liverpool',
+        'Glasgow',
+        'Edimburgo',
+        'Cardiff',
+        'Belfast',
+        'Bristol',
+        'Newcastle'
+      ];
     }
   }
 

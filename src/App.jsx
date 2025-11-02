@@ -18,9 +18,11 @@ import Footer from './components/homepage/Footer';
 import CommunityExplorer from './pages/public/CommunityExplorer';
 import EventsExplorer from './pages/public/EventsExplorer';
 import EventDetails from './pages/public/EventDetails';
+import EventDetail from './pages/public/EventDetail';
 import EventList from './pages/events/EventList';
-import EventDetail from './pages/events/EventDetail';
+import EventDetailAdmin from './pages/events/EventDetail';
 import CreateEvent from './pages/events/CreateEvent';
+import OnboardingPage from './pages/onboarding/Onboarding';
 import OpportunityList from './pages/opportunities/OpportunityList';
 import OpportunityDetail from './pages/opportunities/OpportunityDetail';
 import CreateOpportunity from './pages/opportunities/CreateOpportunity';
@@ -93,13 +95,15 @@ function App() {
             {/* Rotas Públicas */}
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/comunidade" element={<PublicLayout><CommunityExplorer /></PublicLayout>} />
-            <Route path="/eventos" element={<PublicLayout><EventList /></PublicLayout>} />
-            <Route path="/eventos/:slug" element={<PublicLayout><EventDetail /></PublicLayout>} />
-            <Route path="/criar-evento" element={
-              <ProtectedRoute fallback={<PageLoader />}>
-                <PublicLayout><CreateEvent /></PublicLayout>
-              </ProtectedRoute>
-            } />
+            <Route path="/eventos" element={<PublicLayout><EventsExplorer /></PublicLayout>} />
+            <Route path="/evento/:id" element={<PublicLayout><EventDetail /></PublicLayout>} />
+        <Route path="/onboarding" element={<PublicLayout><OnboardingPage /></PublicLayout>} />
+        <Route path="/eventos/:slug" element={<PublicLayout><EventDetailAdmin /></PublicLayout>} />
+<Route path="/criar-evento" element={
+  <ProtectedRoute fallback={<PageLoader />}>
+    <PublicLayout><CreateEvent /></PublicLayout>
+  </ProtectedRoute>
+} />
             <Route path="/evento/:id" element={<PublicLayout><EventDetails /></PublicLayout>} />
             <Route path="/oportunidades" element={<PublicLayout><OpportunityList /></PublicLayout>} />
             <Route path="/oportunidades/:slug" element={<PublicLayout><OpportunityDetail /></PublicLayout>} />

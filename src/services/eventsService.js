@@ -20,7 +20,7 @@ class EventsService {
       if (filters.limit) params.append('page_size', filters.limit);
       if (filters.ordering) params.append('ordering', filters.ordering);
 
-      const response = await this.apiClient.get(`/api/events/?${params.toString()}`);
+      const response = await this.apiClient.get(`/events/?${params.toString()}`);
       
       // Transformar dados da API para o formato esperado pelo frontend
       return {
@@ -39,7 +39,7 @@ class EventsService {
   // Buscar evento específico por ID
   async getEvent(eventId) {
     try {
-      const response = await this.apiClient.get(`/api/events/${eventId}/`);
+      const response = await this.apiClient.get(`/events/${eventId}/`);
       return this.transformEventFromAPI(response.data);
     } catch (error) {
       console.error('Erro ao buscar evento:', error);
@@ -51,7 +51,7 @@ class EventsService {
   async createEvent(eventData) {
     try {
       const transformedData = this.transformEventToAPI(eventData);
-      const response = await this.apiClient.post('/api/events/', transformedData);
+      const response = await this.apiClient.post('/events/', transformedData);
       return this.transformEventFromAPI(response.data);
     } catch (error) {
       console.error('Erro ao criar evento:', error);
@@ -63,7 +63,7 @@ class EventsService {
   async updateEvent(eventId, eventData) {
     try {
       const transformedData = this.transformEventToAPI(eventData);
-      const response = await this.apiClient.put(`/api/events/${eventId}/`, transformedData);
+      const response = await this.apiClient.put(`/events/${eventId}/`, transformedData);
       return this.transformEventFromAPI(response.data);
     } catch (error) {
       console.error('Erro ao atualizar evento:', error);
@@ -74,7 +74,7 @@ class EventsService {
   // Deletar evento
   async deleteEvent(eventId) {
     try {
-      await this.apiClient.delete(`/api/events/${eventId}/`);
+      await this.apiClient.delete(`/events/${eventId}/`);
       return true;
     } catch (error) {
       console.error('Erro ao deletar evento:', error);
@@ -85,7 +85,7 @@ class EventsService {
   // Buscar categorias de eventos
   async getCategories() {
     try {
-      const response = await this.apiClient.get('/api/events/categories/');
+      const response = await this.apiClient.get('/events/categories/');
       return response.data.map(cat => ({
         value: cat.slug,
         label: cat.name,

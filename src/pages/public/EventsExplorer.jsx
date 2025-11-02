@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { services } from '../../services';
 
 const EventsExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -7,127 +8,37 @@ const EventsExplorer = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-  // Mock data - em produção viria de uma API
-  const events = [
-    {
-      id: 1,
-      title: "Festival de Cultura Angolana",
-      description: "Celebração da rica cultura angolana com música, dança, gastronomia e artesanato tradicional.",
-      date: "2024-03-15",
-      time: "14:00",
-      endTime: "22:00",
-      location: "Londres",
-      venue: "Southbank Centre",
-      address: "Belvedere Rd, South Bank, London SE1 8XX",
-      category: "Cultural",
-      image: "https://picsum.photos/400/250?random=50",
-      organizer: "Associação Cultural Angola UK",
-      price: "Gratuito",
-      capacity: 500,
-      registered: 234,
-      featured: true,
-      tags: ["Música", "Dança", "Gastronomia", "Família"]
-    },
-    {
-      id: 2,
-      title: "Networking Empresarial Angolano",
-      description: "Encontro mensal para empresários e profissionais angolanos expandirem suas redes de contacto.",
-      date: "2024-03-20",
-      time: "18:30",
-      endTime: "21:00",
-      location: "Manchester",
-      venue: "Manchester Business Centre",
-      address: "46 Deansgate, Manchester M3 2FN",
-      category: "Negócios",
-      image: "https://picsum.photos/400/250?random=51",
-      organizer: "Angola Business Network",
-      price: "£15",
-      capacity: 80,
-      registered: 45,
-      featured: false,
-      tags: ["Networking", "Negócios", "Profissional"]
-    },
-    {
-      id: 3,
-      title: "Workshop de Culinária Angolana",
-      description: "Aprenda a preparar pratos tradicionais angolanos com chefs especializados.",
-      date: "2024-03-25",
-      time: "10:00",
-      endTime: "15:00",
-      location: "Birmingham",
-      venue: "Birmingham Cookery School",
-      address: "25 Frederick St, Birmingham B1 3HH",
-      category: "Educacional",
-      image: "https://picsum.photos/400/250?random=52",
-      organizer: "Chef Luísa Domingos",
-      price: "£45",
-      capacity: 20,
-      registered: 18,
-      featured: true,
-      tags: ["Culinária", "Workshop", "Tradicional"]
-    },
-    {
-      id: 4,
-      title: "Noite de Kizomba e Semba",
-      description: "Noite de dança com os melhores DJs de música angolana e aulas para iniciantes.",
-      date: "2024-03-30",
-      time: "20:00",
-      endTime: "02:00",
-      location: "Londres",
-      venue: "The Scala",
-      address: "275 Pentonville Rd, Kings Cross, London N1 9NL",
-      category: "Entretenimento",
-      image: "https://picsum.photos/400/250?random=53",
-      organizer: "Kizomba London",
-      price: "£20",
-      capacity: 300,
-      registered: 156,
-      featured: false,
-      tags: ["Dança", "Música", "Noite", "Kizomba"]
-    },
-    {
-      id: 5,
-      title: "Conferência de Empreendedorismo",
-      description: "Palestras e painéis sobre empreendedorismo na comunidade angolana no Reino Unido.",
-      date: "2024-04-05",
-      time: "09:00",
-      endTime: "17:00",
-      location: "Edimburgo",
-      venue: "Edinburgh International Conference Centre",
-      address: "The Exchange, 150 Morrison St, Edinburgh EH3 8EE",
-      category: "Negócios",
-      image: "https://picsum.photos/400/250?random=54",
-      organizer: "Angola Entrepreneurs UK",
-      price: "£35",
-      capacity: 150,
-      registered: 89,
-      featured: true,
-      tags: ["Empreendedorismo", "Palestras", "Negócios"]
-    },
-    {
-      id: 6,
-      title: "Torneio de Futebol da Comunidade",
-      description: "Torneio amigável de futebol entre equipas da comunidade angolana.",
-      date: "2024-04-10",
-      time: "10:00",
-      endTime: "18:00",
-      location: "Liverpool",
-      venue: "Greenbank Sports Academy",
-      address: "Greenbank Ln, Liverpool L17 1AG",
-      category: "Desporto",
-      image: "https://picsum.photos/400/250?random=55",
-      organizer: "Angola FC Liverpool",
-      price: "Gratuito",
-      capacity: 200,
-      registered: 67,
-      featured: false,
-      tags: ["Futebol", "Desporto", "Comunidade"]
-    }
-  ];
-
-  const locations = [...new Set(events.map(event => event.location))];
-  const categories = [...new Set(events.map(event => event.category))];
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await services.eventsService.getEvents();
+        
+        if (response && response.results) {
+          setEvents(response.results);
+          
+          // Extrair localizações e categorias únicas
+          const uniqueLocations = [...new Set(response.results.map(event => event.location))];
+          const uniqueCategories = [...new Set(response.results.map(event => event.category))];
+          
+          setLocations(uniqueLocations);
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar eventos:', error);
+        // Fallback para dados mock já está implementado no serviço
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEvents();
+  }, []);
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

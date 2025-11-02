@@ -10,6 +10,7 @@ import PortfolioManager from '../../components/profile/PortfolioManager';
 import ProfileEditor from '../../components/profile/ProfileEditor';
 import { useToast } from '../../components/common/Toast';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
+import VisitorAction from '../../components/common/VisitorAction';
 
 const MemberProfile = () => {
   const { id } = useParams();
@@ -946,30 +947,28 @@ const MemberProfile = () => {
                 Editar Perfil
               </button>
             ) : (
-              <button
-                onClick={() => setShowContactModal(true)}
-                className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
-              >
-                <i className="fas fa-envelope mr-2"></i>
-                Contactar
-              </button>
+              <VisitorAction
+                buttonText="Contactar"
+                buttonClassName="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+                actionType="contact"
+                icon="fas fa-envelope mr-2"
+                onSuccess={() => setShowContactModal(true)}
+              />
             )}
-            <a
-              href={`tel:${member.phone}`}
-              className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
-            >
-              <i className="fas fa-phone mr-2"></i>
-              Ligar
-            </a>
-            <a
-              href={`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
-            >
-              <i className="fab fa-whatsapp mr-2"></i>
-              WhatsApp
-            </a>
+            <VisitorAction
+              buttonText="Ligar"
+              buttonClassName="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
+              actionType="call"
+              icon="fas fa-phone mr-2"
+              onSuccess={() => window.location.href = `tel:${member.phone}`}
+            />
+            <VisitorAction
+              buttonText="WhatsApp"
+              buttonClassName="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+              actionType="whatsapp"
+              icon="fab fa-whatsapp mr-2"
+              onSuccess={() => window.open(`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`, '_blank')}
+            />
             <button className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
               <i className="fas fa-share-alt mr-2"></i>
               Partilhar

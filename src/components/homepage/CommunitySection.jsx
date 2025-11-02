@@ -1,36 +1,63 @@
+import { useState, useEffect } from 'react';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
+import { services } from '../../services';
 
 const CommunitySection = () => {
-  const members = [
-    {
-      name: "Ana Kiala",
-      profession: "Designer de Interiores",
-      location: "Londres",
-      profile_image: "https://picsum.photos/40/40?random=3",
-      image: "https://picsum.photos/634/400?random=10"
-    },
-    {
-      name: "João Manuel",
-      profession: "Consultor Financeiro",
-      location: "Manchester",
-      profile_image: "https://picsum.photos/40/40?random=4",
-      image: "https://picsum.photos/634/400?random=11"
-    },
-    {
-      name: "Luísa Domingos",
-      profession: "Chef de Cozinha",
-      location: "Birmingham",
-      profile_image: "https://picsum.photos/40/40?random=5",
-      image: "https://picsum.photos/634/400?random=12"
-    },
-    {
-      name: "Pedro Santos",
-      profession: "Desenvolvedor de Software",
-      location: "Edimburgo",
-      profile_image: "https://picsum.photos/40/40?random=6",
-      image: "https://picsum.photos/634/400?random=13"
-    }
-  ];
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchCommunityMembers = async () => {
+      try {
+        setLoading(true);
+        const response = await services.communityService.getCommunities({ 
+          limit: 4, 
+          featured: true 
+        });
+        
+        if (response && response.results) {
+          setMembers(response.results);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar membros da comunidade:', error);
+        // Fallback para dados mock em caso de erro
+        setMembers([
+          {
+            name: "Ana Kiala",
+            profession: "Designer de Interiores",
+            location: "Londres",
+            profile_image: "https://picsum.photos/40/40?random=3",
+            image: "https://picsum.photos/634/400?random=10"
+          },
+          {
+            name: "João Manuel",
+            profession: "Consultor Financeiro",
+            location: "Manchester",
+            profile_image: "https://picsum.photos/40/40?random=4",
+            image: "https://picsum.photos/634/400?random=11"
+          },
+          {
+            name: "Luísa Domingos",
+            profession: "Chef de Cozinha",
+            location: "Birmingham",
+            profile_image: "https://picsum.photos/40/40?random=5",
+            image: "https://picsum.photos/634/400?random=12"
+          },
+          {
+            name: "Pedro Santos",
+            profession: "Desenvolvedor de Software",
+            location: "Edimburgo",
+            profile_image: "https://picsum.photos/40/40?random=6",
+            image: "https://picsum.photos/634/400?random=13"
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCommunityMembers();
+  }, []);
 
   return (
     <section id="community" className="py-20 bg-gray-50">

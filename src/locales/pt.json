@@ -104,7 +104,38 @@
       "registerButton": "Criar Conta",
       "hasAccount": "Já tem conta?",
       "signIn": "Entrar"
-    }
+    },
+    "login": "Entrar",
+    "register": "Registar",
+    "logout": "Sair",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "confirmPassword": "Confirmar Palavra-passe",
+    "forgotPassword": "Esqueceu a palavra-passe?",
+    "resetPassword": "Redefinir Palavra-passe",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?",
+    "createAccount": "Criar Conta",
+    "loginSuccess": "Login efetuado com sucesso",
+    "loginError": "Erro ao efetuar login",
+    "registerSuccess": "Registo efetuado com sucesso",
+    "registerError": "Erro ao efetuar registo",
+    "logoutSuccess": "Sessão terminada com sucesso",
+    "verifyEmail": "Verifique o seu email",
+    "verifyEmailSent": "Foi enviado um email de verificação",
+    "verifyEmailSuccess": "Email verificado com sucesso",
+    "verifyEmailError": "Erro ao verificar email",
+    "unauthorized": "Não autorizado",
+    "accessDenied": "Acesso negado",
+    "sessionExpired": "A sua sessão expirou",
+    "pleaseLogin": "Por favor, faça login para continuar",
+    "registrationRequired": "Registo necessário",
+    "registerToContinue": "Registe-se para continuar a utilizar esta funcionalidade",
+    "registerToMessage": "Registe-se para enviar mensagens aos membros da comunidade",
+    "registerToJoinEvent": "Registe-se para se inscrever neste evento",
+    "registerToApplyOpportunity": "Registe-se para se candidatar a esta oportunidade",
+    "becomeAMember": "Torne-se membro",
+    "completeOnboarding": "Complete o processo de onboarding para aceder a todas as funcionalidades"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -231,7 +262,7 @@
     "newsletterDescription": "Subscreva a nossa newsletter para receber as últimas notícias e atualizações.",
     "emailPlaceholder": "O seu email",
     "subscribe": "Subscrever",
-    "copyright": "© 2024 AWAYSUK. Todos os direitos reservados."
+    "copyright": "© 2025 AWAYSUK. Todos os direitos reservados."
   },
   "Mensagem enviada com sucesso!": "Mensagem enviada com sucesso!",
   "/locales/pt": {
