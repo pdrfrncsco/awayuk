@@ -137,6 +137,17 @@ class OpportunitiesService {
       throw error;
     }
   }
+  
+  // Candidatar-se a uma oportunidade
+  async applyToOpportunity(opportunityId) {
+    try {
+      const response = await this.apiClient.post(`/api/opportunities/${opportunityId}/apply/`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao candidatar-se à oportunidade:', error);
+      throw error;
+    }
+  }
 
   // Duplicar oportunidade
   async duplicateOpportunity(opportunityId) {

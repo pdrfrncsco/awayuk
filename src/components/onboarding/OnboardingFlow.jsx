@@ -140,10 +140,10 @@ const OnboardingFlow = () => {
       updateUser({
         ...user,
         role: 'member',
+        onboarding_completed: true,
         profile: {
           ...user.profile,
-          ...formData,
-          onboardingCompleted: true
+          ...formData
         }
       });
       

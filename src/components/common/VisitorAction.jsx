@@ -111,13 +111,13 @@ const VisitorAction = ({
                 <>
                   <button
                     className="w-full bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 px-4 rounded-md font-medium hover:opacity-90 transition-opacity"
-                    onClick={() => handleRedirect('/registar')}
+                    onClick={() => handleRedirect('/registo')}
                   >
                     {t('auth.register')}
                   </button>
                   <button
                     className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-md font-medium hover:bg-gray-50 transition-colors"
-                    onClick={() => handleRedirect('/entrar')}
+                    onClick={() => handleRedirect('/login')}
                   >
                     {t('auth.login')}
                   </button>

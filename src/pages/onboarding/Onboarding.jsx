@@ -15,7 +15,7 @@ const Onboarding = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: '/onboarding' } });
-    } else if (user?.profile?.onboardingCompleted) {
+    } else if (user?.onboarding_completed) {
       // Se o onboarding já foi concluído, redirecionar para o dashboard
       navigate('/dashboard');
     }
