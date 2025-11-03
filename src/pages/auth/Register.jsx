@@ -22,6 +22,7 @@ const Register = () => {
     last_name: '',
     password: '',
     password_confirm: '',
+    user_type: 'member', // Valor padrão para o tipo de usuário
     agreeTerms: false
   });
   const [errors, setErrors] = useState({});
@@ -94,6 +95,13 @@ const Register = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email inválido';
     }
+    
+    // Validação do tipo de usuário
+    if (!formData.user_type) {
+      newErrors.user_type = 'Tipo de conta é obrigatório';
+    } else if (!['member', 'business'].includes(formData.user_type)) {
+      newErrors.user_type = 'Tipo de conta inválido';
+    }
 
     // Validação do nome
     if (!formData.first_name.trim()) {
@@ -149,7 +157,8 @@ const Register = () => {
         first_name: formData.first_name,
         last_name: formData.last_name,
         password: formData.password,
-        password_confirm: formData.password_confirm
+        password_confirm: formData.password_confirm,
+        user_type: formData.user_type
       };
 
       const result = await register(registrationData);
@@ -361,6 +370,28 @@ const Register = () => {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Tipo de Usuário */}
+            <div>
+              <label htmlFor="user_type" className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Conta *
+              </label>
+              <select
+                id="user_type"
+                name="user_type"
+                value={formData.user_type}
+                onChange={handleInputChange}
+                className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors"
+              >
+                <option value="member">Membro Individual</option>
+                <option value="business">Empresa/Negócio</option>
+              </select>
+              {formData.user_type === 'business' && (
+                <p className="mt-1 text-sm text-blue-600">
+                  Contas empresariais têm acesso a recursos adicionais para divulgação de oportunidades, eventos, serviços, etc.
+                </p>
+              )}
             </div>
 
             {/* Password */}
