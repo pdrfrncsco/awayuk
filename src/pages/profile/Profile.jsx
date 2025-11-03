@@ -939,21 +939,80 @@ const MemberProfile = () => {
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
             {isOwnProfile ? (
-              <button
-                onClick={() => setIsEditingProfile(true)}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
-              >
-                <i className="fas fa-edit mr-2"></i>
-                Editar Perfil
-              </button>
+              <>
+                {/* Botão de edição de perfil para todos os tipos de usuário */}
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  <i className="fas fa-edit mr-2"></i>
+                  Editar Perfil
+                </button>
+                
+                {/* Botão condicional para acesso ao dashboard baseado em permissões */}
+                {user?.permissions?.includes('view_dashboard') && (
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                  >
+                    <i className="fas fa-tachometer-alt mr-2"></i>
+                    Acessar Dashboard
+                  </button>
+                )}
+                
+                {/* Botões específicos baseados no User Type */}
+                {user?.user_type === 'business' && (
+                  <button
+                    onClick={() => navigate('/oportunidades/criar')}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    <i className="fas fa-plus-circle mr-2"></i>
+                    Criar Oportunidade
+                  </button>
+                )}
+                
+                {/* Botões específicos baseados em User Roles */}
+                {user?.roles?.includes('event_organizer') && (
+                  <button
+                    onClick={() => navigate('/eventos/criar')}
+                    className="bg-yellow-600 text-white px-6 py-2 rounded-md hover:bg-yellow-700 transition-colors"
+                  >
+                    <i className="fas fa-calendar-plus mr-2"></i>
+                    Criar Evento
+                  </button>
+                )}
+                
+                {user?.roles?.includes('content_creator') && (
+                  <button
+                    onClick={() => navigate('/conteudo/criar')}
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                  >
+                    <i className="fas fa-pen-fancy mr-2"></i>
+                    Criar Conteúdo
+                  </button>
+                )}
+              </>
             ) : (
-              <VisitorAction
-                buttonText="Contactar"
-                buttonClassName="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
-                actionType="contact"
-                icon="fas fa-envelope mr-2"
-                onSuccess={() => setShowContactModal(true)}
-              />
+              <>
+                <VisitorAction
+                  buttonText="Contactar"
+                  buttonClassName="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
+                  actionType="contact"
+                  icon="fas fa-envelope mr-2"
+                  onSuccess={() => setShowContactModal(true)}
+                />
+                
+                {/* Botões adicionais para interagir com perfis de business */}
+                {profileData?.user_type === 'business' && (
+                  <button
+                    onClick={() => navigate(`/oportunidades?business=${profileData.id}`)}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <i className="fas fa-briefcase mr-2"></i>
+                    Ver Oportunidades
+                  </button>
+                )}
+              </>
             )}
             <VisitorAction
               buttonText="Ligar"

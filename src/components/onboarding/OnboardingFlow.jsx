@@ -159,7 +159,12 @@ const OnboardingFlow = () => {
 
   // Manipulador para finalizar o onboarding
   const handleFinish = () => {
-    navigate('/dashboard');
+    // Redirecionar para a página de perfil do usuário
+    if (user?.id) {
+      navigate(`/perfil/${user.id}`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   // Renderização do conteúdo baseado na etapa atual
