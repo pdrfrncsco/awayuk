@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions, PERMISSIONS } from '../../contexts/PermissionsContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import useUserType from '../../hooks/useUserType';
 import { PermissionCheck } from './PermissionGuard';
 import { NotificationCenter } from '../notifications';
 
@@ -34,6 +35,7 @@ const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const { userRole, canAccessDashboard } = usePermissions();
   const { unreadCount } = useNotifications();
+  const { isMember, isBusiness, isAdmin } = useUserType();
   const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Utilizador';
   
   // Se o utilizador não tem acesso ao dashboard, não renderiza nada
@@ -46,79 +48,92 @@ const DashboardLayout = () => {
       name: 'Dashboard', 
       href: '/dashboard', 
       icon: HomeIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
     },
     { 
       name: 'Onboarding', 
       href: '/dashboard/onboarding', 
       icon: DocumentTextIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business']
     },
     { 
       name: 'Membros', 
       href: '/dashboard/membros', 
       icon: UsersIcon,
-      permission: PERMISSIONS.VIEW_MEMBERS
+      permission: PERMISSIONS.VIEW_MEMBERS,
+      userTypes: ['admin']
     },
     { 
       name: 'Eventos', 
       href: '/dashboard/eventos', 
       icon: CalendarIcon,
-      permission: PERMISSIONS.VIEW_EVENTS
+      permission: PERMISSIONS.VIEW_EVENTS,
+      userTypes: ['member', 'admin']
     },
     { 
       name: 'Oportunidades', 
       href: '/dashboard/oportunidades', 
       icon: BriefcaseIcon,
-      permission: PERMISSIONS.VIEW_OPPORTUNITIES
+      permission: PERMISSIONS.VIEW_OPPORTUNITIES,
+      userTypes: ['business', 'admin']
     },
     { 
       name: 'Conteúdos', 
       href: '/dashboard/conteudos', 
       icon: DocumentTextIcon,
-      permission: PERMISSIONS.VIEW_CONTENT
+      permission: PERMISSIONS.VIEW_CONTENT,
+      userTypes: ['admin']
     },
     { 
       name: 'Avaliações', 
       href: '/dashboard/testemunhos', 
       icon: ChatBubbleLeftRightIcon,
-      permission: PERMISSIONS.EDIT_CONTENT
+      permission: PERMISSIONS.EDIT_CONTENT,
+      userTypes: ['admin']
     },
     { 
       name: 'Estatísticas', 
       href: '/dashboard/estatisticas', 
       icon: ChartBarIcon,
-      permission: PERMISSIONS.VIEW_STATISTICS
+      permission: PERMISSIONS.VIEW_STATISTICS,
+      userTypes: ['admin']
     },
     { 
       name: 'Roles & Permissões', 
       href: '/dashboard/roles', 
       icon: ShieldCheckIcon,
-      permission: PERMISSIONS.MANAGE_USERS
+      permission: PERMISSIONS.MANAGE_USERS,
+      userTypes: ['admin']
     },
     { 
       name: 'Notificações', 
       href: '/dashboard/notificacoes', 
       icon: BellIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
     },
     { 
       name: 'Comunidade', 
       href: '/dashboard/comunidade', 
       icon: UserGroupIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
     },
     { 
       name: 'Conexões', 
       href: '/dashboard/conexoes', 
       icon: LinkIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
     },
     { 
       name: 'Configurações', 
       href: '/dashboard/configuracoes', 
       icon: CogIcon,
-      permission: PERMISSIONS.VIEW_SETTINGS
+      permission: PERMISSIONS.VIEW_SETTINGS,
+      userTypes: ['member', 'business', 'admin']
     },
   ];
 
@@ -154,6 +169,11 @@ const DashboardLayout = () => {
             <nav className="mt-5 px-2 space-y-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
+                const userTypeAllowed = item.userTypes && item.userTypes.includes(user?.user_type);
+                
+                // Só exibe o item se o usuário tiver o tipo permitido
+                if (!userTypeAllowed) return null;
+                
                 return (
                   <PermissionCheck key={item.name} permission={item.permission}>
                     <Link
@@ -204,6 +224,11 @@ const DashboardLayout = () => {
             <nav className="mt-5 flex-1 px-2 bg-white space-y-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
+                const userTypeAllowed = item.userTypes && item.userTypes.includes(user?.user_type);
+                
+                // Só exibe o item se o usuário tiver o tipo permitido
+                if (!userTypeAllowed) return null;
+                
                 return (
                   <PermissionCheck key={item.name} permission={item.permission}>
                     <Link

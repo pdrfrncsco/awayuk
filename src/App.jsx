@@ -6,6 +6,7 @@ import { CommunityProvider } from './contexts/CommunityContext';
 import { I18nProvider } from './contexts/I18nContext';
 import { RouteGuard } from './components/dashboard/PermissionGuard';
 import ProtectedRoute, { GuestRoute, VerifiedRoute } from './components/auth/ProtectedRoute';
+import { BusinessRoute, MemberRoute, AdminRoute, MultiTypeRoute } from './components/guards/UserTypeGuard';
 import { PageLoader } from './components/common/LoadingSpinner';
 import Navigation from './components/homepage/Navigation';
 import HeroSection from './components/homepage/HeroSection';
@@ -100,17 +101,17 @@ function App() {
         <Route path="/onboarding" element={<PublicLayout><OnboardingPage /></PublicLayout>} />
         <Route path="/eventos/:slug" element={<PublicLayout><EventDetailAdmin /></PublicLayout>} />
 <Route path="/criar-evento" element={
-  <ProtectedRoute fallback={<PageLoader />}>
-    <PublicLayout><CreateEvent /></PublicLayout>
-  </ProtectedRoute>
-} />
+              <MultiTypeRoute allowedTypes={['member', 'admin']} redirectTo="/dashboard">
+                <PublicLayout><CreateEvent /></PublicLayout>
+              </MultiTypeRoute>
+            } />
             <Route path="/evento/:id" element={<PublicLayout><EventDetails /></PublicLayout>} />
             <Route path="/oportunidades" element={<PublicLayout><OpportunityList /></PublicLayout>} />
             <Route path="/oportunidades/:slug" element={<PublicLayout><OpportunityDetail /></PublicLayout>} />
             <Route path="/criar-oportunidade" element={
-              <ProtectedRoute fallback={<PageLoader />}>
+              <MultiTypeRoute allowedTypes={['business', 'admin']} redirectTo="/dashboard">
                 <PublicLayout><CreateOpportunity /></PublicLayout>
-              </ProtectedRoute>
+              </MultiTypeRoute>
             } />
             <Route path="/oportunidade/:id" element={<PublicLayout><OpportunityDetails /></PublicLayout>} />
             <Route path="/sobre" element={<PublicLayout><AboutUs /></PublicLayout>} />
@@ -151,19 +152,25 @@ function App() {
                 </RouteGuard>
               } />
               <Route path="membros" element={
-                <RouteGuard permission={PERMISSIONS.VIEW_MEMBERS}>
-                  <MembersManagement />
-                </RouteGuard>
+                <AdminRoute>
+                  <RouteGuard permission={PERMISSIONS.VIEW_MEMBERS}>
+                    <MembersManagement />
+                  </RouteGuard>
+                </AdminRoute>
               } />
               <Route path="eventos" element={
-                <RouteGuard permission={PERMISSIONS.VIEW_EVENTS}>
-                  <EventsManagement />
-                </RouteGuard>
+                <MultiTypeRoute allowedTypes={['member', 'admin']}>
+                  <RouteGuard permission={PERMISSIONS.VIEW_EVENTS}>
+                    <EventsManagement />
+                  </RouteGuard>
+                </MultiTypeRoute>
               } />
               <Route path="oportunidades" element={
-                <RouteGuard permission={PERMISSIONS.VIEW_OPPORTUNITIES}>
-                  <OpportunitiesManagement />
-                </RouteGuard>
+                <MultiTypeRoute allowedTypes={['business', 'admin']}>
+                  <RouteGuard permission={PERMISSIONS.VIEW_OPPORTUNITIES}>
+                    <OpportunitiesManagement />
+                  </RouteGuard>
+                </MultiTypeRoute>
               } />
               <Route path="conteudos" element={
                 <RouteGuard permission={PERMISSIONS.VIEW_CONTENT}>
@@ -176,9 +183,11 @@ function App() {
                 </RouteGuard>
               } />
               <Route path="onboarding-admin" element={
-                <RouteGuard permission={PERMISSIONS.MANAGE_APPLICATIONS}>
-                  <OnboardingAdmin />
-                </RouteGuard>
+                <AdminRoute>
+                  <RouteGuard permission={PERMISSIONS.MANAGE_APPLICATIONS}>
+                    <OnboardingAdmin />
+                  </RouteGuard>
+                </AdminRoute>
               } />
               <Route path="testemunhos" element={
                 <RouteGuard permission={PERMISSIONS.EDIT_CONTENT}>
@@ -191,9 +200,11 @@ function App() {
                 </RouteGuard>
               } />
               <Route path="roles" element={
-                <RouteGuard permission={PERMISSIONS.MANAGE_USERS}>
-                  <RolesManagement />
-                </RouteGuard>
+                <AdminRoute>
+                  <RouteGuard permission={PERMISSIONS.MANAGE_USERS}>
+                    <RolesManagement />
+                  </RouteGuard>
+                </AdminRoute>
               } />
               <Route path="notificacoes" element={
                 <RouteGuard permission={PERMISSIONS.VIEW_DASHBOARD}>
