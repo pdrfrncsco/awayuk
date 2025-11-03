@@ -16,7 +16,9 @@ import {
   UserCircleIcon,
   UserGroupIcon,
   LinkIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  UserIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions, PERMISSIONS } from '../../contexts/PermissionsContext';
@@ -228,9 +230,22 @@ const DashboardLayout = () => {
             <div className="flex items-center w-full">
               <UserCircleIcon className="h-10 w-10 text-gray-400" />
               <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-gray-700">{displayName}</p>
-                <p className="text-xs font-medium text-gray-500">{user?.email}</p>
-                <p className="text-xs font-medium text-red-600 capitalize">{userRole}</p>
+                <p className="text-sm font-medium text-gray-700 flex items-center">
+                  <UserIcon className="h-4 w-4 mr-1 text-gray-500" />
+                  {displayName || user?.full_name || 'Utilizador'}
+                </p>
+                <p className="text-xs font-medium text-gray-500 flex items-center">
+                  <EnvelopeIcon className="h-3 w-3 mr-1 text-gray-400" />
+                  {user?.email}
+                </p>
+                <p className="text-xs font-medium text-red-600 capitalize flex items-center">
+                  <ShieldCheckIcon className="h-3 w-3 mr-1 text-red-500" />
+                  {user?.user_type ? 
+                    (user.user_type === 'member' ? 'Membro' : 
+                     user.user_type === 'business' ? 'Empresa' : 
+                     user.user_type === 'admin' ? 'Administrador' : userRole) 
+                    : userRole}
+                </p>
               </div>
               <button
                 onClick={handleLogout}
@@ -296,8 +311,18 @@ const DashboardLayout = () => {
                 <div className="flex items-center space-x-3 bg-gray-50 rounded-lg px-3 py-2">
                   <UserCircleIcon className="h-8 w-8 text-gray-400" />
                   <div className="hidden sm:block">
-                    <span className="text-sm font-medium text-gray-700">{user?.name || 'Utilizador'}</span>
-                    <p className="text-xs font-medium text-red-600 capitalize">{userRole}</p>
+                    <span className="text-sm font-medium text-gray-700">{user?.name || user?.full_name || 'Utilizador'}</span>
+                    <p className="text-xs font-medium text-red-600 capitalize">
+                      {user?.user_type ? (
+                        <span className="flex items-center">
+                          {user.user_type === 'member' ? 'Membro' : 
+                           user.user_type === 'business' ? 'Empresa' : 
+                           user.user_type === 'admin' ? 'Administrador' : userRole}
+                        </span>
+                      ) : (
+                        userRole
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>

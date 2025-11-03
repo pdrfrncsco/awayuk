@@ -103,7 +103,7 @@ const ProtectedRoute = ({
  * @returns {React.ReactElement} Componente ou redirecionamento
  */
 export const GuestRoute = ({ children, redirectTo = '/dashboard' }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   // Mostrar loading enquanto verifica autenticação
@@ -115,6 +115,22 @@ export const GuestRoute = ({ children, redirectTo = '/dashboard' }) => {
   if (isAuthenticated) {
     // Verificar se há um destino salvo no state
     const from = location.state?.from || redirectTo;
+    
+    // Redirecionar para perfil se for usuário do tipo 'member'
+    if (user && user.user_type === 'member') {
+      // Verificar se já está na página de perfil ou tentando acessar a página de perfil
+      const isProfilePage = location.pathname.startsWith(`/perfil/`);
+      const isOwnProfilePage = location.pathname === `/perfil/${user.id}`;
+      
+      // Se estiver tentando acessar qualquer página de perfil, permitir
+      if (isProfilePage) {
+        return children;
+      }
+      
+      // Caso contrário, redirecionar para o próprio perfil
+      return <Navigate to={`/perfil/${user.id}`} replace />;
+    }
+    
     return <Navigate to={from} replace />;
   }
 
