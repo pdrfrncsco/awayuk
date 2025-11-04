@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 import { services } from '../../services';
+import VisitorAction from '../../components/auth/VisitorAction';
 
 const CommunityExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,20 +138,36 @@ const CommunityExplorer = () => {
             Ver Perfil
           </Link>
           {member.phone && (
-            <a 
-              href={`tel:${member.phone}`}
-              className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+            <VisitorAction
+              actionType="call"
+              showModal={true}
+              onAction={() => {
+                window.location.href = `tel:${member.phone}`;
+              }}
             >
-              <i className="fas fa-phone"></i>
-            </a>
+              <a 
+                href={`tel:${member.phone}`}
+                className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+              >
+                <i className="fas fa-phone"></i>
+              </a>
+            </VisitorAction>
           )}
           {member.email && (
-            <a 
-              href={`mailto:${member.email}`}
-              className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+            <VisitorAction
+              actionType="message"
+              showModal={true}
+              onAction={() => {
+                window.location.href = `mailto:${member.email}`;
+              }}
             >
-              <i className="fas fa-envelope"></i>
-            </a>
+              <a 
+                href={`mailto:${member.email}`}
+                className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+              >
+                <i className="fas fa-envelope"></i>
+              </a>
+            </VisitorAction>
           )}
         </div>
       </div>
@@ -207,20 +224,36 @@ const CommunityExplorer = () => {
                 Ver Perfil
               </Link>
               {member.phone && (
-                <a 
-                  href={`tel:${member.phone}`}
-                  className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                <VisitorAction
+                  actionType="call"
+                  showModal={true}
+                  onAction={() => {
+                    window.location.href = `tel:${member.phone}`;
+                  }}
                 >
-                  <i className="fas fa-phone"></i>
-                </a>
+                  <a 
+                    href={`tel:${member.phone}`}
+                    className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                  >
+                    <i className="fas fa-phone"></i>
+                  </a>
+                </VisitorAction>
               )}
               {member.email && (
-                <a 
-                  href={`mailto:${member.email}`}
-                  className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                <VisitorAction
+                  actionType="message"
+                  showModal={true}
+                  onAction={() => {
+                    window.location.href = `mailto:${member.email}`;
+                  }}
                 >
-                  <i className="fas fa-envelope"></i>
-                </a>
+                  <a 
+                    href={`mailto:${member.email}`}
+                    className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                  >
+                    <i className="fas fa-envelope"></i>
+                  </a>
+                </VisitorAction>
               )}
             </div>
           </div>
