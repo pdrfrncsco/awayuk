@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
+import { services } from '../../services';
 
 const CommunityExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,115 +9,37 @@ const CommunityExplorer = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
-  // Mock data - em produção viria de uma API
-  const members = [
-    {
-      id: 1,
-      name: "Ana Kiala",
-      profession: "Designer de Interiores",
-      location: "Londres",
-      category: "Design & Criatividade",
-      profile_image: "https://picsum.photos/80/80?random=10",
-      coverImage: "https://picsum.photos/400/200?random=20",
-      rating: 4.8,
-      reviewCount: 23,
-      description: "Especialista em design de interiores com 8 anos de experiência. Transformo espaços em ambientes únicos e funcionais.",
-      services: ["Design Residencial", "Consultoria", "Decoração"],
-      phone: "+44 20 1234 5678",
-      email: "ana@example.com",
-      verified: true
-    },
-    {
-      id: 2,
-      name: "João Manuel",
-      profession: "Consultor Financeiro",
-      location: "Manchester",
-      category: "Finanças & Negócios",
-      profile_image: "https://picsum.photos/80/80?random=11",
-      coverImage: "https://picsum.photos/400/200?random=21",
-      rating: 4.9,
-      reviewCount: 45,
-      description: "Ajudo famílias e empresas a alcançar estabilidade financeira através de planejamento estratégico.",
-      services: ["Consultoria Financeira", "Investimentos", "Seguros"],
-      phone: "+44 161 234 5678",
-      email: "joao@example.com",
-      verified: true
-    },
-    {
-      id: 3,
-      name: "Luísa Domingos",
-      profession: "Chef de Cozinha",
-      location: "Birmingham",
-      category: "Alimentação & Bebidas",
-      profile_image: "https://picsum.photos/80/80?random=12",
-      coverImage: "https://picsum.photos/400/200?random=22",
-      rating: 4.7,
-      reviewCount: 67,
-      description: "Chef especializada em culinária angolana e fusão africana. Catering para eventos especiais.",
-      services: ["Catering", "Aulas de Culinária", "Consultoria Gastronômica"],
-      phone: "+44 121 234 5678",
-      email: "luisa@example.com",
-      verified: true
-    },
-    {
-      id: 4,
-      name: "Pedro Santos",
-      profession: "Desenvolvedor de Software",
-      location: "Edimburgo",
-      category: "Tecnologia",
-      profile_image: "https://picsum.photos/80/80?random=13",
-      coverImage: "https://picsum.photos/400/200?random=23",
-      rating: 4.6,
-      reviewCount: 34,
-      description: "Desenvolvedor full-stack especializado em React e Node.js. Criação de soluções web modernas.",
-      services: ["Desenvolvimento Web", "Apps Mobile", "Consultoria Tech"],
-      phone: "+44 131 234 5678",
-      email: "pedro@example.com",
-      verified: false
-    },
-    {
-      id: 5,
-      name: "Maria Fernandes",
-      profession: "Advogada de Imigração",
-      location: "Londres",
-      category: "Serviços Legais",
-      profile_image: "https://picsum.photos/80/80?random=14",
-      coverImage: "https://picsum.photos/400/200?random=24",
-      rating: 4.9,
-      reviewCount: 89,
-      description: "Especialista em direito de imigração com foco na comunidade africana no Reino Unido.",
-      services: ["Vistos", "Cidadania", "Reunificação Familiar"],
-      phone: "+44 20 9876 5432",
-      email: "maria@example.com",
-      verified: true
-    },
-    {
-      id: 6,
-      name: "Carlos Neto",
-      profession: "Personal Trainer",
-      location: "Liverpool",
-      category: "Saúde & Fitness",
-      profile_image: "https://picsum.photos/80/80?random=15",
-      coverImage: "https://picsum.photos/400/200?random=25",
-      rating: 4.5,
-      reviewCount: 28,
-      description: "Personal trainer certificado com especialização em treino funcional e nutrição esportiva.",
-      services: ["Personal Training", "Nutrição", "Treino Online"],
-      phone: "+44 151 234 5678",
-      email: "carlos@example.com",
-      verified: true
-    }
-  ];
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const locations = [...new Set(members.map(member => member.location))];
-  const categories = [...new Set(members.map(member => member.category))];
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await services.members.getMembers({ limit: 100 });
+        setMembers(response?.results || []);
+      } catch (err) {
+        console.error('Erro ao carregar membros:', err);
+        setError('Não foi possível carregar os membros.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMembers();
+  }, []);
+
+  const locations = [...new Set(members.map(member => member.location).filter(Boolean))];
+  // Usamos a profissão como "categoria" para fins de filtro
+  const categories = [...new Set(members.map(member => member.profession || 'Outros').filter(Boolean))];
 
   const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (member.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (member.profession || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (member.bio || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = !selectedLocation || member.location === selectedLocation;
-    const matchesCategory = !selectedCategory || member.category === selectedCategory;
+    const matchesCategory = !selectedCategory || (member.profession || 'Outros') === selectedCategory;
     
     return matchesSearch && matchesLocation && matchesCategory;
   });
@@ -146,12 +69,12 @@ const CommunityExplorer = () => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <img 
-          src={member.coverImage} 
+          src={member.cover_image || member.avatar || 'https://picsum.photos/400/200?random=23'} 
           alt="Cover" 
           className="w-full h-32 object-cover"
         />
         <div className="absolute top-2 right-2">
-          {member.verified && (
+          {member.isVerified && (
             <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
               <i className="fas fa-check-circle mr-1"></i>
               Verificado
@@ -173,14 +96,15 @@ const CommunityExplorer = () => {
           </div>
         </div>
         
+        {/* Placeholder para rating no futuro */}
         <div className="flex items-center mb-2">
           <div className="flex mr-2">
-            {renderStars(member.rating)}
+            {renderStars(5)}
           </div>
-          <span className="text-sm text-gray-600">({member.reviewCount})</span>
+          <span className="text-sm text-gray-600">(0)</span>
         </div>
         
-        <p className="text-sm text-gray-700 mb-3 line-clamp-2">{member.description}</p>
+        <p className="text-sm text-gray-700 mb-3 line-clamp-2">{member.bio}</p>
         
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -188,20 +112,22 @@ const CommunityExplorer = () => {
             {member.location}
           </span>
           <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-            {member.category}
+            {member.profession || 'Membro'}
           </span>
         </div>
         
-        <div className="flex flex-wrap gap-1 mb-3">
-          {member.services.slice(0, 2).map((service, index) => (
-            <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-              {service}
-            </span>
-          ))}
-          {member.services.length > 2 && (
-            <span className="text-xs text-gray-500">+{member.services.length - 2} mais</span>
-          )}
-        </div>
+        {Array.isArray(member.skills) && member.skills.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {member.skills.slice(0, 2).map((skill, index) => (
+              <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                {skill}
+              </span>
+            ))}
+            {member.skills.length > 2 && (
+              <span className="text-xs text-gray-500">+{member.skills.length - 2} mais</span>
+            )}
+          </div>
+        )}
         
         <div className="flex gap-2">
           <Link 
@@ -210,18 +136,22 @@ const CommunityExplorer = () => {
           >
             Ver Perfil
           </Link>
-          <a 
-            href={`tel:${member.phone}`}
-            className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
-          >
-            <i className="fas fa-phone"></i>
-          </a>
-          <a 
-            href={`mailto:${member.email}`}
-            className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
-          >
-            <i className="fas fa-envelope"></i>
-          </a>
+          {member.phone && (
+            <a 
+              href={`tel:${member.phone}`}
+              className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+            >
+              <i className="fas fa-phone"></i>
+            </a>
+          )}
+          {member.email && (
+            <a 
+              href={`mailto:${member.email}`}
+              className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+            >
+              <i className="fas fa-envelope"></i>
+            </a>
+          )}
         </div>
       </div>
     </div>
@@ -250,13 +180,13 @@ const CommunityExplorer = () => {
             
             <div className="flex items-center space-x-2">
               <div className="flex">
-                {renderStars(member.rating)}
+                {renderStars(5)}
               </div>
-              <span className="text-sm text-gray-600">({member.reviewCount})</span>
+              <span className="text-sm text-gray-600">(0)</span>
             </div>
           </div>
           
-          <p className="text-sm text-gray-700 mt-2 mb-3">{member.description}</p>
+          <p className="text-sm text-gray-700 mt-2 mb-3">{member.bio}</p>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -276,18 +206,22 @@ const CommunityExplorer = () => {
               >
                 Ver Perfil
               </Link>
-              <a 
-                href={`tel:${member.phone}`}
-                className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
-              >
-                <i className="fas fa-phone"></i>
-              </a>
-              <a 
-                href={`mailto:${member.email}`}
-                className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
-              >
-                <i className="fas fa-envelope"></i>
-              </a>
+              {member.phone && (
+                <a 
+                  href={`tel:${member.phone}`}
+                  className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                >
+                  <i className="fas fa-phone"></i>
+                </a>
+              )}
+              {member.email && (
+                <a 
+                  href={`mailto:${member.email}`}
+                  className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors"
+                >
+                  <i className="fas fa-envelope"></i>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -391,9 +325,13 @@ const CommunityExplorer = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              {filteredMembers.length} membro{filteredMembers.length !== 1 ? 's' : ''} encontrado{filteredMembers.length !== 1 ? 's' : ''}
-            </p>
+            {loading ? (
+              <p className="text-sm text-gray-600">A carregar membros...</p>
+            ) : (
+              <p className="text-sm text-gray-600">
+                {filteredMembers.length} membro{filteredMembers.length !== 1 ? 's' : ''} encontrado{filteredMembers.length !== 1 ? 's' : ''}
+              </p>
+            )}
             
             <button 
               onClick={() => {
@@ -409,7 +347,15 @@ const CommunityExplorer = () => {
         </div>
 
         {/* Results */}
-        {filteredMembers.length === 0 ? (
+        {error && (
+          <div className="text-center py-12">
+            <i className="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{error}</h3>
+            <p className="text-gray-600">Tente novamente mais tarde.</p>
+          </div>
+        )}
+
+        {!error && filteredMembers.length === 0 ? (
           <div className="text-center py-12">
             <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
             <h3 className="text-lg font-medium text-gray-900 mb-2">

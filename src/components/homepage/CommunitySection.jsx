@@ -10,13 +10,15 @@ const CommunitySection = () => {
     const fetchCommunityMembers = async () => {
       try {
         setLoading(true);
-        const response = await services.communityService.getCommunities({ 
-          limit: 4, 
-          featured: true 
+        const response = await services.members.getMembers({ 
+          limit: 4,
+          ordering: '-date_joined'
         });
         
         if (response && response.results) {
           setMembers(response.results);
+        } else {
+          setMembers([]);
         }
       } catch (error) {
         console.error('Erro ao buscar membros da comunidade:', error);
@@ -27,28 +29,28 @@ const CommunitySection = () => {
             profession: "Designer de Interiores",
             location: "Londres",
             profile_image: "https://picsum.photos/40/40?random=3",
-            image: "https://picsum.photos/634/400?random=10"
+            avatar: "https://picsum.photos/200/200?random=10"
           },
           {
             name: "João Manuel",
             profession: "Consultor Financeiro",
             location: "Manchester",
             profile_image: "https://picsum.photos/40/40?random=4",
-            image: "https://picsum.photos/634/400?random=11"
+            avatar: "https://picsum.photos/200/200?random=11"
           },
           {
             name: "Luísa Domingos",
             profession: "Chef de Cozinha",
             location: "Birmingham",
             profile_image: "https://picsum.photos/40/40?random=5",
-            image: "https://picsum.photos/634/400?random=12"
+            avatar: "https://picsum.photos/200/200?random=12"
           },
           {
             name: "Pedro Santos",
             profession: "Desenvolvedor de Software",
             location: "Edimburgo",
             profile_image: "https://picsum.photos/40/40?random=6",
-            image: "https://picsum.photos/634/400?random=13"
+            avatar: "https://picsum.photos/200/200?random=13"
           }
         ]);
       } finally {
@@ -75,14 +77,14 @@ const CommunitySection = () => {
           {members.map((member, index) => (
             <div key={index} className="user-card bg-white rounded-lg overflow-hidden shadow-md transition duration-300">
               <div className="relative pb-48 overflow-hidden">
-                <img className="absolute inset-0 h-full w-full object-cover" src={member.image} alt="Member" />
+                <img className="absolute inset-0 h-full w-full object-cover" src={member.cover_image || member.avatar || 'https://picsum.photos/634/400?random=20'} alt="Member" />
               </div>
               <div className="p-4">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <img
                       className="h-10 w-10 rounded-full"
-                      src={getProfileImageUrl({ profile_image: member.profile_image, name: member.name })}
+                      src={getProfileImageUrl({ profile_image: member.profile_image, avatar: member.avatar, name: member.name })}
                       alt={member.name}
                     />
                   </div>
@@ -101,7 +103,7 @@ const CommunitySection = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <a href="#" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-yellow-500 to-red-500 hover:opacity-90">
+          <a href="/comunidade" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-yellow-500 to-red-500 hover:opacity-90">
             Explorar mais membros
             <i className="fas fa-arrow-right ml-2"></i>
           </a>
