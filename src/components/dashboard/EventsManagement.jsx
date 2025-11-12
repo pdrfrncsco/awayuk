@@ -43,8 +43,8 @@ const EventsManagement = () => {
       
       const filters = {
         search: searchTerm,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        category: filterCategory !== 'all' ? filterCategory : undefined,
         page: pagination.page,
         limit: pagination.limit
       };
@@ -117,8 +117,8 @@ const EventsManagement = () => {
     try {
       const filters = {
         search: searchTerm,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        category: categoryFilter !== 'all' ? categoryFilter : undefined
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        category: filterCategory !== 'all' ? filterCategory : undefined
       };
       
       await services.eventsService.exportEvents(filters, 'csv');
@@ -135,7 +135,7 @@ const EventsManagement = () => {
 
   useEffect(() => {
     loadEvents();
-  }, [searchTerm, statusFilter, categoryFilter, pagination.page]);
+  }, [searchTerm, filterStatus, filterCategory, pagination.page]);
 
   // Funções de paginação
   const handlePageChange = (newPage) => {

@@ -18,7 +18,11 @@ import {
   ShareIcon,
   BuildingOfficeIcon,
   AcademicCapIcon,
-  StarIcon
+  StarIcon,
+  PauseIcon,
+  PlayIcon,
+  Squares2X2Icon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
 
 const OpportunitiesManagement = () => {
@@ -597,14 +601,14 @@ const OpportunitiesManagement = () => {
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
                   >
-                    <ViewGridIcon className="h-5 w-5 text-gray-500" />
+                    <Squares2X2Icon className="h-5 w-5 text-gray-500" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
                   >
-                    <ViewListIcon className="h-5 w-5 text-gray-500" />
+                    <ListBulletIcon className="h-5 w-5 text-gray-500" />
                   </button>
                 </div>
               </div>

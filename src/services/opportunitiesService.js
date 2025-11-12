@@ -2,7 +2,8 @@ import { ApiClient } from './api.js';
 
 class OpportunitiesService {
   constructor() {
-    this.apiClient = ApiClient;
+    // Instanciar corretamente para usar baseURL e interceptores
+    this.apiClient = new ApiClient();
   }
 
   // Buscar oportunidades com filtros e paginação
@@ -19,14 +20,14 @@ class OpportunitiesService {
       if (filters.limit) params.append('page_size', filters.limit);
       if (filters.ordering) params.append('ordering', filters.ordering);
 
-      const response = await this.apiClient.get(`/api/opportunities/?${params.toString()}`);
+      const data = await this.apiClient.get(`/opportunities/?${params.toString()}`);
       
       // Transformar dados da API para o formato esperado pelo frontend
       return {
-        results: response.data.results.map(item => this.transformOpportunityFromAPI(item)),
-        count: response.data.count,
-        next: response.data.next,
-        previous: response.data.previous
+        results: (data.results || []).map(item => this.transformOpportunityFromAPI(item)),
+        count: data.count || 0,
+        next: data.next || null,
+        previous: data.previous || null
       };
     } catch (error) {
       console.error('Erro ao buscar oportunidades:', error);
@@ -38,8 +39,8 @@ class OpportunitiesService {
   // Buscar oportunidade específica por ID
   async getOpportunity(opportunityId) {
     try {
-      const response = await this.apiClient.get(`/opportunities/${opportunityId}/`);
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.get(`/opportunities/${opportunityId}/`);
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao buscar oportunidade:', error);
       throw error;
@@ -50,8 +51,8 @@ class OpportunitiesService {
   async createOpportunity(opportunityData) {
     try {
       const transformedData = this.transformOpportunityToAPI(opportunityData);
-      const response = await this.apiClient.post('/opportunities/', transformedData);
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.post('/opportunities/', transformedData);
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao criar oportunidade:', error);
       throw error;
@@ -62,8 +63,8 @@ class OpportunitiesService {
   async updateOpportunity(opportunityId, opportunityData) {
     try {
       const transformedData = this.transformOpportunityToAPI(opportunityData);
-      const response = await this.apiClient.put(`/api/opportunities/${opportunityId}/`, transformedData);
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.put(`/opportunities/${opportunityId}/`, transformedData);
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao atualizar oportunidade:', error);
       throw error;
@@ -73,7 +74,7 @@ class OpportunitiesService {
   // Deletar oportunidade
   async deleteOpportunity(opportunityId) {
     try {
-      await this.apiClient.delete(`/api/opportunities/${opportunityId}/`);
+      await this.apiClient.delete(`/opportunities/${opportunityId}/`);
       return true;
     } catch (error) {
       console.error('Erro ao deletar oportunidade:', error);
@@ -89,8 +90,8 @@ class OpportunitiesService {
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('page_size', filters.limit);
 
-      const response = await this.apiClient.get(`/api/opportunities/${opportunityId}/applications/?${params.toString()}`);
-      return response.data;
+      const data = await this.apiClient.get(`/opportunities/${opportunityId}/applications/?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Erro ao buscar candidaturas:', error);
       throw error;
@@ -100,8 +101,8 @@ class OpportunitiesService {
   // Buscar estatísticas de oportunidades
   async getOpportunityStats() {
     try {
-      const response = await this.apiClient.get('/api/opportunities/stats/');
-      return response.data;
+      const data = await this.apiClient.get('/opportunities/stats/');
+      return data;
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
       return {
@@ -119,8 +120,8 @@ class OpportunitiesService {
   // Alterar status da oportunidade
   async updateOpportunityStatus(opportunityId, status) {
     try {
-      const response = await this.apiClient.patch(`/api/opportunities/${opportunityId}/`, { status });
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.patch(`/opportunities/${opportunityId}/`, { status });
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao alterar status:', error);
       throw error;
@@ -130,8 +131,8 @@ class OpportunitiesService {
   // Marcar/desmarcar como destaque
   async toggleFeatured(opportunityId, featured) {
     try {
-      const response = await this.apiClient.patch(`/api/opportunities/${opportunityId}/`, { featured });
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.patch(`/opportunities/${opportunityId}/`, { featured });
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao alterar destaque:', error);
       throw error;
@@ -141,8 +142,8 @@ class OpportunitiesService {
   // Candidatar-se a uma oportunidade
   async applyToOpportunity(opportunityId) {
     try {
-      const response = await this.apiClient.post(`/api/opportunities/${opportunityId}/apply/`);
-      return response.data;
+      const data = await this.apiClient.post(`/opportunities/${opportunityId}/apply/`);
+      return data;
     } catch (error) {
       console.error('Erro ao candidatar-se à oportunidade:', error);
       throw error;
@@ -152,8 +153,8 @@ class OpportunitiesService {
   // Duplicar oportunidade
   async duplicateOpportunity(opportunityId) {
     try {
-      const response = await this.apiClient.post(`/api/opportunities/${opportunityId}/duplicate/`);
-      return this.transformOpportunityFromAPI(response.data);
+      const data = await this.apiClient.post(`/opportunities/${opportunityId}/duplicate/`);
+      return this.transformOpportunityFromAPI(data);
     } catch (error) {
       console.error('Erro ao duplicar oportunidade:', error);
       throw error;
@@ -212,8 +213,8 @@ class OpportunitiesService {
   // Buscar localizações
   async getLocations() {
     try {
-      const response = await this.apiClient.get('/api/opportunities/locations/');
-      return response.data;
+      const data = await this.apiClient.get('/opportunities/locations/');
+      return data;
     } catch (error) {
       console.error('Erro ao buscar localizações:', error);
       // Retornar dados mock em caso de erro
@@ -235,8 +236,8 @@ class OpportunitiesService {
   // Buscar tipos de trabalho disponíveis
   async getJobTypes() {
     try {
-      const response = await this.apiClient.get('/api/opportunities/job-types/');
-      return response.data;
+      const data = await this.apiClient.get('/opportunities/job-types/');
+      return data;
     } catch (error) {
       console.error('Erro ao buscar tipos de trabalho:', error);
       return this.getDefaultJobTypes();
@@ -246,8 +247,8 @@ class OpportunitiesService {
   // Buscar localizações disponíveis
   async getLocations() {
     try {
-      const response = await this.apiClient.get('/api/opportunities/locations/');
-      return response.data;
+      const data = await this.apiClient.get('/opportunities/locations/');
+      return data;
     } catch (error) {
       console.error('Erro ao buscar localizações:', error);
       return this.getDefaultLocations();

@@ -87,13 +87,15 @@ class EventsService {
   async getCategories() {
     try {
       const data = await this.apiClient.get('/events/categories/');
-      return (data || []).map(cat => ({
+      const list = Array.isArray(data) ? data : (data?.results || []);
+      return list.map(cat => ({
         value: cat.slug,
         label: cat.name,
         color: cat.color || 'bg-gray-100 text-gray-800'
       }));
     } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
+      // Evitar log de erro barulhento no console em 404; usar fallback
+      console.warn('Aviso: usando categorias padrão (falha ao buscar categorias).');
       return this.getDefaultCategories();
     }
   }
