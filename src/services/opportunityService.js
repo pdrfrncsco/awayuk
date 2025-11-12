@@ -28,11 +28,24 @@ class OpportunityService {
    */
   async getOpportunities(params = {}) {
     try {
-      const queryParams = new URLSearchParams({
-        page: params.page || 1,
-        limit: params.limit || 20,
-        ...params
-      });
+      const queryParams = new URLSearchParams();
+      // Paginação
+      queryParams.append('page', (params.page || 1).toString());
+      queryParams.append('page_size', (params.page_size || params.limit || 20).toString());
+
+      // Filtros comuns
+      if (params.search) queryParams.append('search', params.search);
+      if (params.category) queryParams.append('category', params.category);
+      // Backend espera 'job_type'
+      const jobType = params.job_type || params.type;
+      if (jobType) queryParams.append('job_type', jobType);
+      if (params.location) queryParams.append('location', params.location);
+      if (params.salary_min) queryParams.append('salary_min', params.salary_min);
+      if (params.salary_max) queryParams.append('salary_max', params.salary_max);
+      if (params.experience_level) queryParams.append('experience_level', params.experience_level);
+      if (typeof params.remote !== 'undefined') queryParams.append('remote', String(params.remote));
+      if (params.status) queryParams.append('status', params.status);
+      if (params.ordering) queryParams.append('ordering', params.ordering);
 
       return await this.apiClient.get(`/opportunities/?${queryParams}`);
     } catch (error) {
@@ -102,6 +115,100 @@ class OpportunityService {
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao atualizar oportunidade',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Atualiza o status de uma oportunidade
+   * Compatível com componentes que chamam services.opportunities.updateOpportunityStatus
+   * @param {number} opportunityId - ID da oportunidade
+   * @param {string} newStatus - Novo status (ex.: 'draft', 'active', 'archived')
+   * @returns {Promise<Object>} Oportunidade atualizada
+   */
+  async updateOpportunityStatus(opportunityId, newStatus) {
+    try {
+      return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { status: newStatus });
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao atualizar status da oportunidade',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Define/alternar destaque de uma oportunidade
+   * Compatível com components que chamam services.opportunities.toggleFeatured(id, featured)
+   * @param {number} opportunityId - ID da oportunidade
+   * @param {boolean} featured - Estado desejado de destaque
+   * @returns {Promise<Object>} Oportunidade atualizada
+   */
+  async toggleFeatured(opportunityId, featured) {
+    try {
+      // No backend o campo é is_featured
+      return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { is_featured: featured });
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao atualizar destaque da oportunidade',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Duplica uma oportunidade
+   * Tenta endpoint dedicado e, se não existir, faz fallback criando uma cópia
+   * @param {number} opportunityId - ID da oportunidade a duplicar
+   * @returns {Promise<Object>} Oportunidade criada (cópia)
+   */
+  async duplicateOpportunity(opportunityId) {
+    try {
+      // Tentar endpoint dedicado, caso exista
+      return await this.apiClient.post(`/opportunities/${opportunityId}/duplicate/`);
+    } catch (error) {
+      // Se o endpoint não existir (ex.: 404), fazer fallback client-side
+      if (error && (error.status === 404 || String(error.message || '').includes('Not Found'))) {
+        try {
+          const original = await this.getOpportunity(opportunityId);
+          // Remover campos não criáveis e ajustar defaults
+          const copyData = {
+            title: `${original.title} (Cópia)`,
+            description: original.description,
+            company_name: original.company_name,
+            company_logo: original.company_logo,
+            location_city: original.location_city,
+            location_country: original.location_country,
+            work_type: original.work_type,
+            type: original.type,
+            category: original.category?.id || original.category, // aceita id ou objeto
+            experience_level: original.experience_level,
+            salary_min: original.salary_min,
+            salary_max: original.salary_max,
+            salary_currency: original.salary_currency,
+            application_deadline: original.application_deadline,
+            start_date: original.start_date,
+            remote: original.remote,
+            requirements: original.requirements,
+            benefits: original.benefits,
+            status: 'draft',
+            is_featured: false
+          };
+          return await this.createOpportunity(copyData);
+        } catch (fallbackError) {
+          throw new ApiError(
+            fallbackError.message || 'Falha ao duplicar oportunidade via fallback',
+            fallbackError.status || 400,
+            fallbackError.data
+          );
+        }
+      }
+      throw new ApiError(
+        error.message || 'Erro ao duplicar oportunidade',
         error.status || 400,
         error.data
       );
@@ -260,6 +367,73 @@ class OpportunityService {
   }
 
   /**
+   * Alias compatível com componentes antigos: tipos de trabalho
+   * @returns {Promise<Array>} Lista de tipos
+   */
+  async getJobTypes() {
+    try {
+      // Backend atual não expõe /opportunities/job-types/
+      // Tentar categorias por tipo ou retornar valores padrão
+      const data = await this.apiClient.get('/opportunities/job-types/');
+      return data;
+    } catch (error) {
+      // Fallback silencioso para evitar quebra de UI
+      return [
+        { value: 'full-time', label: 'Tempo Integral' },
+        { value: 'part-time', label: 'Meio Período' },
+        { value: 'contract', label: 'Contrato' },
+        { value: 'freelance', label: 'Freelance' },
+        { value: 'internship', label: 'Estágio' }
+      ];
+    }
+  }
+
+  /**
+   * Alias compatível com componentes antigos: localizações
+   * @returns {Promise<Array>} Lista de localizações
+   */
+  async getLocations() {
+    try {
+      // Backend atual não expõe /opportunities/locations/
+      // Retornar lista padrão quando 404 ou indisponível
+      const data = await this.apiClient.get('/opportunities/locations/');
+      return data;
+    } catch (error) {
+      return [
+        'Londres',
+        'Manchester',
+        'Birmingham',
+        'Edinburgh',
+        'Liverpool',
+        'Bristol',
+        'Leeds',
+        'Glasgow'
+      ];
+    }
+  }
+
+  /**
+   * Estatísticas gerais de oportunidades (agregadas)
+   * @returns {Promise<Object>} Estatísticas agregadas
+   */
+  async getOpportunityStats() {
+    try {
+      return await this.apiClient.get('/opportunities/stats/');
+    } catch (error) {
+      // Fallback básico quando não autenticado ou indisponível
+      return {
+        total_opportunities: 0,
+        active_opportunities: 0,
+        total_applications: 0,
+        opportunities_by_type: {},
+        opportunities_by_category: {},
+        opportunities_by_location: {},
+        recent_opportunities: []
+      };
+    }
+  }
+
+  /**
    * Obtém oportunidades em destaque
    * @param {Object} params - Parâmetros de consulta
    * @returns {Promise<Object>} Lista de oportunidades em destaque
@@ -375,11 +549,11 @@ class OpportunityService {
   }
 
   /**
-   * Obtém estatísticas de uma oportunidade (para criadores)
+   * Obtém estatísticas de uma oportunidade específica (para criadores)
    * @param {number} opportunityId - ID da oportunidade
    * @returns {Promise<Object>} Estatísticas da oportunidade
    */
-  async getOpportunityStats(opportunityId) {
+  async getOpportunityStatsById(opportunityId) {
     try {
       return await this.apiClient.get(`/opportunities/${opportunityId}/stats/`);
     } catch (error) {
@@ -390,6 +564,10 @@ class OpportunityService {
       );
     }
   }
+
+  /**
+   * (Removido) Estatísticas por oportunidade: use getOpportunityStatsById(opportunityId) se necessário
+   */
 
   /**
    * Exporta candidaturas (para criadores)

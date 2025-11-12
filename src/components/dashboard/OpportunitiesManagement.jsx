@@ -18,6 +18,7 @@ import {
   ShareIcon,
   BuildingOfficeIcon,
   AcademicCapIcon,
+  DocumentDuplicateIcon,
   StarIcon,
   PauseIcon,
   PlayIcon,
