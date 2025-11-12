@@ -1,638 +1,238 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTranslation } from '../../hooks/useTranslation';
-import opportunityService from '../../services/opportunityService';
+import { services } from '../../services';
 
-const CreateOpportunity = () => {
+function CreateOpportunity() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { user, isAuthenticated } = useAuth();
-  
+  const [types, setTypes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const [form, setForm] = useState({
     title: '',
-    type: 'job',
+    company: '',
+    location: '',
+    type: '',
     category: '',
-    company_name: '',
-    company_logo: '',
-    company_website: '',
+    level: '',
+    workType: 'presencial',
+    remote: false,
+    salaryMin: '',
+    salaryMax: '',
+    deadline: '',
     description: '',
     requirements: '',
-    benefits: '',
-    location_city: '',
-    location_country: 'Reino Unido',
-    work_type: 'hybrid',
-    experience_level: 'mid',
-    salary_min: '',
-    salary_max: '',
-    salary_currency: 'EUR',
-    contact_email: user?.email || '',
-    contact_phone: '',
-    deadline: '',
-    is_featured: false,
-    tags: ''
+    benefits: ''
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+    async function loadMeta() {
+      try {
+        setLoading(true);
+        const [t, c] = await Promise.all([
+          services.opportunityService.getOpportunityTypes?.(),
+          services.opportunityService.getOpportunityCategories?.()
+        ]);
+        setTypes(Array.isArray(t) ? t : []);
+        setCategories(Array.isArray(c) ? c : []);
+      } catch (e) {
+        console.warn('Falha ao carregar tipos/categorias de oportunidades:', e);
+      } finally {
+        setLoading(false);
+      }
     }
-    loadCategories();
-  }, [isAuthenticated, navigate]);
+    loadMeta();
+  }, []);
 
-  const loadCategories = async () => {
-    try {
-      const response = await opportunityService.getCategories();
-      setCategories(response.results || response.data || []);
-    } catch (err) {
-      console.error('Erro ao carregar categorias:', err);
-    }
-  };
-
-  const handleInputChange = (e) => {
+  function handleChange(e) {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setForm(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    // Limpar erro do campo quando o usuário começar a digitar
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
-  };
+  }
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Título é obrigatório';
+  function validate() {
+    const next = {};
+    if (!form.title?.trim()) next.title = 'Título é obrigatório';
+    if (!form.company?.trim()) next.company = 'Empresa é obrigatória';
+    if (!form.location?.trim()) next.location = 'Localização é obrigatória';
+    if (!form.type?.trim()) next.type = 'Tipo é obrigatório';
+    if (!form.category?.trim()) next.category = 'Categoria é obrigatória';
+    if (!form.description?.trim()) next.description = 'Descrição é obrigatória';
+    if (form.salaryMin && form.salaryMax && Number(form.salaryMin) > Number(form.salaryMax)) {
+      next.salaryMax = 'Salário máximo deve ser maior que o mínimo';
     }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
 
-    if (!formData.company_name.trim()) {
-      newErrors.company_name = 'Nome da empresa é obrigatório';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Descrição é obrigatória';
-    }
-
-    if (!formData.location_city.trim()) {
-      newErrors.location_city = 'Cidade é obrigatória';
-    }
-
-    if (!formData.contact_email.trim()) {
-      newErrors.contact_email = 'Email de contacto é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(formData.contact_email)) {
-      newErrors.contact_email = 'Email inválido';
-    }
-
-    if (formData.salary_min && formData.salary_max) {
-      if (parseInt(formData.salary_min) > parseInt(formData.salary_max)) {
-        newErrors.salary_max = 'Salário máximo deve ser maior que o mínimo';
-      }
-    }
-
-    if (formData.deadline) {
-      const deadline = new Date(formData.deadline);
-      const today = new Date();
-      if (deadline <= today) {
-        newErrors.deadline = 'Prazo deve ser uma data futura';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+    setSuccess(null);
+    setError(null);
+    if (!validate()) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      setError('');
-
-      // Preparar dados para envio
-      const submitData = {
-        ...formData,
-        salary_min: formData.salary_min ? parseInt(formData.salary_min) : null,
-        salary_max: formData.salary_max ? parseInt(formData.salary_max) : null,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+      const payload = {
+        title: form.title,
+        description: form.description,
+        company: form.company,
+        location: form.location,
+        type: form.type,
+        category: form.category,
+        salary_min: form.salaryMin ? Number(form.salaryMin) : undefined,
+        salary_max: form.salaryMax ? Number(form.salaryMax) : undefined,
+        experience_level: form.level || undefined,
+        remote: !!form.remote,
+        requirements: form.requirements ? form.requirements.trim() : undefined,
+        benefits: form.benefits ? form.benefits.trim() : undefined,
       };
 
-      const response = await opportunityService.createOpportunity(submitData);
-      
-      // Redirecionar para a página da oportunidade criada
-      navigate(`/oportunidades/${response.slug}`);
-    } catch (err) {
-      setError(err.message || 'Erro ao criar oportunidade');
+      const created = await services.opportunityService.createOpportunity(payload);
+      setSuccess('Oportunidade criada com sucesso');
+      setTimeout(() => navigate('/dashboard/oportunidades'), 350);
+      return created;
+    } catch (e) {
+      console.error(e);
+      setError(e?.message || 'Falha ao criar a oportunidade');
     } finally {
       setLoading(false);
     }
-  };
-
-  const opportunityTypes = [
-    { value: 'job', label: 'Emprego' },
-    { value: 'internship', label: 'Estágio' },
-    { value: 'freelance', label: 'Freelance' },
-    { value: 'partnership', label: 'Parceria' },
-    { value: 'investment', label: 'Investimento' },
-    { value: 'collaboration', label: 'Colaboração' },
-    { value: 'mentorship', label: 'Mentoria' },
-    { value: 'volunteer', label: 'Voluntariado' }
-  ];
-
-  const experienceLevels = [
-    { value: 'entry', label: 'Iniciante' },
-    { value: 'junior', label: 'Júnior' },
-    { value: 'mid', label: 'Intermédio' },
-    { value: 'senior', label: 'Sénior' },
-    { value: 'executive', label: 'Executivo' }
-  ];
-
-  const workTypes = [
-    { value: 'remote', label: 'Remoto' },
-    { value: 'onsite', label: 'Presencial' },
-    { value: 'hybrid', label: 'Híbrido' }
-  ];
-
-  const currencies = [
-    { value: 'EUR', label: 'Euro (€)' },
-    { value: 'GBP', label: 'Libra (£)' },
-    { value: 'USD', label: 'Dólar ($)' }
-  ];
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Criar Nova Oportunidade
-          </h1>
-          <p className="text-gray-600">
-            Publique uma oportunidade de emprego, parceria ou investimento na comunidade AwaysUK
-          </p>
+    <div className='min-h-screen bg-gray-50'>
+      <div className='max-w-5xl mx-auto px-4 py-8'>
+        <div className='mb-6'>
+          <h1 className='text-2xl font-semibold text-gray-900'>Criar Nova Oportunidade</h1>
+          <p className='text-sm text-gray-600'>Divulgue oportunidades de emprego ou negócio à comunidade.</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-            <div className="flex">
-              <i className="fas fa-exclamation-circle text-red-400 mr-3 mt-0.5"></i>
-              <p className="text-red-800">{error}</p>
-            </div>
-          </div>
+          <div className='mb-4 rounded-md bg-red-50 p-4 text-red-700'>{error}</div>
+        )}
+        {success && (
+          <div className='mb-4 rounded-md bg-green-50 p-4 text-green-700'>{success}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Informações básicas */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Informações Básicas
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Título da oportunidade *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.title ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Ex: Desenvolvedor Frontend React"
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de oportunidade *
-                </label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  {opportunityTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoria
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">Selecionar categoria</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <form onSubmit={handleSubmit} className='bg-white shadow rounded-lg p-6 space-y-6'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Título *</label>
+              <input name='title' value={form.title} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.title && <p className='mt-1 text-xs text-red-600'>{errors.title}</p>}
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Empresa *</label>
+              <input name='company' value={form.company} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.company && <p className='mt-1 text-xs text-red-600'>{errors.company}</p>}
             </div>
           </div>
 
-          {/* Informações da empresa */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Informações da Empresa
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome da empresa *
-                </label>
-                <input
-                  type="text"
-                  name="company_name"
-                  value={formData.company_name}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.company_name ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Ex: Tech Solutions Ltd"
-                />
-                {errors.company_name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Website da empresa
-                </label>
-                <input
-                  type="url"
-                  name="company_website"
-                  value={formData.company_website}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="https://www.empresa.com"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL do logotipo da empresa
-                </label>
-                <input
-                  type="url"
-                  name="company_logo"
-                  value={formData.company_logo}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="https://www.empresa.com/logo.png"
-                />
-              </div>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Localização *</label>
+              <input name='location' value={form.location} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.location && <p className='mt-1 text-xs text-red-600'>{errors.location}</p>}
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Tipo *</label>
+              <select name='type' value={form.type} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value=''>Selecione...</option>
+                {types?.map((t, i) => (
+                  <option key={i} value={t?.value || t}>{t?.label || t}</option>
+                ))}
+              </select>
+              {errors.type && <p className='mt-1 text-xs text-red-600'>{errors.type}</p>}
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Categoria *</label>
+              <select name='category' value={form.category} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value=''>Selecione...</option>
+                {categories?.map((c, i) => (
+                  <option key={i} value={c?.value || c}>{c?.label || c}</option>
+                ))}
+              </select>
+              {errors.category && <p className='mt-1 text-xs text-red-600'>{errors.category}</p>}
             </div>
           </div>
 
-          {/* Descrição */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Descrição da Oportunidade
-            </h2>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descrição *
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={6}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.description ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Descreva a oportunidade, responsabilidades, objetivos..."
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Requisitos
-                </label>
-                <textarea
-                  name="requirements"
-                  value={formData.requirements}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Liste os requisitos necessários..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Benefícios
-                </label>
-                <textarea
-                  name="benefits"
-                  value={formData.benefits}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Descreva os benefícios oferecidos..."
-                />
-              </div>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Nível</label>
+              <select name='level' value={form.level} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value=''>Selecione...</option>
+                <option value='junior'>Júnior</option>
+                <option value='mid'>Intermédio</option>
+                <option value='senior'>Sénior</option>
+                <option value='lead'>Líder</option>
+              </select>
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Regime</label>
+              <select name='workType' value={form.workType} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value='presencial'>Presencial</option>
+                <option value='hibrido'>Híbrido</option>
+                <option value='remoto'>Remoto</option>
+              </select>
+            </div>
+            <div className='flex items-center mt-6'>
+              <input id='remote' type='checkbox' name='remote' checked={form.remote} onChange={handleChange} className='h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500' />
+              <label htmlFor='remote' className='ml-2 block text-sm text-gray-700'>Aceita remoto</label>
             </div>
           </div>
 
-          {/* Localização e modalidade */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Localização e Modalidade
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cidade *
-                </label>
-                <input
-                  type="text"
-                  name="location_city"
-                  value={formData.location_city}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.location_city ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Ex: Londres"
-                />
-                {errors.location_city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.location_city}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  País
-                </label>
-                <input
-                  type="text"
-                  name="location_country"
-                  value={formData.location_country}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Modalidade de trabalho
-                </label>
-                <select
-                  name="work_type"
-                  value={formData.work_type}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  {workTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Salário mínimo</label>
+              <input name='salaryMin' type='number' min='0' value={form.salaryMin} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Salário máximo</label>
+              <input name='salaryMax' type='number' min='0' value={form.salaryMax} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.salaryMax && <p className='mt-1 text-xs text-red-600'>{errors.salaryMax}</p>}
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Prazo (deadline)</label>
+              <input name='deadline' type='date' value={form.deadline} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
             </div>
           </div>
 
-          {/* Experiência e remuneração */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Experiência e Remuneração
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nível de experiência
-                </label>
-                <select
-                  name="experience_level"
-                  value={formData.experience_level}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  {experienceLevels.map(level => (
-                    <option key={level.value} value={level.value}>
-                      {level.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div>
+            <label className='block text-sm font-medium text-gray-700'>Descrição *</label>
+            <textarea name='description' rows={4} value={form.description} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            {errors.description && <p className='mt-1 text-xs text-red-600'>{errors.description}</p>}
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Moeda
-                </label>
-                <select
-                  name="salary_currency"
-                  value={formData.salary_currency}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  {currencies.map(currency => (
-                    <option key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Salário mínimo
-                </label>
-                <input
-                  type="number"
-                  name="salary_min"
-                  value={formData.salary_min}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="30000"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Salário máximo
-                </label>
-                <input
-                  type="number"
-                  name="salary_max"
-                  value={formData.salary_max}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.salary_max ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="60000"
-                />
-                {errors.salary_max && (
-                  <p className="mt-1 text-sm text-red-600">{errors.salary_max}</p>
-                )}
-              </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Requisitos (um por linha)</label>
+              <textarea name='requirements' rows={3} value={form.requirements} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Benefícios (um por linha)</label>
+              <textarea name='benefits' rows={3} value={form.benefits} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
             </div>
           </div>
 
-          {/* Contacto e prazo */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Contacto e Prazo
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email de contacto *
-                </label>
-                <input
-                  type="email"
-                  name="contact_email"
-                  value={formData.contact_email}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.contact_email ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="contacto@empresa.com"
-                />
-                {errors.contact_email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.contact_email}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefone de contacto
-                </label>
-                <input
-                  type="tel"
-                  name="contact_phone"
-                  value={formData.contact_phone}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="+44 20 1234 5678"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prazo de candidatura
-                </label>
-                <input
-                  type="date"
-                  name="deadline"
-                  value={formData.deadline}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                    errors.deadline ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {errors.deadline && (
-                  <p className="mt-1 text-sm text-red-600">{errors.deadline}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tags (separadas por vírgula)
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="react, javascript, frontend"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="is_featured"
-                  checked={formData.is_featured}
-                  onChange={handleInputChange}
-                  className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  Destacar esta oportunidade (aparecerá em destaque na listagem)
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Botões de ação */}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate('/oportunidades')}
-              className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-300"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90 transition duration-300 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Criando...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-plus mr-2"></i>
-                  Criar Oportunidade
-                </>
-              )}
+          <div className='flex justify-end gap-3 pt-4'>
+            <button type='button' onClick={() => navigate(-1)} className='px-4 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50'>Cancelar</button>
+            <button type='submit' disabled={loading} className='px-4 py-2 rounded-md border border-transparent text-white bg-red-600 hover:bg-red-700 disabled:opacity-50'>
+              {loading ? 'A criar...' : 'Criar Oportunidade'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-};
+}
 
 export default CreateOpportunity;

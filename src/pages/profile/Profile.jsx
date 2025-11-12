@@ -10,7 +10,7 @@ import PortfolioManager from '../../components/profile/PortfolioManager';
 import ProfileEditor from '../../components/profile/ProfileEditor';
 import { useToast } from '../../components/common/Toast';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
-import VisitorAction from '../../components/common/VisitorAction';
+import VisitorAction from '../../components/auth/VisitorAction';
 
 const MemberProfile = () => {
   const { id } = useParams();
@@ -995,12 +995,17 @@ const MemberProfile = () => {
             ) : (
               <>
                 <VisitorAction
-                  buttonText="Contactar"
-                  buttonClassName="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity"
-                  actionType="contact"
-                  icon="fas fa-envelope mr-2"
-                  onSuccess={() => setShowContactModal(true)}
-                />
+                  onAction={() => setShowContactModal(true)}
+                  showModal={true}
+                  redirectTo="/login"
+                  requireMember={false}
+                  actionType="message"
+                >
+                  <button className="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity">
+                    <i className="fas fa-envelope mr-2"></i>
+                    Contactar
+                  </button>
+                </VisitorAction>
                 
                 {/* Botões adicionais para interagir com perfis de business */}
                 {profileData?.user_type === 'business' && (
@@ -1015,19 +1020,29 @@ const MemberProfile = () => {
               </>
             )}
             <VisitorAction
-              buttonText="Ligar"
-              buttonClassName="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
-              actionType="call"
-              icon="fas fa-phone mr-2"
-              onSuccess={() => window.location.href = `tel:${member.phone}`}
-            />
+              onAction={() => window.location.href = `tel:${member.phone}`}
+              showModal={true}
+              redirectTo="/login"
+              requireMember={false}
+              actionType="message"
+            >
+              <button className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors">
+                <i className="fas fa-phone mr-2"></i>
+                Ligar
+              </button>
+            </VisitorAction>
             <VisitorAction
-              buttonText="WhatsApp"
-              buttonClassName="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
-              actionType="whatsapp"
-              icon="fab fa-whatsapp mr-2"
-              onSuccess={() => window.open(`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`, '_blank')}
-            />
+              onAction={() => window.open(`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`, '_blank')}
+              showModal={true}
+              redirectTo="/login"
+              requireMember={false}
+              actionType="message"
+            >
+              <button className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors">
+                <i className="fab fa-whatsapp mr-2"></i>
+                WhatsApp
+              </button>
+            </VisitorAction>
             <button className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
               <i className="fas fa-share-alt mr-2"></i>
               Partilhar

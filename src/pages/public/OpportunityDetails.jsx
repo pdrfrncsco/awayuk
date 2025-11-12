@@ -20,6 +20,7 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import VisitorAction from '../../components/auth/VisitorAction';
 
 const OpportunityDetails = () => {
   const { id } = useParams();
@@ -269,42 +270,63 @@ const OpportunityDetails = () => {
               </div>
               
               <div className="space-y-3">
-                <button
-                  onClick={handleApply}
-                  className={`w-full px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isApplied 
-                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                      : 'bg-yellow-500 text-white hover:bg-yellow-600'
-                  }`}
+                <VisitorAction
+                  onAction={handleApply}
+                  showModal={false}
+                  redirectTo="/login"
+                  requireMember={false}
+                  actionType="opportunity"
                 >
-                  {isApplied ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <CheckCircleIcon className="h-5 w-5" />
-                      Candidatura Enviada
-                    </span>
-                  ) : (
-                    'Candidatar-se'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setShowContactModal(true)}
-                  className="w-full px-4 py-3 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  Contactar Empresa
-                </button>
-                
-                <div className="flex gap-2">
                   <button
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className="flex-1 px-4 py-2 border border-white/30 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
+                    className={`w-full px-4 py-3 rounded-lg font-medium transition-colors ${
+                      isApplied 
+                        ? 'bg-green-500 text-white hover:bg-green-600' 
+                        : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                    }`}
                   >
-                    {isFavorite ? (
-                      <HeartSolidIcon className="h-5 w-5 text-red-300" />
+                    {isApplied ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <CheckCircleIcon className="h-5 w-5" />
+                        Candidatura Enviada
+                      </span>
                     ) : (
-                      <HeartIcon className="h-5 w-5" />
+                      'Candidatar-se'
                     )}
                   </button>
+                </VisitorAction>
+                
+                <VisitorAction
+                  onAction={() => setShowContactModal(true)}
+                  showModal={false}
+                  redirectTo="/login"
+                  requireMember={false}
+                  actionType="message"
+                >
+                  <button
+                    className="w-full px-4 py-3 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    Contactar Empresa
+                  </button>
+                </VisitorAction>
+                
+                <div className="flex gap-2">
+                  <VisitorAction
+                    onAction={() => setIsFavorite(!isFavorite)}
+                    showModal={true}
+                    redirectTo="/login"
+                    requireMember={false}
+                    actionType="favorite"
+                  >
+                    <button
+                      className="flex-1 px-4 py-2 border border-white/30 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
+                    >
+                      {isFavorite ? (
+                        <HeartSolidIcon className="h-5 w-5 text-red-300" />
+                      ) : (
+                        <HeartIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </VisitorAction>
                   
                   <div className="relative group">
                     <button className="px-4 py-2 border border-white/30 rounded-lg hover:bg-white/10 transition-colors">

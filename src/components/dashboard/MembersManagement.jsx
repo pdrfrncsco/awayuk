@@ -35,6 +35,90 @@ const MembersManagement = () => {
     totalPages: 0
   });
 
+  // Modal e Formulário de CRUD
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: '',
+    profession: '',
+    company: '',
+    bio: '',
+    website: '',
+    linkedin: '',
+    twitter: '',
+    skills: [],
+    interests: [],
+    status: 'active',
+    role: 'member'
+  });
+
+  const openAddMemberModal = () => {
+    setEditingMember(null);
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      location: '',
+      profession: '',
+      company: '',
+      bio: '',
+      website: '',
+      linkedin: '',
+      twitter: '',
+      skills: [],
+      interests: [],
+      status: 'active',
+      role: 'member'
+    });
+    setShowFormModal(true);
+  };
+
+  const openEditMemberModal = (member) => {
+    setEditingMember(member);
+    setFormData({
+      firstName: member.firstName || '',
+      lastName: member.lastName || '',
+      email: member.email || '',
+      phone: member.phone || '',
+      location: member.location || '',
+      profession: member.profession || '',
+      company: member.company || '',
+      bio: member.bio || '',
+      website: member.website || '',
+      linkedin: member.linkedin || '',
+      twitter: member.twitter || '',
+      skills: member.skills || [],
+      interests: member.interests || [],
+      status: member.status || 'active',
+      role: member.role || 'member'
+    });
+    setShowFormModal(true);
+  };
+
+  const handleFormInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTagsInputChange = (name, value) => {
+    const arr = value
+      .split(',')
+      .map(v => v.trim())
+      .filter(v => v.length > 0);
+    setFormData(prev => ({ ...prev, [name]: arr }));
+  };
+
+  const closeFormModal = () => {
+    setShowFormModal(false);
+    setEditingMember(null);
+  };
+
   // Carregar membros
   const loadMembers = async () => {
     try {
@@ -83,7 +167,7 @@ const MembersManagement = () => {
   const toggleMemberStatus = async (memberId, currentStatus) => {
     try {
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      await membersService.toggleMemberStatus(memberId, newStatus);
+      await membersService.toggleMemberStatus(memberId, newStatus === 'active');
       
       // Atualizar lista local
       setMembers(prev => prev.map(member => 
@@ -121,8 +205,15 @@ const MembersManagement = () => {
         status: filterStatus !== 'all' ? filterStatus : undefined,
         role: filterRole !== 'all' ? filterRole : undefined
       };
-      
-      await membersService.exportMembers(filters);
+      const blob = await membersService.exportMembers(filters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'members_export.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Erro ao exportar dados:', err);
       setError('Erro ao exportar dados.');
@@ -218,6 +309,7 @@ const MembersManagement = () => {
           </button>
           <button
             type="button"
+            onClick={openAddMemberModal}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
@@ -415,7 +507,7 @@ const MembersManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button className="text-red-600 hover:text-red-900">
+                            <button onClick={() => openEditMemberModal(member)} className="text-red-600 hover:text-red-900">
                               <PencilIcon className="h-4 w-4" />
                             </button>
                             <button 
@@ -516,6 +608,127 @@ const MembersManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Formulário */}
+      {showFormModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black bg-opacity-40" onClick={closeFormModal}></div>
+            <div className="relative bg-white w-full max-w-3xl rounded-lg shadow-lg">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {editingMember ? 'Editar Membro' : 'Adicionar Membro'}
+                </h3>
+                <button onClick={closeFormModal} className="text-gray-500 hover:text-gray-700">Fechar</button>
+              </div>
+              <div className="px-6 py-4">
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    setSaving(true);
+                    setError(null);
+                    const payload = { ...formData };
+                    let saved;
+                    if (editingMember) {
+                      saved = await membersService.updateMember(editingMember.id, payload);
+                      setMembers(prev => prev.map(m => m.id === editingMember.id ? saved : m));
+                    } else {
+                      saved = await membersService.createMember(payload);
+                      // Inserir no topo e atualizar totais
+                      setMembers(prev => [saved, ...prev]);
+                      setPagination(prev => ({ ...prev, total: prev.total + 1 }));
+                    }
+                    setShowFormModal(false);
+                    setEditingMember(null);
+                  } catch (err) {
+                    console.error('Erro ao salvar membro:', err);
+                    setError('Erro ao salvar membro. Verifique os dados e tente novamente.');
+                  } finally {
+                    setSaving(false);
+                  }
+                }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Primeiro Nome</label>
+                      <input name="firstName" value={formData.firstName} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Último Nome</label>
+                      <input name="lastName" value={formData.lastName} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <input type="email" required name="email" value={formData.email} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Telefone</label>
+                      <input name="phone" value={formData.phone} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Localização</label>
+                      <input name="location" value={formData.location} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Profissão</label>
+                      <input name="profession" value={formData.profession} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Empresa</label>
+                      <input name="company" value={formData.company} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">Bio</label>
+                      <textarea name="bio" rows={3} value={formData.bio} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Website</label>
+                      <input name="website" value={formData.website} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
+                      <input name="linkedin" value={formData.linkedin} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Twitter</label>
+                      <input name="twitter" value={formData.twitter} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Skills (separadas por vírgula)</label>
+                      <input value={formData.skills.join(', ')} onChange={(e) => handleTagsInputChange('skills', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Interesses (separados por vírgula)</label>
+                      <input value={formData.interests.join(', ')} onChange={(e) => handleTagsInputChange('interests', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status</label>
+                      <select name="status" value={formData.status} onChange={handleFormInputChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Função</label>
+                      <select name="role" value={formData.role} onChange={handleFormInputChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md">
+                        <option value="member">Membro</option>
+                        <option value="moderator">Moderador</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-end space-x-3">
+                    <button type="button" onClick={closeFormModal} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" disabled={saving} className="px-4 py-2 rounded-md border border-transparent text-white bg-red-600 hover:bg-red-700 disabled:opacity-50">
+                      {saving ? 'Salvando...' : editingMember ? 'Salvar alterações' : 'Criar membro'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

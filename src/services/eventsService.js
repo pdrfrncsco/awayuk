@@ -2,7 +2,8 @@ import { ApiClient } from './api.js';
 
 class EventsService {
   constructor() {
-    this.apiClient = ApiClient;
+    // Instanciar ApiClient para garantir interceptores e baseURL corretos
+    this.apiClient = new ApiClient();
   }
 
   // Buscar eventos com filtros e paginação
@@ -20,14 +21,14 @@ class EventsService {
       if (filters.limit) params.append('page_size', filters.limit);
       if (filters.ordering) params.append('ordering', filters.ordering);
 
-      const response = await this.apiClient.get(`/events/?${params.toString()}`);
+      const data = await this.apiClient.get(`/events/?${params.toString()}`);
       
       // Transformar dados da API para o formato esperado pelo frontend
       return {
-        results: response.data.results.map(this.transformEventFromAPI),
-        count: response.data.count,
-        next: response.data.next,
-        previous: response.data.previous
+        results: (data.results || []).map(this.transformEventFromAPI),
+        count: data.count,
+        next: data.next,
+        previous: data.previous
       };
     } catch (error) {
       console.error('Erro ao buscar eventos:', error);
@@ -36,11 +37,11 @@ class EventsService {
     }
   }
 
-  // Buscar evento específico por ID
-  async getEvent(eventId) {
+  // Buscar evento específico por slug (ou ID se o backend suportar)
+  async getEvent(eventIdentifier) {
     try {
-      const response = await this.apiClient.get(`/events/${eventId}/`);
-      return this.transformEventFromAPI(response.data);
+      const data = await this.apiClient.get(`/events/${eventIdentifier}/`);
+      return this.transformEventFromAPI(data);
     } catch (error) {
       console.error('Erro ao buscar evento:', error);
       throw error;
@@ -51,8 +52,8 @@ class EventsService {
   async createEvent(eventData) {
     try {
       const transformedData = this.transformEventToAPI(eventData);
-      const response = await this.apiClient.post('/events/', transformedData);
-      return this.transformEventFromAPI(response.data);
+      const data = await this.apiClient.post('/events/', transformedData);
+      return this.transformEventFromAPI(data);
     } catch (error) {
       console.error('Erro ao criar evento:', error);
       throw error;
@@ -60,11 +61,11 @@ class EventsService {
   }
 
   // Atualizar evento
-  async updateEvent(eventId, eventData) {
+  async updateEvent(eventIdentifier, eventData) {
     try {
       const transformedData = this.transformEventToAPI(eventData);
-      const response = await this.apiClient.put(`/events/${eventId}/`, transformedData);
-      return this.transformEventFromAPI(response.data);
+      const data = await this.apiClient.put(`/events/${eventIdentifier}/`, transformedData);
+      return this.transformEventFromAPI(data);
     } catch (error) {
       console.error('Erro ao atualizar evento:', error);
       throw error;
@@ -72,9 +73,9 @@ class EventsService {
   }
 
   // Deletar evento
-  async deleteEvent(eventId) {
+  async deleteEvent(eventIdentifier) {
     try {
-      await this.apiClient.delete(`/events/${eventId}/`);
+      await this.apiClient.delete(`/events/${eventIdentifier}/`);
       return true;
     } catch (error) {
       console.error('Erro ao deletar evento:', error);
@@ -85,8 +86,8 @@ class EventsService {
   // Buscar categorias de eventos
   async getCategories() {
     try {
-      const response = await this.apiClient.get('/events/categories/');
-      return response.data.map(cat => ({
+      const data = await this.apiClient.get('/events/categories/');
+      return (data || []).map(cat => ({
         value: cat.slug,
         label: cat.name,
         color: cat.color || 'bg-gray-100 text-gray-800'
@@ -98,14 +99,14 @@ class EventsService {
   }
 
   // Buscar registros de um evento
-  async getEventRegistrations(eventId, filters = {}) {
+  async getEventRegistrations(eventSlug, filters = {}) {
     try {
       const params = new URLSearchParams();
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('page_size', filters.limit);
 
-      const response = await this.apiClient.get(`/api/events/${eventId}/registrations/?${params.toString()}`);
-      return response.data;
+      const data = await this.apiClient.get(`/events/${eventSlug}/registrations/?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Erro ao buscar registros:', error);
       throw error;
@@ -113,14 +114,14 @@ class EventsService {
   }
 
   // Buscar comentários de um evento
-  async getEventComments(eventId, filters = {}) {
+  async getEventComments(eventSlug, filters = {}) {
     try {
       const params = new URLSearchParams();
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('page_size', filters.limit);
 
-      const response = await this.apiClient.get(`/api/events/${eventId}/comments/?${params.toString()}`);
-      return response.data;
+      const data = await this.apiClient.get(`/events/${eventSlug}/comments/?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Erro ao buscar comentários:', error);
       throw error;
@@ -130,8 +131,8 @@ class EventsService {
   // Buscar estatísticas de eventos
   async getEventStats() {
     try {
-      const response = await this.apiClient.get('/api/events/stats/');
-      return response.data;
+      const data = await this.apiClient.get('/events/stats/');
+      return data;
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
       return {
@@ -147,10 +148,10 @@ class EventsService {
   }
 
   // Alterar status do evento
-  async updateEventStatus(eventId, status) {
+  async updateEventStatus(eventSlug, status) {
     try {
-      const response = await this.apiClient.patch(`/api/events/${eventId}/`, { status });
-      return this.transformEventFromAPI(response.data);
+      const data = await this.apiClient.patch(`/events/${eventSlug}/`, { status });
+      return this.transformEventFromAPI(data);
     } catch (error) {
       console.error('Erro ao alterar status:', error);
       throw error;
@@ -158,12 +159,28 @@ class EventsService {
   }
 
   // Duplicar evento
-  async duplicateEvent(eventId) {
+  async duplicateEvent(eventSlug) {
     try {
-      const response = await this.apiClient.post(`/api/events/${eventId}/duplicate/`);
-      return this.transformEventFromAPI(response.data);
+      const data = await this.apiClient.post(`/events/${eventSlug}/duplicate/`);
+      return this.transformEventFromAPI(data);
     } catch (error) {
       console.error('Erro ao duplicar evento:', error);
+      throw error;
+    }
+  }
+
+  // Registar-se num evento
+  async registerForEvent(eventSlug, registrationData = {}) {
+    try {
+      const payload = {
+        special_requirements: registrationData.special_requirements || '',
+        dietary_requirements: registrationData.dietary_requirements || '',
+        emergency_contact: registrationData.emergency_contact || ''
+      };
+      const data = await this.apiClient.post(`/events/${eventSlug}/register/`, payload);
+      return data; // retorna dados do registo
+    } catch (error) {
+      console.error('Erro ao registar no evento:', error);
       throw error;
     }
   }
@@ -178,12 +195,12 @@ class EventsService {
       if (filters.category) params.append('category', filters.category);
       params.append('format', format);
 
-      const response = await this.apiClient.get(`/api/events/export/?${params.toString()}`, {
+      const blobData = await this.apiClient.get(`/events/export/?${params.toString()}`, {
         responseType: 'blob'
       });
 
       // Criar download do arquivo
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([blobData]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `eventos_${new Date().toISOString().split('T')[0]}.${format}`);
@@ -201,22 +218,46 @@ class EventsService {
 
   // Transformar dados da API para o formato do frontend
   transformEventFromAPI(apiEvent) {
+    // Mapear campos do EventDetail/List serializers para o formato esperado pelo frontend
+    const start = apiEvent.start_date ? new Date(apiEvent.start_date) : null;
+    const end = apiEvent.end_date ? new Date(apiEvent.end_date) : null;
+    const toHHMM = (d) => d ? `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : '';
+
+    const organizerUser = apiEvent.organizer ? {
+      id: apiEvent.organizer.id,
+      username: apiEvent.organizer.username,
+      firstName: apiEvent.organizer.first_name,
+      lastName: apiEvent.organizer.last_name,
+      profile_image: apiEvent.organizer.profile_image
+    } : null;
+
+    const organizerName = organizerUser
+      ? ((organizerUser.firstName || organizerUser.lastName)
+        ? `${organizerUser.firstName || ''} ${organizerUser.lastName || ''}`.trim()
+        : organizerUser.username)
+      : (apiEvent.organizer || '');
+
     return {
       id: apiEvent.id,
+      slug: apiEvent.slug,
       title: apiEvent.title,
-      description: apiEvent.description,
-      date: apiEvent.date,
-      time: apiEvent.time,
-      location: apiEvent.location,
+      description: apiEvent.description || apiEvent.short_description || '',
+      date: apiEvent.start_date || apiEvent.date,
+      time: toHHMM(start),
+      endTime: toHHMM(end),
+      location: apiEvent.city || apiEvent.location,
       address: apiEvent.address,
-      category: apiEvent.category?.slug || apiEvent.category,
+      category: apiEvent.category?.name || apiEvent.category?.slug || apiEvent.category,
       status: apiEvent.status,
-      attendees: apiEvent.registrations_count || 0,
-      maxAttendees: apiEvent.max_attendees,
-      price: parseFloat(apiEvent.price || 0),
-      organizer: apiEvent.organizer?.name || apiEvent.organizer,
-      image: apiEvent.image,
+      registered: apiEvent.attendee_count ?? apiEvent.registrations_count ?? 0,
+      capacity: apiEvent.max_attendees ?? apiEvent.maxAttendees,
+      price: apiEvent.is_free ? 'Gratuito' : (apiEvent.price != null ? `£${apiEvent.price}` : ''),
+      organizer: organizerName,
+      organizerUser,
+      venue: apiEvent.venue_name || apiEvent.venue,
+      image: apiEvent.featured_image || apiEvent.image,
       tags: apiEvent.tags || [],
+      featured: apiEvent.is_featured || false,
       created_at: apiEvent.created_at,
       updated_at: apiEvent.updated_at
     };

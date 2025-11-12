@@ -18,14 +18,10 @@ import ContactSection from './components/homepage/ContactSection';
 import Footer from './components/homepage/Footer';
 import CommunityExplorer from './pages/public/CommunityExplorer';
 import EventsExplorer from './pages/public/EventsExplorer';
-import EventDetails from './pages/public/EventDetails';
 import EventDetail from './pages/public/EventDetail';
-import EventList from './pages/events/EventList';
-import EventDetailAdmin from './pages/events/EventDetail';
+// Consolidated events to public pages; removed EventDetails, EventList, and admin EventDetail
 import CreateEvent from './pages/events/CreateEvent';
 import OnboardingPage from './pages/onboarding/Onboarding';
-import OpportunityList from './pages/opportunities/OpportunityList';
-import OpportunityDetail from './pages/opportunities/OpportunityDetail';
 import CreateOpportunity from './pages/opportunities/CreateOpportunity';
 import BusinessOpportunities from './pages/public/BusinessOpportunities';
 import OpportunityDetails from './pages/public/OpportunityDetails';
@@ -97,17 +93,16 @@ function App() {
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/comunidade" element={<PublicLayout><CommunityExplorer /></PublicLayout>} />
             <Route path="/eventos" element={<PublicLayout><EventsExplorer /></PublicLayout>} />
-            <Route path="/evento/:id" element={<PublicLayout><EventDetail /></PublicLayout>} />
+            <Route path="/evento/:slug" element={<PublicLayout><EventDetail /></PublicLayout>} />
         <Route path="/onboarding" element={<PublicLayout><OnboardingPage /></PublicLayout>} />
-        <Route path="/eventos/:slug" element={<PublicLayout><EventDetailAdmin /></PublicLayout>} />
+        { /* Removed admin event detail route using slug to avoid duplication */ }
 <Route path="/criar-evento" element={
               <MultiTypeRoute allowedTypes={['member', 'admin']} redirectTo="/dashboard">
                 <PublicLayout><CreateEvent /></PublicLayout>
               </MultiTypeRoute>
             } />
-            <Route path="/evento/:id" element={<PublicLayout><EventDetails /></PublicLayout>} />
-            <Route path="/oportunidades" element={<PublicLayout><OpportunityList /></PublicLayout>} />
-            <Route path="/oportunidades/:slug" element={<PublicLayout><OpportunityDetail /></PublicLayout>} />
+            { /* Removed duplicate event details route; using EventDetail instead */ }
+            <Route path="/oportunidades" element={<PublicLayout><BusinessOpportunities /></PublicLayout>} />
             <Route path="/criar-oportunidade" element={
               <MultiTypeRoute allowedTypes={['business', 'admin']} redirectTo="/dashboard">
                 <PublicLayout><CreateOpportunity /></PublicLayout>
@@ -169,6 +164,13 @@ function App() {
                 <MultiTypeRoute allowedTypes={['business', 'admin']}>
                   <RouteGuard permission={PERMISSIONS.VIEW_OPPORTUNITIES}>
                     <OpportunitiesManagement />
+                  </RouteGuard>
+                </MultiTypeRoute>
+              } />
+              <Route path="oportunidades/nova" element={
+                <MultiTypeRoute allowedTypes={['business', 'admin']}>
+                  <RouteGuard permission={PERMISSIONS.CREATE_OPPORTUNITY}>
+                    <CreateOpportunity />
                   </RouteGuard>
                 </MultiTypeRoute>
               } />

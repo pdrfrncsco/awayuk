@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import VisitorAction from '../../components/auth/VisitorAction';
 import { 
   MagnifyingGlassIcon, 
   MapPinIcon, 
@@ -292,16 +293,21 @@ const BusinessOpportunities = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-1">{opportunity.title}</h3>
             <p className="text-gray-600 font-medium">{opportunity.company}</p>
           </div>
-          <button
-            onClick={() => toggleFavorite(opportunity.id)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          <VisitorAction
+            onAction={() => toggleFavorite(opportunity.id)}
+            showModal={true}
+            redirectTo="/login"
+            requireMember={false}
+            actionType="favorite"
           >
-            {favorites.has(opportunity.id) ? (
-              <HeartSolidIcon className="h-5 w-5 text-red-500" />
-            ) : (
-              <HeartIcon className="h-5 w-5 text-gray-400" />
-            )}
-          </button>
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+              {favorites.has(opportunity.id) ? (
+                <HeartSolidIcon className="h-5 w-5 text-red-500" />
+              ) : (
+                <HeartIcon className="h-5 w-5 text-gray-400" />
+              )}
+            </button>
+          </VisitorAction>
         </div>
         
         <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
@@ -334,6 +340,26 @@ const BusinessOpportunities = () => {
             Prazo: {formatDate(opportunity.deadline)}
           </div>
           <div className="flex gap-2">
+            <VisitorAction
+              onAction={() => {
+                const email = opportunity?.contact?.email;
+                if (email) {
+                  const subject = `Candidatura - ${opportunity.title}`;
+                  window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+                } else {
+                  window.location.href = `/oportunidade/${opportunity.id}`;
+                }
+              }}
+              showModal={false}
+              redirectTo="/login"
+              requireMember={true}
+              actionType="opportunity"
+            >
+              <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-1">
+                <EnvelopeIcon className="h-5 w-5" />
+                Candidatar-me
+              </button>
+            </VisitorAction>
             <Link
               to={`/oportunidade/${opportunity.id}`}
               className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"

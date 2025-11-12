@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { services } from '../../services';
+import VisitorAction from '../../components/common/VisitorAction';
+import { useAuth } from '../../contexts/AuthContext';
 
 const EventsExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,11 +14,39 @@ const EventsExplorer = () => {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('date'); // 'date' | 'popular' | 'location' | 'title'
+  const [sortDir, setSortDir] = useState('asc'); // 'asc' | 'desc'
+  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [page, setPage] = useState(1);
+  const [savedIds, setSavedIds] = useState(() => new Set(JSON.parse(localStorage.getItem('savedEvents') || '[]')));
+  const [sharedId, setSharedId] = useState(null);
+  const { isAuthenticated, user } = useAuth();
+  const isMember = user && user.role === 'member';
+
+  // Carregar preferências de filtros do localStorage
+  useEffect(() => {
+    const prefsStr = localStorage.getItem('eventsExplorerFilters');
+    if (prefsStr) {
+      try {
+        const prefs = JSON.parse(prefsStr);
+        setSearchTerm(prefs.searchTerm ?? '');
+        setSelectedLocation(prefs.selectedLocation ?? '');
+        setSelectedCategory(prefs.selectedCategory ?? '');
+        setSelectedDate(prefs.selectedDate ?? '');
+        setViewMode(prefs.viewMode ?? 'grid');
+        setSortBy(prefs.sortBy ?? 'date');
+        setSortDir(prefs.sortDir ?? 'asc');
+        setItemsPerPage(prefs.itemsPerPage ?? 9);
+      } catch (_) {}
+    }
+  }, []);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await services.eventsService.getEvents();
         
         if (response && response.results) {
@@ -31,6 +61,7 @@ const EventsExplorer = () => {
         }
       } catch (error) {
         console.error('Erro ao buscar eventos:', error);
+        setError('Ocorreu um erro ao carregar os eventos. Tente novamente.');
         // Fallback para dados mock já está implementado no serviço
       } finally {
         setLoading(false);
@@ -40,16 +71,64 @@ const EventsExplorer = () => {
     fetchEvents();
   }, []);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.organizer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = !selectedLocation || event.location === selectedLocation;
-    const matchesCategory = !selectedCategory || event.category === selectedCategory;
-    const matchesDate = !selectedDate || event.date >= selectedDate;
-    
-    return matchesSearch && matchesLocation && matchesCategory && matchesDate;
-  });
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           event.organizer.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesLocation = !selectedLocation || event.location === selectedLocation;
+      const matchesCategory = !selectedCategory || event.category === selectedCategory;
+      const matchesDate = !selectedDate || event.date >= selectedDate;
+      
+      return matchesSearch && matchesLocation && matchesCategory && matchesDate;
+    });
+  }, [events, searchTerm, selectedLocation, selectedCategory, selectedDate]);
+
+  const sortedEvents = useMemo(() => {
+    const list = [...filteredEvents];
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'date') {
+        cmp = new Date(a.date) - new Date(b.date);
+      } else if (sortBy === 'popular') {
+        const pa = a.registered / (a.capacity || 1);
+        const pb = b.registered / (b.capacity || 1);
+        cmp = pb - pa; // mais popular primeiro
+      } else if (sortBy === 'location') {
+        cmp = (a.location || '').localeCompare(b.location || '');
+      } else if (sortBy === 'title') {
+        cmp = (a.title || '').localeCompare(b.title || '');
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [filteredEvents, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedEvents.length / itemsPerPage));
+  const paginatedEvents = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    return sortedEvents.slice(start, start + itemsPerPage);
+  }, [sortedEvents, page, itemsPerPage]);
+
+  // Reset da página quando filtros/ordenção mudam
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedLocation, selectedCategory, selectedDate, sortBy, sortDir, itemsPerPage, viewMode]);
+
+  // Guardar preferências
+  useEffect(() => {
+    const prefs = {
+      searchTerm,
+      selectedLocation,
+      selectedCategory,
+      selectedDate,
+      viewMode,
+      sortBy,
+      sortDir,
+      itemsPerPage
+    };
+    try { localStorage.setItem('eventsExplorerFilters', JSON.stringify(prefs)); } catch (_) {}
+  }, [searchTerm, selectedLocation, selectedCategory, selectedDate, viewMode, sortBy, sortDir, itemsPerPage]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -63,6 +142,25 @@ const EventsExplorer = () => {
 
   const formatTime = (timeString) => {
     return timeString;
+  };
+
+  const handleShare = (event) => {
+    try {
+      const url = `${window.location.origin}/evento/${event.slug || event.id}`;
+      navigator.clipboard?.writeText(url);
+      setSharedId(event.id);
+      setTimeout(() => setSharedId(null), 1500);
+    } catch (_) {}
+  };
+
+  const toggleSaved = (eventId) => {
+    setSavedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      try { localStorage.setItem('savedEvents', JSON.stringify([...next])); } catch (_) {}
+      return next;
+    });
   };
 
   const getAvailabilityStatus = (capacity, registered) => {
@@ -147,18 +245,26 @@ const EventsExplorer = () => {
           
           <div className="flex gap-2">
             <Link 
-              to={`/evento/${event.id}`}
+              to={`/evento/${event.slug || event.id}`}
               className="flex-1 bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 px-3 rounded text-sm hover:opacity-90 transition-opacity text-center"
             >
               <i className="fas fa-eye mr-1"></i>
               Ver Detalhes
             </Link>
-            <button className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors">
+            <button onClick={() => handleShare(event)} className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors flex items-center">
               <i className="fas fa-share-alt"></i>
+              {sharedId === event.id && (
+                <span className="ml-2 text-xs text-green-600">Copiado!</span>
+              )}
             </button>
-            <button className="bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors">
-              <i className="fas fa-heart"></i>
-            </button>
+            <VisitorAction
+              actionType="favorite"
+              isAuthenticated={isAuthenticated}
+              isMember={isMember}
+              buttonText={savedIds.has(event.id) ? 'Guardado' : 'Guardar'}
+              buttonClassName={`bg-gray-100 ${savedIds.has(event.id) ? 'text-red-600' : 'text-gray-700'} py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors`}
+              onAction={() => toggleSaved(event.id)}
+            />
           </div>
         </div>
       </div>
@@ -230,19 +336,27 @@ const EventsExplorer = () => {
               
               <div className="flex flex-col gap-2 ml-4">
                 <Link 
-                  to={`/evento/${event.id}`}
+                  to={`/evento/${event.slug || event.id}`}
                   className="bg-gradient-to-r from-yellow-500 to-red-500 text-white py-2 px-4 rounded text-sm hover:opacity-90 transition-opacity text-center"
                 >
                   <i className="fas fa-eye mr-1"></i>
                   Ver Detalhes
                 </Link>
                 <div className="flex gap-1">
-                  <button className="bg-gray-100 text-gray-700 py-1 px-2 rounded text-sm hover:bg-gray-200 transition-colors">
+                  <button onClick={() => handleShare(event)} className="bg-gray-100 text-gray-700 py-1 px-2 rounded text-sm hover:bg-gray-200 transition-colors flex items-center">
                     <i className="fas fa-share-alt"></i>
+                    {sharedId === event.id && (
+                      <span className="ml-2 text-xs text-green-600">Copiado!</span>
+                    )}
                   </button>
-                  <button className="bg-gray-100 text-gray-700 py-1 px-2 rounded text-sm hover:bg-gray-200 transition-colors">
-                    <i className="fas fa-heart"></i>
-                  </button>
+                  <VisitorAction
+                    actionType="favorite"
+                    isAuthenticated={isAuthenticated}
+                    isMember={isMember}
+                    buttonText={savedIds.has(event.id) ? 'Guardado' : 'Guardar'}
+                    buttonClassName={`bg-gray-100 ${savedIds.has(event.id) ? 'text-red-600' : 'text-gray-700'} py-1 px-2 rounded text-sm hover:bg-gray-200 transition-colors`}
+                    onAction={() => toggleSaved(event.id)}
+                  />
                 </div>
               </div>
             </div>
@@ -267,7 +381,12 @@ const EventsExplorer = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+          {error && (
+            <div className="mb-4 bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded">
+              {error}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Pesquisar
@@ -357,11 +476,35 @@ const EventsExplorer = () => {
                 </button>
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+              <div className="flex gap-2">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="flex-1 py-2 px-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="date">Data</option>
+                  <option value="popular">Popularidade</option>
+                  <option value="location">Localidade</option>
+                  <option value="title">Título</option>
+                </select>
+                <select
+                  value={sortDir}
+                  onChange={(e) => setSortDir(e.target.value)}
+                  className="w-24 py-2 px-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="asc">Asc</option>
+                  <option value="desc">Desc</option>
+                </select>
+              </div>
+            </div>
           </div>
           
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              {filteredEvents.length} evento{filteredEvents.length !== 1 ? 's' : ''} encontrado{filteredEvents.length !== 1 ? 's' : ''}
+              {sortedEvents.length} evento{sortedEvents.length !== 1 ? 's' : ''} encontrado{sortedEvents.length !== 1 ? 's' : ''}
             </p>
             
             <button 
@@ -370,16 +513,47 @@ const EventsExplorer = () => {
                 setSelectedLocation('');
                 setSelectedCategory('');
                 setSelectedDate('');
+                setSortBy('date');
+                setSortDir('asc');
+                setItemsPerPage(9);
               }}
               className="text-sm text-red-600 hover:text-red-800"
             >
               Limpar filtros
             </button>
           </div>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <label className="text-sm text-gray-700">Resultados por página</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="w-24 py-1 px-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm"
+            >
+              <option value={6}>6</option>
+              <option value={9}>9</option>
+              <option value={12}>12</option>
+            </select>
+          </div>
         </div>
 
         {/* Results */}
-        {filteredEvents.length === 0 ? (
+        {loading ? (
+          <div className={viewMode === 'grid' 
+            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+            : 'space-y-4'
+          }>
+            {[...Array(itemsPerPage)].map((_, idx) => (
+              <div key={idx} className={viewMode === 'grid' ? 'bg-white rounded-lg shadow-md overflow-hidden animate-pulse' : 'bg-white rounded-lg shadow-md p-4 animate-pulse'}>
+                <div className={viewMode === 'grid' ? 'h-48 bg-gray-200' : 'h-24 w-24 bg-gray-200 rounded-lg'}></div>
+                <div className={viewMode === 'grid' ? 'p-4 space-y-3' : 'mt-4 space-y-3'}>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sortedEvents.length === 0 ? (
           <div className="text-center py-12">
             <i className="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -394,11 +568,32 @@ const EventsExplorer = () => {
             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
             : 'space-y-4'
           }>
-            {filteredEvents.map(event => 
+            {paginatedEvents.map(event => 
               viewMode === 'grid' 
                 ? <EventCard key={event.id} event={event} />
                 : <EventListItem key={event.id} event={event} />
             )}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && sortedEvents.length > itemsPerPage && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-3 py-2 border rounded-md text-sm hover:bg-gray-50"
+              disabled={page === 1}
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-700">Página {page} de {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="px-3 py-2 border rounded-md text-sm hover:bg-gray-50"
+              disabled={page === totalPages}
+            >
+              Seguinte
+            </button>
           </div>
         )}
       </div>
