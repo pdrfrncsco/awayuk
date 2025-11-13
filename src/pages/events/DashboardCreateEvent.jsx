@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { services } from '../../services';
 import EventForm from '../../components/events/EventForm';
+import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../../contexts/NotificationsContext';
 
 function DashboardCreateEvent() {
   const navigate = useNavigate();
+  const { addNotification, showToast } = useNotifications();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,6 +31,24 @@ function DashboardCreateEvent() {
     try {
       const created = await services.eventsService.createEvent(formData);
       setSuccess('Evento criado com sucesso');
+
+      // Toast de sucesso imediato
+      showToast({
+        type: NOTIFICATION_TYPES.EVENT,
+        title: 'Evento criado',
+        message: 'O seu evento foi enviado para aprovação. Receberá uma notificação quando for aprovado.',
+        actionUrl: '/dashboard/eventos'
+      });
+
+      // Notificação in-app para acompanhar aprovação
+      addNotification({
+        category: NOTIFICATION_CATEGORIES.EVENT,
+        type: NOTIFICATION_TYPES.INFO,
+        title: 'Evento enviado para aprovação',
+        message: 'Aguardando validação do admin. Iremos atualizar quando houver mudanças.',
+        actionUrl: '/dashboard/eventos'
+      });
+
       setTimeout(() => navigate('/dashboard/eventos'), 400);
       return created;
     } catch (e) {
@@ -53,6 +73,13 @@ function DashboardCreateEvent() {
       } else {
         setError(e?.message || 'Falha ao criar o evento');
       }
+
+      // Toast de erro
+      showToast({
+        type: NOTIFICATION_TYPES.ERROR,
+        title: 'Erro ao criar evento',
+        message: e?.message || 'Tente novamente mais tarde.'
+      });
     } finally {
       setLoading(false);
     }

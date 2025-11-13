@@ -4,11 +4,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import eventsService from '../../services/eventsService';
 import EventImageUpload from '../../components/events/EventImageUpload';
+import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../../contexts/NotificationsContext';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
+  const { addNotification, showToast } = useNotifications();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -156,9 +158,32 @@ const CreateEvent = () => {
       });
 
       const response = await eventsService.createEvent(submitData);
+
+      // Toast de sucesso imediato
+      showToast({
+        type: NOTIFICATION_TYPES.EVENT,
+        title: 'Evento criado',
+        message: 'O seu evento foi enviado para aprovação. Receberá uma notificação quando for aprovado.',
+        actionUrl: `/eventos/${response.slug}`
+      });
+
+      // Notificação in-app para acompanhar aprovação
+      addNotification({
+        category: NOTIFICATION_CATEGORIES.EVENT,
+        type: NOTIFICATION_TYPES.INFO,
+        title: 'Evento enviado para aprovação',
+        message: 'Aguardando validação do admin. Iremos atualizar quando houver mudanças.',
+        actionUrl: `/eventos/${response.slug}`
+      });
+
       navigate(`/eventos/${response.slug}`);
     } catch (err) {
       setError(err.message || 'Erro ao criar evento');
+      showToast({
+        type: NOTIFICATION_TYPES.ERROR,
+        title: 'Erro ao criar evento',
+        message: err?.message || 'Tente novamente mais tarde.'
+      });
     } finally {
       setLoading(false);
     }

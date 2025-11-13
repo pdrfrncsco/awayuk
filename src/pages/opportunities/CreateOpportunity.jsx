@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { services } from '../../services';
+import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../../contexts/NotificationsContext';
 
 function CreateOpportunity() {
   const navigate = useNavigate();
+  const { addNotification, showToast } = useNotifications();
   const [types, setTypes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -144,11 +146,36 @@ function CreateOpportunity() {
 
       const created = await services.opportunities.createOpportunity(payload);
       setSuccess('Oportunidade criada com sucesso');
+
+      // Toast de sucesso imediato
+      showToast({
+        type: NOTIFICATION_TYPES.OPPORTUNITY,
+        title: 'Oportunidade criada',
+        message: 'A sua oportunidade foi enviada para aprovação. Receberá uma notificação quando for aprovada.',
+        actionUrl: '/dashboard/oportunidades'
+      });
+
+      // Notificação in-app para acompanhar o processo
+      addNotification({
+        category: NOTIFICATION_CATEGORIES.OPPORTUNITY,
+        type: NOTIFICATION_TYPES.INFO,
+        title: 'Oportunidade enviada para aprovação',
+        message: 'Aguardando validação do admin. Iremos atualizar o status assim que houver mudanças.',
+        actionUrl: '/dashboard/oportunidades'
+      });
+
       setTimeout(() => navigate('/dashboard/oportunidades'), 350);
       return created;
     } catch (e) {
       console.error(e);
       setError(e?.message || 'Falha ao criar a oportunidade');
+
+      // Toast de erro
+      showToast({
+        type: NOTIFICATION_TYPES.ERROR,
+        title: 'Erro ao criar oportunidade',
+        message: e?.message || 'Tente novamente mais tarde.'
+      });
     } finally {
       setLoading(false);
     }
