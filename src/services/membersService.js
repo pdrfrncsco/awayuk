@@ -80,7 +80,17 @@ class MembersService {
   async createMember(memberData) {
     try {
       const transformedData = this.transformMemberDataForAPI(memberData);
-      const response = await this.apiClient.post('/accounts/users/', transformedData);
+      // Endpoint /accounts/users/ não suporta criação direta.
+      // Utilizar o endpoint de registo para criar utilizadores.
+      const response = await this.apiClient.post('/accounts/register/', {
+        username: memberData.username,
+        email: memberData.email,
+        first_name: memberData.firstName || '',
+        last_name: memberData.lastName || '',
+        user_type: memberData.user_type || 'member',
+        password: memberData.password,
+        password_confirm: memberData.password_confirm
+      });
       return this.transformUserData(response);
     } catch (error) {
       throw new ApiError(
@@ -119,6 +129,7 @@ class MembersService {
   async deleteMember(memberId) {
     try {
       await this.apiClient.delete(`/accounts/users/${memberId}/`);
+      return { success: true };
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao remover membro',
@@ -278,6 +289,7 @@ class MembersService {
    */
   transformMemberDataForAPI(memberData) {
     return {
+      username: memberData.username || '',
       first_name: memberData.firstName || '',
       last_name: memberData.lastName || '',
       email: memberData.email,
@@ -292,7 +304,8 @@ class MembersService {
       skills: memberData.skills || [],
       interests: memberData.interests || [],
       is_active: memberData.status === 'active',
-      role: memberData.role || 'member'
+      role: memberData.role || 'member',
+      user_type: memberData.user_type || 'member'
     };
   }
 
