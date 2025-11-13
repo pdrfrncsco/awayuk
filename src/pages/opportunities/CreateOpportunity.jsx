@@ -12,19 +12,21 @@ function CreateOpportunity() {
 
   const [form, setForm] = useState({
     title: '',
-    company: '',
-    location: '',
+    company_name: '',
+    location_city: '',
     type: '',
     category: '',
-    level: '',
-    workType: 'presencial',
-    remote: false,
+    experience_level: '',
+    work_type: 'onsite',
     salaryMin: '',
     salaryMax: '',
-    deadline: '',
+    application_deadline: '',
     description: '',
-    requirements: '',
-    benefits: ''
+    skills_required: '',
+    benefits: '',
+    contact_email: '',
+    contact_phone: '',
+    application_url: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -34,13 +36,40 @@ function CreateOpportunity() {
       try {
         setLoading(true);
         const [t, c] = await Promise.all([
-          services.opportunityService.getOpportunityTypes?.(),
-          services.opportunityService.getOpportunityCategories?.()
+          services.opportunities.getOpportunityTypes?.(),
+          services.opportunities.getOpportunityCategories?.()
         ]);
-        setTypes(Array.isArray(t) ? t : []);
-        setCategories(Array.isArray(c) ? c : []);
+        const defaultTypes = [
+          { value: 'job', label: 'Emprego' },
+          { value: 'internship', label: 'Estágio' },
+          { value: 'freelance', label: 'Freelance' },
+          { value: 'partnership', label: 'Parceria' },
+          { value: 'investment', label: 'Investimento' },
+          { value: 'collaboration', label: 'Colaboração' },
+          { value: 'mentorship', label: 'Mentoria' },
+          { value: 'volunteer', label: 'Voluntariado' }
+        ];
+        // Tipos: fallback para lista estática se endpoint não existir
+        setTypes(Array.isArray(t) && t.length
+          ? t.map(x => (x?.value ? x : { value: x, label: String(x) }))
+          : defaultTypes);
+        // Categorias: mapear id/name do backend para value/label
+        setCategories(Array.isArray(c)
+          ? c.map(cat => ({ value: cat.id, label: cat.name }))
+          : []);
       } catch (e) {
         console.warn('Falha ao carregar tipos/categorias de oportunidades:', e);
+        // Fallback para tipos quando falhar
+        setTypes([
+          { value: 'job', label: 'Emprego' },
+          { value: 'internship', label: 'Estágio' },
+          { value: 'freelance', label: 'Freelance' },
+          { value: 'partnership', label: 'Parceria' },
+          { value: 'investment', label: 'Investimento' },
+          { value: 'collaboration', label: 'Colaboração' },
+          { value: 'mentorship', label: 'Mentoria' },
+          { value: 'volunteer', label: 'Voluntariado' }
+        ]);
       } finally {
         setLoading(false);
       }
@@ -62,11 +91,16 @@ function CreateOpportunity() {
   function validate() {
     const next = {};
     if (!form.title?.trim()) next.title = 'Título é obrigatório';
-    if (!form.company?.trim()) next.company = 'Empresa é obrigatória';
-    if (!form.location?.trim()) next.location = 'Localização é obrigatória';
+    if (!form.company_name?.trim()) next.company_name = 'Empresa é obrigatória';
+    if (!form.location_city?.trim()) next.location_city = 'Cidade é obrigatória';
     if (!form.type?.trim()) next.type = 'Tipo é obrigatório';
     if (!form.category?.trim()) next.category = 'Categoria é obrigatória';
+    if (!form.experience_level?.trim()) next.experience_level = 'Nível é obrigatório';
+    if (!form.work_type?.trim()) next.work_type = 'Regime é obrigatório';
     if (!form.description?.trim()) next.description = 'Descrição é obrigatória';
+    if (!form.skills_required?.trim()) next.skills_required = 'Requisitos são obrigatórios';
+    if (!form.contact_email?.trim()) next.contact_email = 'Email de contacto é obrigatório';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email)) next.contact_email = 'Email inválido';
     if (form.salaryMin && form.salaryMax && Number(form.salaryMin) > Number(form.salaryMax)) {
       next.salaryMax = 'Salário máximo deve ser maior que o mínimo';
     }
@@ -84,19 +118,27 @@ function CreateOpportunity() {
       const payload = {
         title: form.title,
         description: form.description,
-        company: form.company,
-        location: form.location,
+        company_name: form.company_name,
+        location_city: form.location_city,
         type: form.type,
-        category: form.category,
+        category: form.category, // deve ser o ID da categoria
+        work_type: form.work_type,
+        experience_level: form.experience_level,
+        skills_required: form.skills_required ? form.skills_required.trim() : undefined,
+        benefits: form.benefits ? form.benefits.trim() : undefined,
         salary_min: form.salaryMin ? Number(form.salaryMin) : undefined,
         salary_max: form.salaryMax ? Number(form.salaryMax) : undefined,
-        experience_level: form.level || undefined,
-        remote: !!form.remote,
-        requirements: form.requirements ? form.requirements.trim() : undefined,
-        benefits: form.benefits ? form.benefits.trim() : undefined,
+        // Backend espera DateTime; se o utilizador escolher apenas a data,
+        // definir para o final do dia para evitar validação com timezone.
+        application_deadline: form.application_deadline
+          ? new Date(`${form.application_deadline}T23:59:59`).toISOString()
+          : undefined,
+        contact_email: form.contact_email,
+        contact_phone: form.contact_phone || undefined,
+        application_url: form.application_url || undefined,
       };
 
-      const created = await services.opportunityService.createOpportunity(payload);
+      const created = await services.opportunities.createOpportunity(payload);
       setSuccess('Oportunidade criada com sucesso');
       setTimeout(() => navigate('/dashboard/oportunidades'), 350);
       return created;
@@ -132,16 +174,16 @@ function CreateOpportunity() {
             </div>
             <div>
               <label className='block text-sm font-medium text-gray-700'>Empresa *</label>
-              <input name='company' value={form.company} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
-              {errors.company && <p className='mt-1 text-xs text-red-600'>{errors.company}</p>}
+              <input name='company_name' value={form.company_name} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.company_name && <p className='mt-1 text-xs text-red-600'>{errors.company_name}</p>}
             </div>
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Localização *</label>
-              <input name='location' value={form.location} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
-              {errors.location && <p className='mt-1 text-xs text-red-600'>{errors.location}</p>}
+              <label className='block text-sm font-medium text-gray-700'>Cidade *</label>
+              <input name='location_city' value={form.location_city} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.location_city && <p className='mt-1 text-xs text-red-600'>{errors.location_city}</p>}
             </div>
             <div>
               <label className='block text-sm font-medium text-gray-700'>Tipo *</label>
@@ -167,26 +209,28 @@ function CreateOpportunity() {
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Nível</label>
-              <select name='level' value={form.level} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+              <label className='block text-sm font-medium text-gray-700'>Nível *</label>
+              <select name='experience_level' value={form.experience_level} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
                 <option value=''>Selecione...</option>
+                <option value='entry'>Iniciante</option>
                 <option value='junior'>Júnior</option>
                 <option value='mid'>Intermédio</option>
                 <option value='senior'>Sénior</option>
-                <option value='lead'>Líder</option>
+                <option value='executive'>Executivo</option>
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Regime</label>
-              <select name='workType' value={form.workType} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
-                <option value='presencial'>Presencial</option>
-                <option value='hibrido'>Híbrido</option>
-                <option value='remoto'>Remoto</option>
+              <label className='block text-sm font-medium text-gray-700'>Regime *</label>
+              <select name='work_type' value={form.work_type} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value=''>Selecione...</option>
+                <option value='onsite'>Presencial</option>
+                <option value='hybrid'>Híbrido</option>
+                <option value='remote'>Remoto</option>
               </select>
             </div>
-            <div className='flex items-center mt-6'>
-              <input id='remote' type='checkbox' name='remote' checked={form.remote} onChange={handleChange} className='h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500' />
-              <label htmlFor='remote' className='ml-2 block text-sm text-gray-700'>Aceita remoto</label>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Prazo (deadline)</label>
+              <input name='application_deadline' type='date' value={form.application_deadline} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
             </div>
           </div>
 
@@ -201,8 +245,9 @@ function CreateOpportunity() {
               {errors.salaryMax && <p className='mt-1 text-xs text-red-600'>{errors.salaryMax}</p>}
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Prazo (deadline)</label>
-              <input name='deadline' type='date' value={form.deadline} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              <label className='block text-sm font-medium text-gray-700'>Email de contacto *</label>
+              <input name='contact_email' type='email' value={form.contact_email} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.contact_email && <p className='mt-1 text-xs text-red-600'>{errors.contact_email}</p>}
             </div>
           </div>
 
@@ -214,12 +259,24 @@ function CreateOpportunity() {
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Requisitos (um por linha)</label>
-              <textarea name='requirements' rows={3} value={form.requirements} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              <label className='block text-sm font-medium text-gray-700'>Requisitos (um por linha) *</label>
+              <textarea name='skills_required' rows={3} value={form.skills_required} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+              {errors.skills_required && <p className='mt-1 text-xs text-red-600'>{errors.skills_required}</p>}
             </div>
             <div>
               <label className='block text-sm font-medium text-gray-700'>Benefícios (um por linha)</label>
               <textarea name='benefits' rows={3} value={form.benefits} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Telefone de contacto</label>
+              <input name='contact_phone' value={form.contact_phone} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>URL de candidatura</label>
+              <input name='application_url' type='url' value={form.application_url} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
             </div>
           </div>
 
