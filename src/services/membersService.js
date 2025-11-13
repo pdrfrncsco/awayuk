@@ -26,10 +26,9 @@ class MembersService {
       const queryParams = new URLSearchParams();
       
       // Adicionar parâmetros de busca
-      if (params.search) queryParams.append('search', params.search);
-      if (params.status) queryParams.append('is_active', params.status === 'active');
-      if (params.role) queryParams.append('role', params.role);
-      if (params.location) queryParams.append('location', params.location);
+      // Backend atual só suporta filtro por user_type em /accounts/users/
+      if (params.user_type) queryParams.append('user_type', params.user_type);
+      // Busca e outros filtros não são suportados pelo endpoint atual; faremos client-side no componente
       if (params.page) queryParams.append('page', params.page);
       if (params.limit) queryParams.append('page_size', params.limit);
       if (params.ordering) queryParams.append('ordering', params.ordering);
@@ -226,6 +225,27 @@ class MembersService {
    * @returns {Object} Dados transformados
    */
   transformUserData(userData) {
+    // Mapear campos disponíveis no UserSerializer e UserProfile
+    const profile = userData.profile || {};
+    // Derivar 'role' a partir de active_roles ou user_type
+    const activeRoles = Array.isArray(userData.active_roles) ? userData.active_roles : [];
+    let derivedRole = 'member';
+    if (activeRoles.some(r => ['admin', 'super_admin'].includes(r))) {
+      derivedRole = 'admin';
+    } else if (activeRoles.some(r => ['community_moderator'].includes(r))) {
+      derivedRole = 'moderator';
+    } else if (userData.user_type === 'admin') {
+      derivedRole = 'admin';
+    } else {
+      derivedRole = 'member';
+    }
+
+    // Interests vêm como texto; transformar em array
+    const interestsText = profile.interests || '';
+    const interestsArr = typeof interestsText === 'string'
+      ? interestsText.split(',').map(v => v.trim()).filter(Boolean)
+      : Array.isArray(interestsText) ? interestsText : [];
+
     return {
       id: userData.id,
       name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.username,
@@ -234,20 +254,20 @@ class MembersService {
       email: userData.email,
       phone: userData.phone || '',
       location: userData.location || '',
-      joinDate: userData.date_joined,
-      status: userData.is_active ? 'active' : 'inactive',
-      role: userData.role || 'member',
+      joinDate: userData.member_since || userData.created_at,
+      status: (userData.is_verified ? 'active' : 'inactive'),
+      role: derivedRole,
       profession: userData.profession || '',
-      company: userData.company || '',
+      company: profile.company || '',
       avatar: userData.profile_image || null,
       isVerified: userData.is_verified || false,
-      lastLogin: userData.last_login,
       bio: userData.bio || '',
-      website: userData.website || '',
-      linkedin: userData.linkedin || '',
-      twitter: userData.twitter || '',
-      skills: userData.skills || [],
-      interests: userData.interests || []
+      website: profile.website || '',
+      linkedin: profile.linkedin || '',
+      twitter: profile.twitter || '',
+      // Não há 'skills' explícito; usar qualifications como aproximação
+      skills: Array.isArray(profile.qualifications) ? profile.qualifications : [],
+      interests: interestsArr
     };
   }
 

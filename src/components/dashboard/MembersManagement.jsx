@@ -21,8 +21,7 @@ import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 
 const MembersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterRole, setFilterRole] = useState('all');
+  const [filterUserType, setFilterUserType] = useState('all');
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [members, setMembers] = useState([]);
@@ -36,88 +35,17 @@ const MembersManagement = () => {
   });
 
   // Modal e Formulário de CRUD
-  const [showFormModal, setShowFormModal] = useState(false);
-  const [editingMember, setEditingMember] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    location: '',
-    profession: '',
-    company: '',
-    bio: '',
-    website: '',
-    linkedin: '',
-    twitter: '',
-    skills: [],
-    interests: [],
-    status: 'active',
-    role: 'member'
-  });
+  // Removido CRUD direto (backend não suporta create/update/delete em /accounts/users)
 
-  const openAddMemberModal = () => {
-    setEditingMember(null);
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      location: '',
-      profession: '',
-      company: '',
-      bio: '',
-      website: '',
-      linkedin: '',
-      twitter: '',
-      skills: [],
-      interests: [],
-      status: 'active',
-      role: 'member'
-    });
-    setShowFormModal(true);
-  };
+  // CRUD desativado
 
-  const openEditMemberModal = (member) => {
-    setEditingMember(member);
-    setFormData({
-      firstName: member.firstName || '',
-      lastName: member.lastName || '',
-      email: member.email || '',
-      phone: member.phone || '',
-      location: member.location || '',
-      profession: member.profession || '',
-      company: member.company || '',
-      bio: member.bio || '',
-      website: member.website || '',
-      linkedin: member.linkedin || '',
-      twitter: member.twitter || '',
-      skills: member.skills || [],
-      interests: member.interests || [],
-      status: member.status || 'active',
-      role: member.role || 'member'
-    });
-    setShowFormModal(true);
-  };
+  // CRUD desativado
 
-  const handleFormInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // CRUD desativado
 
-  const handleTagsInputChange = (name, value) => {
-    const arr = value
-      .split(',')
-      .map(v => v.trim())
-      .filter(v => v.length > 0);
-    setFormData(prev => ({ ...prev, [name]: arr }));
-  };
+  // CRUD desativado
 
-  const closeFormModal = () => {
-    setShowFormModal(false);
-    setEditingMember(null);
-  };
+  // CRUD desativado
 
   // Carregar membros
   const loadMembers = async () => {
@@ -126,11 +54,10 @@ const MembersManagement = () => {
       setError(null);
       
       const filters = {
-        search: searchTerm,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
-        role: filterRole !== 'all' ? filterRole : undefined,
+        // Busca será feita client-side no array retornado (endpoint não suporta search)
         page: pagination.page,
-        limit: pagination.limit
+        limit: pagination.limit,
+        user_type: filterUserType !== 'all' ? filterUserType : undefined
       };
 
       const response = await membersService.getMembers(filters);
@@ -161,64 +88,16 @@ const MembersManagement = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, filterStatus, filterRole]);
+  }, [searchTerm, filterUserType]);
 
   // Alternar status do membro
-  const toggleMemberStatus = async (memberId, currentStatus) => {
-    try {
-      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      await membersService.toggleMemberStatus(memberId, newStatus === 'active');
-      
-      // Atualizar lista local
-      setMembers(prev => prev.map(member => 
-        member.id === memberId 
-          ? { ...member, status: newStatus }
-          : member
-      ));
-    } catch (err) {
-      console.error('Erro ao alterar status:', err);
-      setError('Erro ao alterar status do membro.');
-    }
-  };
+  // Alternar status desativado (não suportado pelo backend atual)
 
   // Deletar membro
-  const deleteMember = async (memberId) => {
-    if (!window.confirm('Tem certeza que deseja deletar este membro?')) {
-      return;
-    }
-
-    try {
-      await membersService.deleteMember(memberId);
-      setMembers(prev => prev.filter(member => member.id !== memberId));
-      setSelectedMembers(prev => prev.filter(id => id !== memberId));
-    } catch (err) {
-      console.error('Erro ao deletar membro:', err);
-      setError('Erro ao deletar membro.');
-    }
-  };
+  // Deletar membro desativado (não suportado pelo backend atual)
 
   // Exportar dados
-  const exportMembers = async () => {
-    try {
-      const filters = {
-        search: searchTerm,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
-        role: filterRole !== 'all' ? filterRole : undefined
-      };
-      const blob = await membersService.exportMembers(filters);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'members_export.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Erro ao exportar dados:', err);
-      setError('Erro ao exportar dados.');
-    }
-  };
+  // Exportação desativada (endpoint não disponível no backend)
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -298,24 +177,7 @@ const MembersManagement = () => {
             Gerencie todos os membros da comunidade AWAYSUK
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button
-            type="button"
-            onClick={exportMembers}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <ArrowDownTrayIcon className="-ml-1 mr-2 h-5 w-5" />
-            Exportar
-          </button>
-          <button
-            type="button"
-            onClick={openAddMemberModal}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-            Adicionar Membro
-          </button>
-        </div>
+        <div className="mt-4 sm:mt-0 flex space-x-3" />
       </div>
 
       {/* Search and Filters */}
@@ -353,29 +215,16 @@ const MembersManagement = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700">Tipo de Utilizador</label>
                   <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    value={filterUserType}
+                    onChange={(e) => setFilterUserType(e.target.value)}
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md"
                   >
                     <option value="all">Todos</option>
-                    <option value="active">Ativos</option>
-                    <option value="pending">Pendentes</option>
-                    <option value="inactive">Inativos</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Função</label>
-                  <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md"
-                  >
-                    <option value="all">Todas</option>
-                    <option value="admin">Admin</option>
-                    <option value="moderator">Moderador</option>
                     <option value="member">Membro</option>
+                    <option value="business">Business</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </div>
               </div>
@@ -432,9 +281,6 @@ const MembersManagement = () => {
                         Localização
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Função
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -489,14 +335,6 @@ const MembersManagement = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => toggleMemberStatus(member.id, member.status)}
-                            className="cursor-pointer"
-                          >
-                            {getStatusBadge(member.status)}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           {getRoleBadge(member.role)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -506,16 +344,9 @@ const MembersManagement = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <button onClick={() => openEditMemberModal(member)} className="text-red-600 hover:text-red-900">
-                              <PencilIcon className="h-4 w-4" />
-                            </button>
-                            <button 
-                              onClick={() => deleteMember(member.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
+                          <div className="flex items-center space-x-2 text-gray-400">
+                            {/* Ações desativadas */}
+                            <EllipsisVerticalIcon className="h-5 w-5" />
                           </div>
                         </td>
                       </tr>
@@ -610,125 +441,7 @@ const MembersManagement = () => {
       </div>
 
       {/* Modal de Formulário */}
-      {showFormModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black bg-opacity-40" onClick={closeFormModal}></div>
-            <div className="relative bg-white w-full max-w-3xl rounded-lg shadow-lg">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {editingMember ? 'Editar Membro' : 'Adicionar Membro'}
-                </h3>
-                <button onClick={closeFormModal} className="text-gray-500 hover:text-gray-700">Fechar</button>
-              </div>
-              <div className="px-6 py-4">
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  try {
-                    setSaving(true);
-                    setError(null);
-                    const payload = { ...formData };
-                    let saved;
-                    if (editingMember) {
-                      saved = await membersService.updateMember(editingMember.id, payload);
-                      setMembers(prev => prev.map(m => m.id === editingMember.id ? saved : m));
-                    } else {
-                      saved = await membersService.createMember(payload);
-                      // Inserir no topo e atualizar totais
-                      setMembers(prev => [saved, ...prev]);
-                      setPagination(prev => ({ ...prev, total: prev.total + 1 }));
-                    }
-                    setShowFormModal(false);
-                    setEditingMember(null);
-                  } catch (err) {
-                    console.error('Erro ao salvar membro:', err);
-                    setError('Erro ao salvar membro. Verifique os dados e tente novamente.');
-                  } finally {
-                    setSaving(false);
-                  }
-                }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Primeiro Nome</label>
-                      <input name="firstName" value={formData.firstName} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Último Nome</label>
-                      <input name="lastName" value={formData.lastName} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <input type="email" required name="email" value={formData.email} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Telefone</label>
-                      <input name="phone" value={formData.phone} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Localização</label>
-                      <input name="location" value={formData.location} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Profissão</label>
-                      <input name="profession" value={formData.profession} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Empresa</label>
-                      <input name="company" value={formData.company} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Bio</label>
-                      <textarea name="bio" rows={3} value={formData.bio} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Website</label>
-                      <input name="website" value={formData.website} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
-                      <input name="linkedin" value={formData.linkedin} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Twitter</label>
-                      <input name="twitter" value={formData.twitter} onChange={handleFormInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Skills (separadas por vírgula)</label>
-                      <input value={formData.skills.join(', ')} onChange={(e) => handleTagsInputChange('skills', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Interesses (separados por vírgula)</label>
-                      <input value={formData.interests.join(', ')} onChange={(e) => handleTagsInputChange('interests', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Status</label>
-                      <select name="status" value={formData.status} onChange={handleFormInputChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md">
-                        <option value="active">Ativo</option>
-                        <option value="inactive">Inativo</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Função</label>
-                      <select name="role" value={formData.role} onChange={handleFormInputChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md">
-                        <option value="member">Membro</option>
-                        <option value="moderator">Moderador</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-end space-x-3">
-                    <button type="button" onClick={closeFormModal} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
-                    <button type="submit" disabled={saving} className="px-4 py-2 rounded-md border border-transparent text-white bg-red-600 hover:bg-red-700 disabled:opacity-50">
-                      {saving ? 'Salvando...' : editingMember ? 'Salvar alterações' : 'Criar membro'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* CRUD desativado: modal removido */}
     </div>
   );
 };
