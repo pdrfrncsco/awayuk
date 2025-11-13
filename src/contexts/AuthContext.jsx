@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Verificar se existe utilizador logado ao carregar a aplicação
   useEffect(() => {
@@ -58,10 +59,12 @@ export const AuthProvider = ({ children }) => {
           setUser(mergedUser);
           setIsAuthenticated(true);
         } else {
+          setSessionExpired(true);
           await logout();
         }
       } catch (error) {
         console.error('Erro ao renovar token:', error);
+        setSessionExpired(true);
         await logout();
       }
     };
@@ -323,6 +326,7 @@ export const AuthProvider = ({ children }) => {
     user,
     isLoading,
     isAuthenticated,
+    sessionExpired,
     
     // Funções de autenticação
     login,

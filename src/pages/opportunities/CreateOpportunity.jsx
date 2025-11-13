@@ -14,12 +14,14 @@ function CreateOpportunity() {
     title: '',
     company_name: '',
     location_city: '',
+    location_country: 'Reino Unido',
     type: '',
     category: '',
     experience_level: '',
     work_type: 'onsite',
     salaryMin: '',
     salaryMax: '',
+    salary_currency: 'GBP',
     application_deadline: '',
     description: '',
     skills_required: '',
@@ -120,6 +122,7 @@ function CreateOpportunity() {
         description: form.description,
         company_name: form.company_name,
         location_city: form.location_city,
+        location_country: form.location_country || 'Reino Unido',
         type: form.type,
         category: form.category, // deve ser o ID da categoria
         work_type: form.work_type,
@@ -128,6 +131,7 @@ function CreateOpportunity() {
         benefits: form.benefits ? form.benefits.trim() : undefined,
         salary_min: form.salaryMin ? Number(form.salaryMin) : undefined,
         salary_max: form.salaryMax ? Number(form.salaryMax) : undefined,
+        salary_currency: form.salary_currency || 'GBP',
         // Backend espera DateTime; se o utilizador escolher apenas a data,
         // definir para o final do dia para evitar validação com timezone.
         application_deadline: form.application_deadline
@@ -179,6 +183,13 @@ function CreateOpportunity() {
             </div>
           </div>
 
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>País</label>
+              <input name='location_country' value={form.location_country} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
+            </div>
+          </div>
+
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div>
               <label className='block text-sm font-medium text-gray-700'>Cidade *</label>
@@ -204,6 +215,17 @@ function CreateOpportunity() {
                 ))}
               </select>
               {errors.category && <p className='mt-1 text-xs text-red-600'>{errors.category}</p>}
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700'>Moeda</label>
+              <select name='salary_currency' value={form.salary_currency} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'>
+                <option value='GBP'>Libra Esterlina (GBP)</option>
+                <option value='EUR'>Euro (EUR)</option>
+                <option value='USD'>Dólar (USD)</option>
+              </select>
             </div>
           </div>
 

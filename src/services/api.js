@@ -91,15 +91,17 @@ class ApiClient {
         const hasResponse = !!error.response;
         const status = error.response?.status;
         const data = error.response?.data;
+        const originalRequest = error.config || {};
+        const isRefreshRequest = (originalRequest?.url || '').includes('/auth/token/refresh/');
+        const hasRefreshToken = !!TokenManager.getRefreshToken();
 
         // Tentar renovar token automaticamente em 401 token_not_valid
-        const originalRequest = error.config || {};
         const tokenInvalid = status === 401 && (
           data?.code === 'token_not_valid' ||
           String(data?.detail || '').toLowerCase().includes('token not valid') ||
           String(data?.detail || '').toLowerCase().includes('given token not valid')
         );
-        if (tokenInvalid && !originalRequest._retry) {
+        if (tokenInvalid && !originalRequest._retry && !isRefreshRequest && hasRefreshToken) {
           originalRequest._retry = true;
           try {
             await this.refreshToken();
@@ -119,6 +121,17 @@ class ApiClient {
             );
             return Promise.reject(friendly);
           }
+        }
+
+        // Se for a própria chamada de refresh ou não houver refresh token, não tentar novamente
+        if (tokenInvalid && (isRefreshRequest || !hasRefreshToken)) {
+          TokenManager.clearTokens();
+          const friendly = new ApiError(
+            'Sessão expirada ou inválida. Faça login novamente.',
+            401,
+            data
+          );
+          return Promise.reject(friendly);
         }
 
         if (hasResponse) {
@@ -181,9 +194,10 @@ class ApiClient {
     }
 
     try {
-      const response = await this.axiosInstance.post('/auth/token/refresh/', {
+      // Usar axios direto para evitar interceptores e loops em erro de refresh
+      const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
         refresh: refreshToken
-      });
+      }, { headers: { 'Content-Type': 'application/json' } });
       
       TokenManager.setTokens(response.access, response.refresh);
       const newAccess = TokenManager.getAccessToken();

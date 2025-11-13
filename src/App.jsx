@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -51,6 +52,8 @@ import CommunityPage from './pages/dashboard/CommunityPage';
 import ConnectionsPage from './pages/dashboard/ConnectionsPage';
 import { PERMISSIONS } from './contexts/PermissionsContext';
 import { ToastNotifications } from './components/notifications';
+import { useAuth } from './contexts/AuthContext';
+import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from './contexts/NotificationsContext';
 import TestAPI from './pages/TestAPI';
 
 // Componente da página inicial
@@ -89,6 +92,7 @@ function App() {
           <NotificationsProvider>
           <CommunityProvider>
             <Router>
+          <SessionExpiredHandler />
           <div className="min-h-screen bg-white">
             <Routes>
             {/* Rotas Públicas */}
@@ -254,5 +258,31 @@ function App() {
     </I18nProvider>
   );
 }
+
+// Handler para sessão expirada: mostra toast e redireciona para login
+const SessionExpiredHandler = () => {
+  const { sessionExpired } = useAuth();
+  const { showToast } = useNotifications();
+  const navigate = useNavigate();
+  const shownRef = useRef(false);
+
+  useEffect(() => {
+    if (sessionExpired && !shownRef.current) {
+      shownRef.current = true;
+      try {
+        showToast({
+          title: 'Sessão expirada',
+          message: 'Por favor, faça login novamente.',
+          category: NOTIFICATION_CATEGORIES.SYSTEM,
+          type: NOTIFICATION_TYPES.ERROR
+        });
+      } catch {}
+      navigate('/login', { replace: true });
+      setTimeout(() => { shownRef.current = false; }, 5000);
+    }
+  }, [sessionExpired, showToast, navigate]);
+
+  return null;
+};
 
 export default App;
