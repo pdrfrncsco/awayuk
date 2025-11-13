@@ -114,7 +114,7 @@ class OpportunityService {
       return await this.apiClient.patch(`/opportunities/${opportunityId}/`, opportunityData);
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao atualizar oportunidade',
+        error.message || 'Erro ao actualizar oportunidade',
         error.status || 400,
         error.data
       );
@@ -133,7 +133,7 @@ class OpportunityService {
       return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { status: newStatus });
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao atualizar status da oportunidade',
+        error.message || 'Erro ao actualizar status da oportunidade',
         error.status || 400,
         error.data
       );
@@ -153,7 +153,7 @@ class OpportunityService {
       return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { is_featured: featured });
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao atualizar destaque da oportunidade',
+        error.message || 'Erro ao actualizar destaque da oportunidade',
         error.status || 400,
         error.data
       );
@@ -225,7 +225,7 @@ class OpportunityService {
       return await this.apiClient.delete(`/opportunities/${opportunityId}/`);
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao deletar oportunidade',
+        error.message || 'Erro ao apagar oportunidade',
         error.status || 400,
         error.data
       );
@@ -371,21 +371,14 @@ class OpportunityService {
    * @returns {Promise<Array>} Lista de tipos
    */
   async getJobTypes() {
-    try {
-      // Backend atual não expõe /opportunities/job-types/
-      // Tentar categorias por tipo ou retornar valores padrão
-      const data = await this.apiClient.get('/opportunities/job-types/');
-      return data;
-    } catch (error) {
-      // Fallback silencioso para evitar quebra de UI
-      return [
-        { value: 'full-time', label: 'Tempo Integral' },
-        { value: 'part-time', label: 'Meio Período' },
-        { value: 'contract', label: 'Contrato' },
-        { value: 'freelance', label: 'Freelance' },
-        { value: 'internship', label: 'Estágio' }
-      ];
-    }
+    // Backend não expõe /opportunities/job-types/ atualmente; retornar lista padrão
+    return [
+      { value: 'full-time', label: 'Tempo Integral' },
+      { value: 'part-time', label: 'Meio Período' },
+      { value: 'contract', label: 'Contrato' },
+      { value: 'freelance', label: 'Freelance' },
+      { value: 'internship', label: 'Estágio' }
+    ];
   }
 
   /**
@@ -393,23 +386,17 @@ class OpportunityService {
    * @returns {Promise<Array>} Lista de localizações
    */
   async getLocations() {
-    try {
-      // Backend atual não expõe /opportunities/locations/
-      // Retornar lista padrão quando 404 ou indisponível
-      const data = await this.apiClient.get('/opportunities/locations/');
-      return data;
-    } catch (error) {
-      return [
-        'Londres',
-        'Manchester',
-        'Birmingham',
-        'Edinburgh',
-        'Liverpool',
-        'Bristol',
-        'Leeds',
-        'Glasgow'
-      ];
-    }
+    // Backend não expõe /opportunities/locations/ atualmente; retornar lista padrão
+    return [
+      'Londres',
+      'Manchester',
+      'Birmingham',
+      'Edinburgh',
+      'Liverpool',
+      'Bristol',
+      'Leeds',
+      'Glasgow'
+    ];
   }
 
   /**
@@ -541,7 +528,7 @@ class OpportunityService {
       });
     } catch (error) {
       throw new ApiError(
-        error.message || 'Erro ao atualizar status da candidatura',
+        error.message || 'Erro ao actualizar status da candidatura',
         error.status || 400,
         error.data
       );

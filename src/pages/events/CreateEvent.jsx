@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
-import eventService from '../../services/eventService';
+import eventsService from '../../services/eventsService';
 import EventImageUpload from '../../components/events/EventImageUpload';
 
 const CreateEvent = () => {
@@ -45,8 +45,8 @@ const CreateEvent = () => {
 
   const loadCategories = async () => {
     try {
-      const response = await eventService.getCategories();
-      setCategories(response.results || response.data || []);
+      const list = await eventsService.getCategories();
+      setCategories(list);
     } catch (err) {
       console.error('Erro ao carregar categorias:', err);
     }
@@ -155,7 +155,7 @@ const CreateEvent = () => {
         }
       });
 
-      const response = await eventService.createEvent(submitData);
+      const response = await eventsService.createEvent(submitData);
       navigate(`/eventos/${response.slug}`);
     } catch (err) {
       setError(err.message || 'Erro ao criar evento');
@@ -247,8 +247,8 @@ const CreateEvent = () => {
                 >
                   <option value="">Selecionar categoria</option>
                   {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
+                    <option key={category.value} value={category.value}>
+                      {category.label}
                     </option>
                   ))}
                 </select>

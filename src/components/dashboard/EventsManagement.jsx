@@ -17,6 +17,7 @@ import {
   CurrencyPoundIcon
 } from '@heroicons/react/24/outline';
 import { services } from '../../services';
+import { useNavigate } from 'react-router-dom';
 
 const EventsManagement = () => {
   const [events, setEvents] = useState([]);
@@ -64,6 +65,8 @@ const EventsManagement = () => {
       setLoading(false);
     }
   };
+
+  const navigate = useNavigate();
 
   // Carregar categorias da API
   const loadCategories = async () => {
@@ -331,6 +334,7 @@ const EventsManagement = () => {
           <button
             type="button"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            onClick={() => navigate('/criar-evento')}
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
             Criar Evento
@@ -427,6 +431,8 @@ const EventsManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Botão abre página de criação; modal removido conforme requisito */}
 
       {/* Events Grid/List */}
       <div className="bg-white shadow rounded-lg">

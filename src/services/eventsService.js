@@ -51,6 +51,11 @@ class EventsService {
   // Criar novo evento
   async createEvent(eventData) {
     try {
+      // Permitir compatibilidade: se receber FormData (upload de imagem), enviar diretamente
+      if (typeof FormData !== 'undefined' && eventData instanceof FormData) {
+        const data = await this.apiClient.post('/events/', eventData);
+        return this.transformEventFromAPI(data);
+      }
       const transformedData = this.transformEventToAPI(eventData);
       const data = await this.apiClient.post('/events/', transformedData);
       return this.transformEventFromAPI(data);

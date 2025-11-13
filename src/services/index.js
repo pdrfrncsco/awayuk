@@ -9,7 +9,6 @@ export { ApiClient, TokenManager, ApiError } from './api.js';
 // Importar serviços específicos
 import authServiceInstance, { AuthService } from './authService.js';
 import notificationServiceInstance, { NotificationService } from './notificationService.js';
-import eventServiceInstance, { EventService } from './eventService.js';
 import opportunityServiceInstance, { OpportunityService } from './opportunityService.js';
 import profileServiceInstance, { ProfileService } from './profileService.js';
 import dashboardServiceInstance from './dashboardService.js';
@@ -26,7 +25,6 @@ import messageServiceInstance from './messageService.js';
 // Exportar serviços específicos
 export { default as authService, AuthService } from './authService.js';
 export { default as notificationService, NotificationService } from './notificationService.js';
-export { default as eventService, EventService } from './eventService.js';
 export { default as opportunityService, OpportunityService } from './opportunityService.js';
 export { default as profileService, ProfileService } from './profileService.js';
 export { default as dashboardService } from './dashboardService.js';
@@ -55,7 +53,8 @@ export { default as messageService } from './messageService.js';
 export const services = {
   auth: authServiceInstance,
   notifications: notificationServiceInstance,
-  events: eventServiceInstance,
+  // Unificar chave "events" para apontar para o serviço único
+  events: eventsServiceInstance,
   opportunities: opportunityServiceInstance,
   profile: profileServiceInstance,
   dashboard: dashboardServiceInstance,
@@ -80,7 +79,7 @@ export const configureServices = (config) => {
     // Atualizar a configuração base de todos os serviços
     authServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     notificationServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
-    eventServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
+    eventsServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     profileServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
     messageServiceInstance.apiClient.axiosInstance.defaults.baseURL = config.baseURL;
@@ -90,7 +89,7 @@ export const configureServices = (config) => {
   if (config.timeout) {
     authServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     notificationServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
-    eventServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
+    eventsServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     opportunityServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     profileServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
     messageServiceInstance.apiClient.axiosInstance.defaults.timeout = config.timeout;
@@ -100,7 +99,7 @@ export const configureServices = (config) => {
   if (config.headers) {
     Object.assign(authServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(notificationServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
-    Object.assign(eventServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
+    Object.assign(eventsServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(opportunityServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(profileServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
     Object.assign(messageServiceInstance.apiClient.axiosInstance.defaults.headers, config.headers);
@@ -138,7 +137,7 @@ export const healthCheck = async () => {
     }
 
     try {
-      await eventServiceInstance.apiClient.get('/health/');
+      await eventsServiceInstance.apiClient.get('/health/');
       results.events = true;
     } catch (error) {
       console.warn('Event service health check failed:', error.message);

@@ -974,7 +974,7 @@ const MemberProfile = () => {
                 {/* Botões específicos baseados em User Roles */}
                 {user?.roles?.includes('event_organizer') && (
                   <button
-                    onClick={() => navigate('/eventos/criar')}
+                    onClick={() => navigate('/criar-evento')}
                     className="bg-yellow-600 text-white px-6 py-2 rounded-md hover:bg-yellow-700 transition-colors"
                   >
                     <i className="fas fa-calendar-plus mr-2"></i>
