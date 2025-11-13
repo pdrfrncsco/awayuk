@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
             const mergedUser = mergeUserWithPermissions(userData, permsData);
             setUser(mergedUser);
             setIsAuthenticated(true);
+            setSessionExpired(false);
           } catch (error) {
             console.error('Erro ao buscar dados do utilizador:', error);
             // Token inválido, tentar refresh
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }) => {
           const mergedUser = mergeUserWithPermissions(userData, permsData);
           setUser(mergedUser);
           setIsAuthenticated(true);
+          setSessionExpired(false);
         } else {
           setSessionExpired(true);
           await logout();
@@ -85,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       const mergedUser = mergeUserWithPermissions(userData, permsData);
       setUser(mergedUser);
       setIsAuthenticated(true);
+      setSessionExpired(false);
       return { success: true, user: mergedUser };
       
       return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
@@ -153,6 +156,7 @@ export const AuthProvider = ({ children }) => {
       // Limpar estado
       setUser(null);
       setIsAuthenticated(false);
+      setSessionExpired(false);
       
       return { success: true };
     } catch (error) {
@@ -160,6 +164,7 @@ export const AuthProvider = ({ children }) => {
       // Mesmo com erro, limpar estado local
       setUser(null);
       setIsAuthenticated(false);
+      setSessionExpired(false);
       TokenManager.clearTokens();
       
       return { success: false, error: 'Erro ao fazer logout.' };

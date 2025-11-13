@@ -340,7 +340,10 @@ class OpportunityService {
    */
   async getOpportunityCategories() {
     try {
-      return await this.apiClient.get('/opportunities/categories/');
+      const data = await this.apiClient.get('/opportunities/categories/');
+      // Desembrulhar paginação padrão do DRF (count/next/previous/results)
+      const list = Array.isArray(data) ? data : (data?.results || []);
+      return list;
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter categorias de oportunidades',
@@ -356,13 +359,22 @@ class OpportunityService {
    */
   async getOpportunityTypes() {
     try {
-      return await this.apiClient.get('/opportunities/types/');
+      const data = await this.apiClient.get('/opportunities/types/');
+      // Alguns backends podem devolver paginação; garantir array
+      const list = Array.isArray(data) ? data : (data?.results || []);
+      return list;
     } catch (error) {
-      throw new ApiError(
-        error.message || 'Erro ao obter tipos de oportunidades',
-        error.status || 400,
-        error.data
-      );
+      // Fallback estático quando o endpoint não existe ou falha
+      return [
+        { value: 'job', label: 'Emprego' },
+        { value: 'internship', label: 'Estágio' },
+        { value: 'freelance', label: 'Freelance' },
+        { value: 'partnership', label: 'Parceria' },
+        { value: 'investment', label: 'Investimento' },
+        { value: 'collaboration', label: 'Colaboração' },
+        { value: 'mentorship', label: 'Mentoria' },
+        { value: 'volunteer', label: 'Voluntariado' }
+      ];
     }
   }
 

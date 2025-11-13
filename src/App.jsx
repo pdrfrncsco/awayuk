@@ -261,13 +261,13 @@ function App() {
 
 // Handler para sessão expirada: mostra toast e redireciona para login
 const SessionExpiredHandler = () => {
-  const { sessionExpired } = useAuth();
+  const { sessionExpired, isAuthenticated } = useAuth();
   const { showToast } = useNotifications();
   const navigate = useNavigate();
   const shownRef = useRef(false);
 
   useEffect(() => {
-    if (sessionExpired && !shownRef.current) {
+    if (sessionExpired && !isAuthenticated && !shownRef.current) {
       shownRef.current = true;
       try {
         showToast({
@@ -280,7 +280,7 @@ const SessionExpiredHandler = () => {
       navigate('/login', { replace: true });
       setTimeout(() => { shownRef.current = false; }, 5000);
     }
-  }, [sessionExpired, showToast, navigate]);
+  }, [sessionExpired, isAuthenticated, showToast, navigate]);
 
   return null;
 };

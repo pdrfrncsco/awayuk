@@ -14,7 +14,6 @@ import profileServiceInstance, { ProfileService } from './profileService.js';
 import dashboardServiceInstance from './dashboardService.js';
 import membersServiceInstance from './membersService.js';
 import eventsServiceInstance, { EventsService } from './eventsService.js';
-import opportunitiesServiceInstance, { OpportunitiesService } from './opportunitiesService.js';
 import analyticsServiceInstance, { AnalyticsService } from './analyticsService.js';
 import contentServiceInstance, { ContentService } from './contentService.js';
 import accountsServiceInstance, { AccountsService } from './accountsService.js';
@@ -30,7 +29,6 @@ export { default as profileService, ProfileService } from './profileService.js';
 export { default as dashboardService } from './dashboardService.js';
 export { default as membersService } from './membersService.js';
 export { default as eventsService, EventsService } from './eventsService.js';
-export { default as opportunitiesService, OpportunitiesService } from './opportunitiesService.js';
 export { default as analyticsService, AnalyticsService } from './analyticsService.js';
 export { default as contentService, ContentService } from './contentService.js';
 export { default as accountsService, AccountsService } from './accountsService.js';
@@ -60,7 +58,6 @@ export const services = {
   dashboard: dashboardServiceInstance,
   members: membersServiceInstance,
   eventsService: eventsServiceInstance,
-  opportunitiesService: opportunitiesServiceInstance,
   analytics: analyticsServiceInstance,
   content: contentServiceInstance,
   accounts: accountsServiceInstance,
