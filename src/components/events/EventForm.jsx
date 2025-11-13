@@ -11,6 +11,7 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
     category: '',
     start_date: '',
     end_date: '',
+    online_link: '',
     is_online: false,
     venue_name: '',
     address: '',
@@ -21,6 +22,7 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
     price: '',
     tags: '',
     featured_image: null,
+    gallery_images: [],
     registration_deadline: '',
     requirements: '',
     agenda: ''
@@ -68,8 +70,17 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
         errors.push('Data de fim deve ser posterior à data de início');
       }
     }
-    if (!formData.is_online && !formData.city.trim()) {
-      errors.push('Cidade é obrigatória para eventos presenciais');
+    if (formData.is_online) {
+      if (!formData.online_link || !formData.online_link.trim()) {
+        errors.push('Link online é obrigatório para eventos online');
+      }
+    } else {
+      if (!formData.venue_name || !formData.venue_name.trim()) {
+        errors.push('Nome do local é obrigatório para eventos presenciais');
+      }
+      if (!formData.city.trim()) {
+        errors.push('Cidade é obrigatória para eventos presenciais');
+      }
     }
     if (!formData.is_free && !formData.price) {
       errors.push('Preço é obrigatório para eventos pagos');
@@ -97,6 +108,13 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
           if (key === 'tags') {
             const tagsArray = val.split(',').map(tag => tag.trim()).filter(Boolean);
             submitData.append(key, JSON.stringify(tagsArray));
+          } else if (key === 'gallery_images' && Array.isArray(val)) {
+            submitData.append(key, JSON.stringify(val));
+          } else if (key === 'featured_image') {
+            // Enviar ficheiro real apenas se existir
+            if (val && typeof val === 'object' && (val instanceof File || val.name)) {
+              submitData.append(key, val);
+            }
           } else if (typeof val === 'boolean') {
             submitData.append(key, val);
           } else {
@@ -178,11 +196,19 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
             <span className="ml-2 text-sm text-gray-700">Este é um evento online</span>
           </label>
         </div>
+        {formData.is_online && (
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Link do Evento (URL) *</label>
+              <input type="url" name="online_link" value={formData.online_link} onChange={handleInputChange} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" required={formData.is_online} />
+            </div>
+          </div>
+        )}
         {!formData.is_online && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Local</label>
-              <input type="text" name="venue_name" value={formData.venue_name} onChange={handleInputChange} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Local *</label>
+              <input type="text" name="venue_name" value={formData.venue_name} onChange={handleInputChange} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" required={!formData.is_online} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Cidade *</label>
@@ -242,14 +268,27 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
             <textarea name="agenda" value={formData.agenda} onChange={handleInputChange} rows={4} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Imagem de Destaque</label>
-            <EventImageUpload
-              onImageUpload={(uploadedImages) => {
-                if (uploadedImages.length > 0) {
-                  setFormData(prev => ({ ...prev, featured_image: uploadedImages[0].id }));
-                }
+            <label className="block text-sm font-medium text-gray-700 mb-2">Imagem de Destaque (ficheiro)</label>
+            <input
+              type="file"
+              name="featured_image"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                setFormData(prev => ({ ...prev, featured_image: file }));
               }}
-              maxFiles={1}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Galeria de Imagens</label>
+            <EventImageUpload
+              onImagesUpdate={(uploadedImages) => {
+                // Guardar como JSON para gallery_images (array de objetos {id, url})
+                const gallery = (uploadedImages || []).map(img => ({ id: img.id, url: img.file_url }));
+                setFormData(prev => ({ ...prev, gallery_images: gallery }));
+              }}
+              maxFiles={10}
               showPreview={true}
             />
           </div>

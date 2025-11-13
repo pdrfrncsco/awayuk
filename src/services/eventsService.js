@@ -100,10 +100,12 @@ class EventsService {
     try {
       const data = await this.apiClient.get('/events/categories/');
       const list = Array.isArray(data) ? data : (data?.results || []);
+      // Backend espera ID da categoria no campo "category" do evento
       return list.map(cat => ({
-        value: cat.slug,
+        value: cat.id,
         label: cat.name,
-        color: cat.color || 'bg-gray-100 text-gray-800'
+        color: cat.color || 'bg-gray-100 text-gray-800',
+        slug: cat.slug
       }));
     } catch (error) {
       // Evitar log de erro barulhento no console em 404; usar fallback
