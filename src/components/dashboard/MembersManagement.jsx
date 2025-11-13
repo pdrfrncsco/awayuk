@@ -47,6 +47,10 @@ const MembersManagement = () => {
     password_confirm: ''
   });
   const [creating, setCreating] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Modal e Formulário de Edição
   const [showEditModal, setShowEditModal] = useState(false);
@@ -127,6 +131,8 @@ const MembersManagement = () => {
     });
     setError(null);
     setSuccessMessage(null);
+    setUsernameAvailable(null);
+    setEmailAvailable(null);
     setShowCreateModal(true);
   };
 
@@ -218,7 +224,62 @@ const MembersManagement = () => {
   const handleCreateChange = (e) => {
     const { name, value } = e.target;
     setCreateForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'username') {
+      setUsernameAvailable(null);
+    }
+    if (name === 'email') {
+      setEmailAvailable(null);
+    }
   };
+
+  // Debounce: verificar disponibilidade de username
+  useEffect(() => {
+    const val = (createForm.username || '').trim();
+    if (!val) {
+      setUsernameAvailable(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        setCheckingUsername(true);
+        const available = await membersService.checkUsernameAvailability(val);
+        setUsernameAvailable(available);
+      } catch (err) {
+        console.warn('Falha ao verificar username:', err);
+        setUsernameAvailable(false);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [createForm.username]);
+
+  // Debounce: verificar disponibilidade de email (validação simples de formato)
+  useEffect(() => {
+    const val = (createForm.email || '').trim();
+    if (!val) {
+      setEmailAvailable(null);
+      return;
+    }
+    const basicEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!basicEmail.test(val)) {
+      setEmailAvailable(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        setCheckingEmail(true);
+        const available = await membersService.checkEmailAvailability(val);
+        setEmailAvailable(available);
+      } catch (err) {
+        console.warn('Falha ao verificar email:', err);
+        setEmailAvailable(false);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [createForm.email]);
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -236,6 +297,16 @@ const MembersManagement = () => {
         setCreating(false);
         return;
       }
+      if (usernameAvailable === false) {
+        setError('O username já está em uso.');
+        setCreating(false);
+        return;
+      }
+      if (emailAvailable === false) {
+        setError('O email já está em uso ou inválido.');
+        setCreating(false);
+        return;
+      }
 
       const newMember = await membersService.createMember(createForm);
       setSuccessMessage(`Membro criado: ${newMember?.name || createForm.username}`);
@@ -243,8 +314,17 @@ const MembersManagement = () => {
       await loadMembers();
     } catch (err) {
       console.error('Erro ao criar membro:', err);
-      const detail = err?.data?.detail || err.message || 'Erro ao criar membro.';
-      setError(detail);
+      // Formatar mensagens de validação do backend (ex.: { password: ["mensagem..."] })
+      let formatted = err?.message || 'Erro ao criar membro.';
+      if (err?.data && typeof err.data === 'object') {
+        const parts = [];
+        Object.entries(err.data).forEach(([field, messages]) => {
+          const msg = Array.isArray(messages) ? messages.join(' ') : String(messages);
+          parts.push(`${field}: ${msg}`);
+        });
+        if (parts.length) formatted = parts.join(' | ');
+      }
+      setError(formatted);
     } finally {
       setCreating(false);
     }
@@ -668,6 +748,17 @@ const MembersManagement = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Username</label>
                           <input name="username" value={createForm.username} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                          {createForm.username && (
+                            <p className={`mt-1 text-xs ${checkingUsername ? 'text-gray-500' : usernameAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                              {checkingUsername
+                                ? 'A verificar disponibilidade...'
+                                : usernameAvailable === null
+                                  ? ''
+                                  : usernameAvailable
+                                    ? 'Username disponível'
+                                    : 'Username já em uso'}
+                            </p>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
@@ -682,6 +773,17 @@ const MembersManagement = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Email</label>
                           <input type="email" name="email" value={createForm.email} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                          {createForm.email && (
+                            <p className={`mt-1 text-xs ${checkingEmail ? 'text-gray-500' : emailAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                              {checkingEmail
+                                ? 'A verificar disponibilidade...'
+                                : emailAvailable === null
+                                  ? ''
+                                  : emailAvailable
+                                    ? 'Email disponível'
+                                    : 'Email inválido ou já em uso'}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Tipo de Utilizador</label>
@@ -692,18 +794,35 @@ const MembersManagement = () => {
                           </select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" name="password" value={createForm.password} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Confirmar Password</label>
-                            <input type="password" name="password_confirm" value={createForm.password_confirm} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                          </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Password</label>
+                          <input type="password" name="password" value={createForm.password} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
                         </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Confirmar Password</label>
+                          <input type="password" name="password_confirm" value={createForm.password_confirm} onChange={handleCreateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <p className="text-xs text-gray-500">A password deve ter ≥ 8 caracteres, não ser comum nem apenas numérica.</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:,.<>?';
+                            let pwd = '';
+                            for (let i = 0; i < 14; i++) {
+                              pwd += chars[Math.floor(Math.random() * chars.length)];
+                            }
+                            setCreateForm(prev => ({ ...prev, password: pwd, password_confirm: pwd }));
+                          }}
+                          className="text-xs px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        >
+                          Gerar password forte
+                        </button>
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button type="submit" disabled={creating} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-white text-base font-medium hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">

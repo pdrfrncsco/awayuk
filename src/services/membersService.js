@@ -102,6 +102,43 @@ class MembersService {
   }
 
   /**
+   * Verifica disponibilidade de username
+   * @param {string} username
+   * @returns {Promise<boolean>} true se disponível
+   */
+  async checkUsernameAvailability(username) {
+    try {
+      const response = await this.apiClient.post('/accounts/check-username/', { username });
+      return Boolean(response?.available);
+    } catch (error) {
+      // Em caso de erro, considerar indisponível para prevenir conflitos
+      throw new ApiError(
+        error.message || 'Erro ao verificar disponibilidade de username',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
+   * Verifica disponibilidade de email
+   * @param {string} email
+   * @returns {Promise<boolean>} true se disponível
+   */
+  async checkEmailAvailability(email) {
+    try {
+      const response = await this.apiClient.post('/accounts/check-email/', { email });
+      return Boolean(response?.available);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao verificar disponibilidade de email',
+        error.status || 500,
+        error.data
+      );
+    }
+  }
+
+  /**
    * Atualiza dados de um membro
    * @param {number} memberId - ID do membro
    * @param {Object} memberData - Dados atualizados
@@ -109,8 +146,15 @@ class MembersService {
    */
   async updateMember(memberId, memberData) {
     try {
-      const transformedData = this.transformMemberDataForAPI(memberData);
-      const response = await this.apiClient.patch(`/accounts/users/${memberId}/`, transformedData);
+      // Construir payload apenas com campos fornecidos
+      const payload = {};
+      if (memberData.username) payload.username = memberData.username;
+      if (memberData.firstName) payload.first_name = memberData.firstName;
+      if (memberData.lastName) payload.last_name = memberData.lastName;
+      if (memberData.email) payload.email = memberData.email;
+      if (memberData.user_type) payload.user_type = memberData.user_type;
+      if (typeof memberData.is_active === 'boolean') payload.is_active = memberData.is_active;
+      const response = await this.apiClient.patch(`/accounts/users/${memberId}/`, payload);
       return this.transformUserData(response);
     } catch (error) {
       throw new ApiError(
