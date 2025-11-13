@@ -230,14 +230,14 @@ const EventsManagement = () => {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <div className="py-1">
                 <button
-                  onClick={() => {/* Ver detalhes */}}
+                  onClick={() => navigate(`/evento/${event.slug || event.id}`)}
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                 >
                   <EyeIcon className="h-4 w-4 mr-2" />
                   Ver detalhes
                 </button>
                 <button
-                  onClick={() => {/* Editar */}}
+                  onClick={() => navigate(`/dashboard/eventos/${event.slug || event.id}/editar`)}
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                 >
                   <PencilIcon className="h-4 w-4 mr-2" />
@@ -334,7 +334,7 @@ const EventsManagement = () => {
           <button
             type="button"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            onClick={() => navigate('/criar-evento')}
+            onClick={() => navigate('/dashboard/eventos/novo')}
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
             Criar Evento
@@ -531,10 +531,10 @@ const EventsManagement = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900">
+                              <button className="text-blue-600 hover:text-blue-900" onClick={() => navigate(`/evento/${event.slug || event.id}`)}>
                                 <EyeIcon className="h-4 w-4" />
                               </button>
-                              <button className="text-green-600 hover:text-green-900">
+                              <button className="text-green-600 hover:text-green-900" onClick={() => navigate(`/dashboard/eventos/${event.slug || event.id}/editar`)}>
                                 <PencilIcon className="h-4 w-4" />
                               </button>
                               <button className="text-gray-400 hover:text-gray-600">
