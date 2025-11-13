@@ -22,6 +22,7 @@ import EventDetail from './pages/public/EventDetail';
 // Consolidated events to public pages; removed EventDetails, EventList, and admin EventDetail
 import CreateEvent from './pages/events/CreateEvent';
 import DashboardCreateEvent from './pages/events/DashboardCreateEvent';
+import DashboardEditEvent from './pages/events/DashboardEditEvent';
 import OnboardingPage from './pages/onboarding/Onboarding';
 import CreateOpportunity from './pages/opportunities/CreateOpportunity';
 import BusinessOpportunities from './pages/public/BusinessOpportunities';
@@ -179,6 +180,13 @@ function App() {
                 <MultiTypeRoute allowedTypes={['member', 'admin']}>
                   <RouteGuard permission={PERMISSIONS.CREATE_EVENT}>
                     <DashboardCreateEvent />
+                  </RouteGuard>
+                </MultiTypeRoute>
+              } />
+              <Route path="eventos/:id/editar" element={
+                <MultiTypeRoute allowedTypes={['member', 'admin']}>
+                  <RouteGuard permission={PERMISSIONS.EDIT_EVENT}>
+                    <DashboardEditEvent />
                   </RouteGuard>
                 </MultiTypeRoute>
               } />

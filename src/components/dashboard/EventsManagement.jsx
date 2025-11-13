@@ -96,8 +96,13 @@ const EventsManagement = () => {
   // Duplicar evento
   const handleDuplicateEvent = async (eventId) => {
     try {
-      await services.eventsService.duplicateEvent(eventId);
-      await loadEvents(); // Recarregar lista
+      const duplicated = await services.eventsService.duplicateEvent(eventId);
+      // Opcional: navegar para edição do duplicado
+      if (duplicated && (duplicated.slug || duplicated.id)) {
+        navigate(`/dashboard/eventos/${duplicated.slug || duplicated.id}/editar`);
+      } else {
+        await loadEvents(); // Fallback: recarregar lista
+      }
     } catch (err) {
       alert('Erro ao duplicar evento');
       console.error('Erro ao duplicar evento:', err);
@@ -536,6 +541,9 @@ const EventsManagement = () => {
                               </button>
                               <button className="text-green-600 hover:text-green-900" onClick={() => navigate(`/dashboard/eventos/${event.slug || event.id}/editar`)}>
                                 <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button className="text-gray-600 hover:text-gray-900" onClick={() => handleDuplicateEvent(event.id)}>
+                                <DocumentDuplicateIcon className="h-4 w-4" />
                               </button>
                               <button className="text-gray-400 hover:text-gray-600">
                                 <EllipsisVerticalIcon className="h-4 w-4" />

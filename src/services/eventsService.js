@@ -53,7 +53,7 @@ class EventsService {
     try {
       // Permitir compatibilidade: se receber FormData (upload de imagem), enviar diretamente
       if (typeof FormData !== 'undefined' && eventData instanceof FormData) {
-        const data = await this.apiClient.post('/events/', eventData);
+        const data = await this.apiClient.upload('/events/', eventData);
         return this.transformEventFromAPI(data);
       }
       const transformedData = this.transformEventToAPI(eventData);
@@ -68,6 +68,13 @@ class EventsService {
   // Atualizar evento
   async updateEvent(eventIdentifier, eventData) {
     try {
+      if (typeof FormData !== 'undefined' && eventData instanceof FormData) {
+        // Enviar como multipart para suportar imagem
+        const data = await this.apiClient.patch(`/events/${eventIdentifier}/`, eventData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return this.transformEventFromAPI(data);
+      }
       const transformedData = this.transformEventToAPI(eventData);
       const data = await this.apiClient.put(`/events/${eventIdentifier}/`, transformedData);
       return this.transformEventFromAPI(data);

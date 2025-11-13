@@ -60,26 +60,6 @@ function DashboardCreateEvent() {
             onSubmit={handleSubmit}
             onCancel={() => navigate('/dashboard/eventos')}
           />
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/eventos')}
-              className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              form={undefined}
-              className="px-4 py-2 rounded-md border border-transparent text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
-              onClick={() => {
-                // O botão de submit real está dentro do EventForm; este é apenas visual.
-              }}
-            >
-              {loading ? 'A criar...' : 'Criar Evento'}
-            </button>
-          </div>
         </div>
       </div>
     </div>

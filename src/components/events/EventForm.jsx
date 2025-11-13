@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EventImageUpload from './EventImageUpload';
 
-const EventForm = ({ onSubmit, onCancel, categories = [] }) => {
+const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, submitLabel = 'Criar Evento', loadingLabel = 'A criar...' }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const defaults = {
     title: '',
     description: '',
     event_type: 'networking',
@@ -24,7 +24,14 @@ const EventForm = ({ onSubmit, onCancel, categories = [] }) => {
     registration_deadline: '',
     requirements: '',
     agenda: ''
-  });
+  };
+  const [formData, setFormData] = useState(initialValues ? { ...defaults, ...initialValues } : defaults);
+
+  useEffect(() => {
+    if (initialValues) {
+      setFormData(prev => ({ ...prev, ...initialValues }));
+    }
+  }, [initialValues]);
 
   const eventTypes = [
     { value: 'networking', label: 'Networking' },
@@ -252,7 +259,7 @@ const EventForm = ({ onSubmit, onCancel, categories = [] }) => {
       <div className="border-t border-gray-200 pt-6 flex justify-end space-x-3">
         <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancelar</button>
         <button type="submit" disabled={loading} className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-red-500 text-white rounded-md hover:opacity-90 disabled:opacity-50">
-          {loading ? 'Criando...' : 'Criar Evento'}
+          {loading ? loadingLabel : submitLabel}
         </button>
       </div>
     </form>
