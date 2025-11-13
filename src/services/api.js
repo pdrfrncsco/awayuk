@@ -87,21 +87,48 @@ class ApiClient {
       (response) => {
         return response.data;
       },
-      (error) => {
-        if (error.response) {
-          // Erro com resposta do servidor
-          const apiError = new ApiError(
-            error.response.data?.message || error.message || 'Erro na requisição',
-            error.response.status,
-            error.response.data
-          );
+      async (error) => {
+        const hasResponse = !!error.response;
+        const status = error.response?.status;
+        const data = error.response?.data;
+
+        // Tentar renovar token automaticamente em 401 token_not_valid
+        const originalRequest = error.config || {};
+        const tokenInvalid = status === 401 && (
+          data?.code === 'token_not_valid' ||
+          String(data?.detail || '').toLowerCase().includes('token not valid') ||
+          String(data?.detail || '').toLowerCase().includes('given token not valid')
+        );
+        if (tokenInvalid && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            await this.refreshToken();
+            const newAccess = TokenManager.getAccessToken();
+            if (newAccess) {
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+              this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;
+            }
+            return await this.axiosInstance.request(originalRequest);
+          } catch (refreshErr) {
+            TokenManager.clearTokens();
+            const friendly = new ApiError(
+              'Sessão expirada. Por favor, faça login novamente.',
+              401,
+              data
+            );
+            return Promise.reject(friendly);
+          }
+        }
+
+        if (hasResponse) {
+          const message = data?.detail || data?.message || error.message || 'Erro na requisição';
+          const apiError = new ApiError(message, status, data);
           return Promise.reject(apiError);
         } else if (error.request) {
-          // Erro de rede
           const apiError = new ApiError('Erro de conexão', 0, { originalError: error });
           return Promise.reject(apiError);
         } else {
-          // Outro tipo de erro
           const apiError = new ApiError('Erro desconhecido', 0, { originalError: error });
           return Promise.reject(apiError);
         }
@@ -159,6 +186,10 @@ class ApiClient {
       });
       
       TokenManager.setTokens(response.access, response.refresh);
+      const newAccess = TokenManager.getAccessToken();
+      if (newAccess) {
+        this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;
+      }
       return response;
     } catch (error) {
       TokenManager.clearTokens();

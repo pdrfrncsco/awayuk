@@ -102,17 +102,40 @@ const EventForm = ({ onSubmit, onCancel, categories = [], initialValues = null, 
       setLoading(true);
       setError('');
       const submitData = new FormData();
+      const allowedKeys = [
+        'title', 'description', 'short_description', 'event_type', 'category',
+        'start_date', 'end_date', 'registration_deadline', 'is_online',
+        'venue_name', 'address', 'city', 'postcode', 'online_link',
+        'max_attendees', 'price', 'is_free', 'featured_image', 'gallery_images',
+        'status', 'meta_description', 'tags', 'is_featured'
+      ];
+      const dateKeys = ['start_date', 'end_date', 'registration_deadline'];
       Object.keys(formData).forEach(key => {
+        if (!allowedKeys.includes(key)) return; // Ignorar campos não suportados pelo backend
         const val = formData[key];
         if (val !== null && val !== '') {
           if (key === 'tags') {
             const tagsArray = val.split(',').map(tag => tag.trim()).filter(Boolean);
             submitData.append(key, JSON.stringify(tagsArray));
+          } else if (key === 'category') {
+            // Enviar apenas se for um pk numérico válido
+            const numVal = Number(val);
+            if (!Number.isNaN(numVal) && Number.isInteger(numVal) && numVal > 0) {
+              submitData.append(key, numVal);
+            }
           } else if (key === 'gallery_images' && Array.isArray(val)) {
             submitData.append(key, JSON.stringify(val));
           } else if (key === 'featured_image') {
             // Enviar ficheiro real apenas se existir
             if (val && typeof val === 'object' && (val instanceof File || val.name)) {
+              submitData.append(key, val);
+            }
+          } else if (dateKeys.includes(key)) {
+            // Garantir formato ISO 8601 completo
+            const d = new Date(val);
+            if (!isNaN(d.getTime())) {
+              submitData.append(key, d.toISOString());
+            } else {
               submitData.append(key, val);
             }
           } else if (typeof val === 'boolean') {

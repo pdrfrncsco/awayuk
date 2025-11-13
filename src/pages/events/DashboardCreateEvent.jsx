@@ -32,8 +32,27 @@ function DashboardCreateEvent() {
       setTimeout(() => navigate('/dashboard/eventos'), 400);
       return created;
     } catch (e) {
-      console.error(e);
-      setError(e?.message || 'Falha ao criar o evento');
+      console.error('Erro ao criar evento:', e);
+      // Mostrar detalhes de validação do backend quando existirem
+      if (e?.data) {
+        try {
+          if (typeof e.data === 'string') {
+            setError(e.data);
+          } else if (typeof e.data === 'object') {
+            const msgs = Object.entries(e.data).map(([field, info]) => {
+              const text = Array.isArray(info) ? info.join('; ') : String(info);
+              return `${field}: ${text}`;
+            });
+            setError(msgs.join('\n'));
+          } else {
+            setError(e?.message || 'Falha ao criar o evento');
+          }
+        } catch (_) {
+          setError(e?.message || 'Falha ao criar o evento');
+        }
+      } else {
+        setError(e?.message || 'Falha ao criar o evento');
+      }
     } finally {
       setLoading(false);
     }

@@ -383,13 +383,10 @@ class EventsService {
 
   // Categorias padrão
   getDefaultCategories() {
-    return [
-      { value: 'networking', label: 'Networking', color: 'bg-blue-100 text-blue-800' },
-      { value: 'workshop', label: 'Workshop', color: 'bg-green-100 text-green-800' },
-      { value: 'social', label: 'Social', color: 'bg-purple-100 text-purple-800' },
-      { value: 'business', label: 'Business', color: 'bg-yellow-100 text-yellow-800' },
-      { value: 'cultural', label: 'Cultural', color: 'bg-pink-100 text-pink-800' }
-    ];
+    // Quando a API de categorias falha, evitamos fornecer valores inválidos
+    // para criação de eventos (pk deve ser numérico). Retornamos lista vazia
+    // para forçar o utilizador a tentar novamente quando a API estiver disponível.
+    return [];
   }
 
   // Utilitário para formatar data
