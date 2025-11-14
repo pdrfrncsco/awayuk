@@ -51,13 +51,7 @@ const DashboardLayout = () => {
       permission: PERMISSIONS.VIEW_DASHBOARD,
       userTypes: ['member', 'business', 'admin']
     },
-    { 
-      name: 'Perfil', 
-      href: '/dashboard/perfil', 
-      icon: UserIcon,
-      permission: PERMISSIONS.VIEW_DASHBOARD,
-      userTypes: ['member', 'business', 'admin']
-    },
+
     { 
       name: 'Onboarding', 
       href: '/dashboard/onboarding', 
@@ -125,6 +119,13 @@ const DashboardLayout = () => {
       name: 'Comunidade', 
       href: '/dashboard/comunidade', 
       icon: UserGroupIcon,
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
+    },
+    { 
+      name: 'Perfil', 
+      href: `/dashboard/perfil${user?.id ? `/${user.id}` : ''}`,
+      icon: UserCircleIcon,
       permission: PERMISSIONS.VIEW_DASHBOARD,
       userTypes: ['member', 'business', 'admin']
     },

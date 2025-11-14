@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { profileService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileImageUpload from '../../components/profile/ProfileImageUpload';
@@ -17,17 +17,16 @@ const MemberProfile = ({ enableEditing = false }) => {
   const { user, isLoading } = useAuth();
   const { ToastContainer, showToast } = useToast();
   const navigate = useNavigate();
-  
-  // Se não há ID na URL e o usuário está autenticado, redirecionar para o próprio perfil
+  const location = useLocation();
+
   useEffect(() => {
-    // Esperar o estado de autenticação resolver antes de redirecionar
-    if (!isLoading && !id && user?.id) {
+    if (!isLoading && !id && user?.id && !enableEditing && !location.pathname.startsWith('/dashboard')) {
       navigate(`/perfil/${user.id}`, { replace: true });
       return;
     }
-  }, [id, user?.id, navigate, isLoading]);
-  
-  const memberId = id ? parseInt(id) : null;
+  }, [id, user?.id, navigate, isLoading, enableEditing, location.pathname]);
+
+  const memberId = id ? parseInt(id) : (enableEditing && user?.id ? user.id : null);
   const [activeTab, setActiveTab] = useState('sobre');
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactForm, setContactForm] = useState({
@@ -951,7 +950,7 @@ const MemberProfile = ({ enableEditing = false }) => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => navigate('/dashboard/perfil')}
+                    onClick={() => navigate(user?.id ? `/dashboard/perfil/${user.id}` : '/dashboard/perfil')}
                     className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
                   >
                     <i className="fas fa-tools mr-2"></i>

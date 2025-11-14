@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   UsersIcon,
@@ -271,7 +272,7 @@ const Dashboard = () => {
                   {
                     name: 'Gerir Perfil',
                     description: 'Editar perfil, sobre, serviços e portfólio',
-                    href: '/dashboard/perfil',
+                    href: `/dashboard/perfil${user?.id ? `/${user.id}` : ''}`,
                     icon: UsersIcon,
                     color: 'bg-blue-500 hover:bg-blue-600'
                   },
@@ -304,9 +305,9 @@ const Dashboard = () => {
                     color: 'bg-blue-500 hover:bg-blue-600'
                   }
                 ].map((action) => (
-                  <a
+                  <Link
                     key={action.name}
-                    href={action.href}
+                    to={action.href}
                     className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all duration-200"
                   >
                     <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center text-white shadow-sm`}>
@@ -316,7 +317,7 @@ const Dashboard = () => {
                       <p className="text-sm font-medium text-gray-900">{action.name}</p>
                       <p className="text-xs text-gray-500">{action.description}</p>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
