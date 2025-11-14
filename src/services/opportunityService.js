@@ -58,13 +58,13 @@ class OpportunityService {
   }
 
   /**
-   * Obtém uma oportunidade específica por ID
-   * @param {number} opportunityId - ID da oportunidade
+   * Obtém detalhes de uma oportunidade por slug
+   * @param {string} slug - Slug da oportunidade
    * @returns {Promise<Object>} Dados da oportunidade
    */
-  async getOpportunity(opportunityId) {
+  async getOpportunityBySlug(slug) {
     try {
-      return await this.apiClient.get(`/opportunities/${opportunityId}/`);
+      return await this.apiClient.get(`/opportunities/${slug}/`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter oportunidade',
@@ -122,15 +122,14 @@ class OpportunityService {
   }
 
   /**
-   * Atualiza o status de uma oportunidade
-   * Compatível com componentes que chamam services.opportunities.updateOpportunityStatus
-   * @param {number} opportunityId - ID da oportunidade
+   * Atualiza o status de uma oportunidade (slug)
+   * @param {string} slug - Slug da oportunidade
    * @param {string} newStatus - Novo status (ex.: 'draft', 'active', 'archived')
    * @returns {Promise<Object>} Oportunidade atualizada
    */
-  async updateOpportunityStatus(opportunityId, newStatus) {
+  async updateOpportunityStatus(slug, newStatus) {
     try {
-      return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { status: newStatus });
+      return await this.apiClient.patch(`/opportunities/${slug}/`, { status: newStatus });
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao actualizar status da oportunidade',
@@ -141,16 +140,14 @@ class OpportunityService {
   }
 
   /**
-   * Define/alternar destaque de uma oportunidade
-   * Compatível com components que chamam services.opportunities.toggleFeatured(id, featured)
-   * @param {number} opportunityId - ID da oportunidade
+   * Define/alternar destaque de uma oportunidade (slug)
+   * @param {string} slug - Slug da oportunidade
    * @param {boolean} featured - Estado desejado de destaque
    * @returns {Promise<Object>} Oportunidade atualizada
    */
-  async toggleFeatured(opportunityId, featured) {
+  async toggleFeatured(slug, featured) {
     try {
-      // No backend o campo é is_featured
-      return await this.apiClient.patch(`/opportunities/${opportunityId}/`, { is_featured: featured });
+      return await this.apiClient.patch(`/opportunities/${slug}/`, { is_featured: featured });
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao actualizar destaque da oportunidade',
@@ -163,19 +160,16 @@ class OpportunityService {
   /**
    * Duplica uma oportunidade
    * Tenta endpoint dedicado e, se não existir, faz fallback criando uma cópia
-   * @param {number} opportunityId - ID da oportunidade a duplicar
+   * @param {string} slug - Slug da oportunidade a duplicar
    * @returns {Promise<Object>} Oportunidade criada (cópia)
    */
-  async duplicateOpportunity(opportunityId) {
+  async duplicateOpportunity(slug) {
     try {
-      // Tentar endpoint dedicado, caso exista
-      return await this.apiClient.post(`/opportunities/${opportunityId}/duplicate/`);
+      return await this.apiClient.post(`/opportunities/${slug}/duplicate/`);
     } catch (error) {
-      // Se o endpoint não existir (ex.: 404), fazer fallback client-side
       if (error && (error.status === 404 || String(error.message || '').includes('Not Found'))) {
         try {
-          const original = await this.getOpportunity(opportunityId);
-          // Remover campos não criáveis e ajustar defaults
+          const original = await this.getOpportunityBySlug(slug);
           const copyData = {
             title: `${original.title} (Cópia)`,
             description: original.description,
@@ -185,7 +179,7 @@ class OpportunityService {
             location_country: original.location_country,
             work_type: original.work_type,
             type: original.type,
-            category: original.category?.id || original.category, // aceita id ou objeto
+            category: original.category?.id || original.category,
             experience_level: original.experience_level,
             salary_min: original.salary_min,
             salary_max: original.salary_max,
@@ -216,13 +210,13 @@ class OpportunityService {
   }
 
   /**
-   * Deleta uma oportunidade
-   * @param {number} opportunityId - ID da oportunidade
+   * Deleta uma oportunidade por slug
+   * @param {string} slug - Slug da oportunidade
    * @returns {Promise<void>}
    */
-  async deleteOpportunity(opportunityId) {
+  async deleteOpportunity(slug) {
     try {
-      return await this.apiClient.delete(`/opportunities/${opportunityId}/`);
+      return await this.apiClient.delete(`/opportunities/${slug}/`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao apagar oportunidade',
@@ -240,7 +234,7 @@ class OpportunityService {
    * @param {File} applicationData.resume - Currículo (arquivo)
    * @returns {Promise<Object>} Dados da candidatura
    */
-  async applyToOpportunity(opportunityId, applicationData) {
+  async applyToOpportunity(opportunityId, applicationData = {}) {
     try {
       const formData = new FormData();
       
@@ -285,10 +279,10 @@ class OpportunityService {
    * @param {Object} params - Parâmetros de consulta
    * @returns {Promise<Object>} Lista de candidaturas
    */
-  async getOpportunityApplications(opportunityId, params = {}) {
+  async getOpportunityApplications(slug, params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      return await this.apiClient.get(`/opportunities/${opportunityId}/applications/?${queryParams}`);
+      return await this.apiClient.get(`/opportunities/${slug}/applications/?${queryParams}`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter candidaturas da oportunidade',
@@ -306,7 +300,7 @@ class OpportunityService {
   async getMyApplications(params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      return await this.apiClient.get(`/opportunities/my-applications/?${queryParams}`);
+      return await this.apiClient.get(`/opportunities/applications/?${queryParams}`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter minhas candidaturas',
@@ -324,7 +318,7 @@ class OpportunityService {
   async getCreatedOpportunities(params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      return await this.apiClient.get(`/opportunities/created-opportunities/?${queryParams}`);
+      return await this.apiClient.get(`/opportunities/my/?${queryParams}`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter oportunidades criadas',
@@ -477,9 +471,9 @@ class OpportunityService {
    * @param {number} opportunityId - ID da oportunidade
    * @returns {Promise<Object>} Dados da operação
    */
-  async saveOpportunity(opportunityId) {
+  async saveOpportunity(slug) {
     try {
-      return await this.apiClient.post(`/opportunities/${opportunityId}/save/`);
+      return await this.apiClient.post(`/opportunities/${slug}/bookmark/`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao salvar oportunidade',
@@ -494,9 +488,9 @@ class OpportunityService {
    * @param {number} opportunityId - ID da oportunidade
    * @returns {Promise<void>}
    */
-  async unsaveOpportunity(opportunityId) {
+  async unsaveOpportunity(slug) {
     try {
-      return await this.apiClient.delete(`/opportunities/${opportunityId}/unsave/`);
+      return await this.apiClient.delete(`/opportunities/${slug}/bookmark/`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao remover oportunidade dos favoritos',
@@ -514,7 +508,7 @@ class OpportunityService {
   async getSavedOpportunities(params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      return await this.apiClient.get(`/opportunities/saved/?${queryParams}`);
+      return await this.apiClient.get(`/opportunities/bookmarks/?${queryParams}`);
     } catch (error) {
       throw new ApiError(
         error.message || 'Erro ao obter oportunidades salvas',
@@ -532,9 +526,9 @@ class OpportunityService {
    * @param {string} notes - Notas sobre a decisão (opcional)
    * @returns {Promise<Object>} Candidatura atualizada
    */
-  async updateApplicationStatus(opportunityId, applicationId, status, notes = '') {
+  async updateApplicationStatus(applicationId, status, notes = '') {
     try {
-      return await this.apiClient.patch(`/opportunities/${opportunityId}/applications/${applicationId}/`, {
+      return await this.apiClient.patch(`/opportunities/applications/${applicationId}/update/`, {
         status,
         notes
       });

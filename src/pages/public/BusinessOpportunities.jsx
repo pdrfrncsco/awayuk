@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import VisitorAction from '../../components/auth/VisitorAction';
+import { services } from '../../services';
+import { useNotifications, NOTIFICATION_TYPES } from '../../contexts/NotificationsContext';
+import { useAuth } from '../../hooks/useAuth';
 import { 
   MagnifyingGlassIcon, 
   MapPinIcon, 
@@ -29,9 +32,11 @@ const BusinessOpportunities = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [favorites, setFavorites] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const { showToast } = useNotifications();
+  const { isAuthenticated } = useAuth();
 
   // Mock data para oportunidades
-  const opportunities = [
+  const mockOpportunities = [
     {
       id: 1,
       title: 'Desenvolvedor Full Stack',
@@ -166,6 +171,75 @@ const BusinessOpportunities = () => {
     }
   ];
 
+  const [opportunities, setOpportunities] = useState(mockOpportunities);
+
+  const normalizeOpportunity = (item) => {
+    const typeMap = {
+      job: 'emprego',
+      internship: 'estagio',
+    };
+    const type = typeMap[item.type] || 'negocio';
+    const salaryMin = item.salary_min;
+    const salaryMax = item.salary_max;
+    const salaryCurrency = item.salary_currency || 'GBP';
+    const salary = (salaryMin || salaryMax)
+      ? `${salaryCurrency === 'GBP' ? '£' : ''}${salaryMin || ''}${salaryMin && salaryMax ? ' - ' : ''}${salaryMax || ''}`
+      : 'A combinar';
+    const workTypeMap = {
+      onsite: 'Presencial',
+      remote: 'Remoto',
+      hybrid: 'Híbrido'
+    };
+    return {
+      id: item.id,
+      slug: item.slug,
+      title: item.title,
+      type,
+      company: item.company_name || '',
+      location: [item.location_city, item.location_country].filter(Boolean).join(', ') || '—',
+      area: 'todas',
+      level: (item.experience_level || 'todos'),
+      salary,
+      workType: workTypeMap[item.work_type] || '—',
+      description: item.description || '',
+      requirements: Array.isArray(item.requirements) ? item.requirements : (String(item.requirements || '').split(',').filter(Boolean)),
+      postedDate: item.created_at,
+      deadline: item.application_deadline,
+      contact: { email: item.contact_email, phone: item.contact_phone },
+      logo: item.company_logo || '/api/placeholder/80/80'
+    };
+  };
+
+  const loadOpportunities = async () => {
+    try {
+      const data = await services.opportunities.getOpportunities({ page: 1, page_size: 20 });
+      const list = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
+      if (list.length) {
+        setOpportunities(list.map(normalizeOpportunity));
+      } else {
+        setOpportunities(mockOpportunities);
+      }
+    } catch (err) {
+      setOpportunities(mockOpportunities);
+    }
+  };
+
+  const loadBookmarks = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await services.opportunities.getSavedOpportunities();
+      const list = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
+      const slugs = list.map(b => b?.opportunity?.slug).filter(Boolean);
+      setFavorites(new Set(slugs));
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadOpportunities();
+    loadBookmarks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
   const typeOptions = [
     { value: 'todos', label: 'Todos os Tipos' },
     { value: 'emprego', label: 'Empregos' },
@@ -215,14 +289,24 @@ const BusinessOpportunities = () => {
     return matchesSearch && matchesType && matchesLocation && matchesArea && matchesLevel;
   });
 
-  const toggleFavorite = (id) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(id)) {
-      newFavorites.delete(id);
-    } else {
-      newFavorites.add(id);
+  const toggleFavorite = async (opportunity) => {
+    const slug = opportunity.slug;
+    if (!slug) return;
+    try {
+      const newFavorites = new Set(favorites);
+      if (newFavorites.has(slug)) {
+        await services.opportunities.unsaveOpportunity(slug);
+        newFavorites.delete(slug);
+        showToast({ type: NOTIFICATION_TYPES.INFO, title: 'Removido dos favoritos', message: 'Oportunidade removida.' });
+      } else {
+        await services.opportunities.saveOpportunity(slug);
+        newFavorites.add(slug);
+        showToast({ type: NOTIFICATION_TYPES.SUCCESS, title: 'Guardado nos favoritos', message: 'Oportunidade guardada.' });
+      }
+      setFavorites(newFavorites);
+    } catch (err) {
+      showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Erro nos favoritos', message: err?.message || 'Tente novamente.' });
     }
-    setFavorites(newFavorites);
   };
 
   const getTypeIcon = (type) => {
@@ -294,14 +378,14 @@ const BusinessOpportunities = () => {
             <p className="text-gray-600 font-medium">{opportunity.company}</p>
           </div>
           <VisitorAction
-            onAction={() => toggleFavorite(opportunity.id)}
+            onAction={() => toggleFavorite(opportunity)}
             showModal={true}
             redirectTo="/login"
             requireMember={false}
             actionType="favorite"
           >
             <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-              {favorites.has(opportunity.id) ? (
+              {favorites.has(opportunity.slug) ? (
                 <HeartSolidIcon className="h-5 w-5 text-red-500" />
               ) : (
                 <HeartIcon className="h-5 w-5 text-gray-400" />

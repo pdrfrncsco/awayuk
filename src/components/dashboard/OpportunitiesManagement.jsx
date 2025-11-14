@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useNotifications, NOTIFICATION_TYPES } from '../../contexts/NotificationsContext';
 import { services } from '../../services';
 import { useAuth } from '../../hooks/useAuth';
 import VisitorAction from '../common/VisitorAction';
@@ -39,6 +40,7 @@ const OpportunitiesManagement = () => {
     featured: 0,
     totalViews: 0
   });
+  const { showToast } = useNotifications();
   
   // Estados para filtros e paginação
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +75,41 @@ const OpportunitiesManagement = () => {
         pagination.limit
       );
       
-      setOpportunities(response.results);
+      const rawList = Array.isArray(response?.results) ? response.results : (Array.isArray(response) ? response : []);
+      const normalized = rawList.map((item) => {
+        const id = item.id || item.pk || item.opportunity_id;
+        const slug = item.slug || item.opportunity_slug || String(id || '');
+        const company = item.company || item.company_name || '';
+        const location = item.location || [item.location_city, item.location_country].filter(Boolean).join(', ');
+        const jobType = item.type || item.job_type;
+        const experience = item.experience || item.experience_level;
+        const featured = typeof item.featured !== 'undefined' ? item.featured : !!item.is_featured;
+        const salary = item.salary || {
+          min: item.salary_min,
+          max: item.salary_max,
+          currency: item.salary_currency
+        };
+        const applications = item.applications || item.applications_count || 0;
+        const views = item.views || item.views_count || 0;
+        const remote = typeof item.remote !== 'undefined' ? item.remote : (item.work_type === 'remote');
+        return {
+          id,
+          slug,
+          title: item.title,
+          description: item.description,
+          company,
+          location,
+          type: jobType,
+          experience,
+          salary,
+          status: item.status,
+          featured,
+          applications,
+          views,
+          remote
+        };
+      });
+      setOpportunities(normalized);
       setPagination(prev => ({
         ...prev,
         total: response.count,
@@ -82,7 +118,12 @@ const OpportunitiesManagement = () => {
       
       // Carregar estatísticas
       const statsData = await services.opportunities.getOpportunityStats();
-      setStats(statsData);
+      setStats({
+        total: statsData.total || statsData.total_opportunities || 0,
+        active: statsData.active || statsData.active_opportunities || 0,
+        featured: statsData.featured || statsData.featured_opportunities || statsData.featured?.length || 0,
+        totalViews: statsData.totalViews || statsData.total_views || statsData.total_applications || 0,
+      });
     } catch (err) {
       console.error('Erro ao carregar oportunidades:', err);
       setError('Não foi possível carregar as oportunidades. Tente novamente mais tarde.');
@@ -132,54 +173,83 @@ const OpportunitiesManagement = () => {
   };
 
   // Função para alternar o status de uma oportunidade
-  const handleStatusChange = async (id, currentStatus) => {
+  const handleStatusChange = async (slug, currentStatus) => {
     try {
+      const safeSlug = String(slug || '').trim();
+      if (!safeSlug) {
+        showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Slug inválido', message: 'Não foi possível identificar a oportunidade.' });
+        return;
+      }
       const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-      await services.opportunities.updateOpportunityStatus(id, newStatus);
+      await services.opportunities.updateOpportunityStatus(safeSlug, newStatus);
       
       // Atualizar a lista de oportunidades
       setOpportunities(prev => 
         prev.map(opp => 
-          opp.id === id ? { ...opp, status: newStatus } : opp
+          opp.slug === slug ? { ...opp, status: newStatus } : opp
         )
       );
       
       // Recarregar estatísticas
       const statsData = await services.opportunities.getOpportunityStats();
-      setStats(statsData);
+      setStats({
+        total: statsData.total || statsData.total_opportunities || 0,
+        active: statsData.active || statsData.active_opportunities || 0,
+        featured: statsData.featured || statsData.featured_opportunities || statsData.featured?.length || 0,
+        totalViews: statsData.totalViews || statsData.total_views || statsData.total_applications || 0,
+      });
+      showToast({ type: NOTIFICATION_TYPES.INFO, title: 'Status atualizado', message: `Oportunidade ${newStatus === 'active' ? 'ativada' : 'pausada'}.` });
     } catch (err) {
       console.error('Erro ao alterar status:', err);
+      showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Erro ao alterar status', message: err?.message || 'Tente novamente.' });
     }
   };
 
   // Função para alternar destaque
-  const handleToggleFeatured = async (id, currentFeatured) => {
+  const handleToggleFeatured = async (slug, currentFeatured) => {
     try {
-      await services.opportunities.toggleFeatured(id, !currentFeatured);
+      const safeSlug = String(slug || '').trim();
+      if (!safeSlug) {
+        showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Slug inválido', message: 'Não foi possível identificar a oportunidade.' });
+        return;
+      }
+      await services.opportunities.toggleFeatured(safeSlug, !currentFeatured);
       
       // Atualizar a lista de oportunidades
       setOpportunities(prev => 
         prev.map(opp => 
-          opp.id === id ? { ...opp, featured: !opp.featured } : opp
+          opp.slug === slug ? { ...opp, featured: !opp.featured } : opp
         )
       );
       
       // Recarregar estatísticas
       const statsData = await services.opportunities.getOpportunityStats();
-      setStats(statsData);
+      setStats({
+        total: statsData.total || statsData.total_opportunities || 0,
+        active: statsData.active || statsData.active_opportunities || 0,
+        featured: statsData.featured || statsData.featured_opportunities || statsData.featured?.length || 0,
+        totalViews: statsData.totalViews || statsData.total_views || statsData.total_applications || 0,
+      });
+      showToast({ type: NOTIFICATION_TYPES.INFO, title: 'Destaque atualizado', message: !currentFeatured ? 'Oportunidade destacada.' : 'Destaque removido.' });
     } catch (err) {
       console.error('Erro ao alterar destaque:', err);
+      showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Erro ao alterar destaque', message: err?.message || 'Tente novamente.' });
     }
   };
 
   // Função para excluir oportunidade
-  const handleDelete = async (id) => {
+  const handleDelete = async (slug) => {
     if (window.confirm('Tem certeza que deseja excluir esta oportunidade?')) {
       try {
-        await services.opportunities.deleteOpportunity(id);
+        const safeSlug = String(slug || '').trim();
+        if (!safeSlug) {
+          showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Slug inválido', message: 'Não foi possível identificar a oportunidade.' });
+          return;
+        }
+        await services.opportunities.deleteOpportunity(safeSlug);
         
         // Remover da lista
-        setOpportunities(prev => prev.filter(opp => opp.id !== id));
+        setOpportunities(prev => prev.filter(opp => opp.slug !== slug));
         
         // Atualizar contagem total
         setPagination(prev => {
@@ -194,16 +264,23 @@ const OpportunitiesManagement = () => {
         // Recarregar estatísticas
         const statsData = await services.opportunities.getOpportunityStats();
         setStats(statsData);
+        showToast({ type: NOTIFICATION_TYPES.SUCCESS, title: 'Oportunidade excluída', message: 'A oportunidade foi removida.' });
       } catch (err) {
         console.error('Erro ao excluir oportunidade:', err);
+        showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Erro ao excluir', message: err?.message || 'Tente novamente.' });
       }
     }
   };
 
   // Função para duplicar oportunidade
-  const handleDuplicate = async (id) => {
+  const handleDuplicate = async (slug) => {
     try {
-      const newOpportunity = await services.opportunities.duplicateOpportunity(id);
+      const safeSlug = String(slug || '').trim();
+      if (!safeSlug) {
+        showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Slug inválido', message: 'Não foi possível identificar a oportunidade.' });
+        return;
+      }
+      const newOpportunity = await services.opportunities.duplicateOpportunity(safeSlug);
       
       // Adicionar à lista se estiver na primeira página
       if (pagination.page === 1) {
@@ -222,9 +299,16 @@ const OpportunitiesManagement = () => {
       
       // Recarregar estatísticas
       const statsData = await services.opportunities.getOpportunityStats();
-      setStats(statsData);
+      setStats({
+        total: statsData.total || statsData.total_opportunities || 0,
+        active: statsData.active || statsData.active_opportunities || 0,
+        featured: statsData.featured || statsData.featured_opportunities || statsData.featured?.length || 0,
+        totalViews: statsData.totalViews || statsData.total_views || statsData.total_applications || 0,
+      });
+      showToast({ type: NOTIFICATION_TYPES.SUCCESS, title: 'Oportunidade duplicada', message: 'Uma cópia foi criada com sucesso.' });
     } catch (err) {
       console.error('Erro ao duplicar oportunidade:', err);
+      showToast({ type: NOTIFICATION_TYPES.ERROR, title: 'Erro ao duplicar', message: err?.message || 'Tente novamente.' });
     }
   };
 
@@ -366,6 +450,16 @@ const OpportunitiesManagement = () => {
     
     // Verificar se o usuário é membro
     const isMember = user?.onboarding_completed || false;
+    const detailsUrl = `/oportunidade/${opportunity.id}`;
+    const copyShareLink = async () => {
+      const url = `${window.location.origin}${detailsUrl}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast({ type: NOTIFICATION_TYPES.INFO, title: 'Link copiado', message: 'URL de detalhes copiada para a área de transferência.' });
+      } catch {
+        showToast({ type: NOTIFICATION_TYPES.INFO, title: 'Link de detalhes', message: url });
+      }
+    };
     
     // Função para lidar com a candidatura
     const handleApply = () => {
@@ -380,106 +474,101 @@ const OpportunitiesManagement = () => {
     };
     
     return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-      <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              {opportunity.featured && (
-                <StarIcon className="h-4 w-4 text-yellow-500" />
-              )}
-              {getStatusBadge(opportunity.status)}
-              {getTypeBadge(opportunity.type)}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow transition-shadow duration-200">
+        <div className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                {opportunity.featured && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Em Destaque
+                  </span>
+                )}
+                {getStatusBadge(opportunity.status)}
+                {getTypeBadge(opportunity.type)}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 truncate">{opportunity.title}</h3>
+              <div className="flex items-center text-sm text-gray-600 mt-1">
+                <BuildingOfficeIcon className="h-4 w-4 mr-1" />
+                <span className="truncate">{opportunity.company}</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-3 line-clamp-3">{opportunity.description}</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{opportunity.title}</h3>
-            <div className="flex items-center text-sm text-gray-600 mb-2">
-              <BuildingOfficeIcon className="h-4 w-4 mr-1" />
-              {opportunity.company}
+            <div className="ml-4 flex items-center gap-2">
+              <Link to={detailsUrl} className="text-gray-500 hover:text-gray-700" title="Ver detalhes">
+                <EyeIcon className="h-5 w-5" />
+              </Link>
+              <button onClick={copyShareLink} className="text-gray-500 hover:text-gray-700" title="Partilhar">
+                <ShareIcon className="h-5 w-5" />
+              </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{opportunity.description}</p>
           </div>
-          <div className="ml-4">
-            <div className="relative">
-              <button className="text-gray-400 hover:text-gray-600">
-                <EllipsisVerticalIcon className="h-5 w-5" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 text-sm text-gray-700">
+            <div className="flex items-center">
+              <MapPinIcon className="h-4 w-4 mr-2 text-gray-500" />
+              {opportunity.location}
+              {opportunity.remote && <span className="ml-2 text-green-600">(Remoto)</span>}
+            </div>
+            <div className="flex items-center">
+              <CurrencyPoundIcon className="h-4 w-4 mr-2 text-gray-500" />
+              {formatSalary(opportunity.salary, opportunity.type)}
+            </div>
+            <div className="flex items-center">
+              <AcademicCapIcon className="h-4 w-4 mr-2 text-gray-500" />
+              {getExperienceBadge(opportunity.experience)}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-xs text-gray-500">
+              {opportunity.applications} candidaturas • {opportunity.views} visualizações
+            </div>
+            <div className="flex items-center gap-2">
+              <VisitorAction
+                actionType="opportunity-application"
+                isAuthenticated={isAuthenticated}
+                isMember={isMember}
+                buttonText="Candidatar-se"
+                buttonClassName="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-xs font-medium"
+                onAction={() => handleApply()}
+              />
+              <button
+                onClick={() => handleStatusChange(opportunity.slug, opportunity.status)}
+                className="inline-flex items-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                title={opportunity.status === 'active' ? 'Pausar' : 'Ativar'}
+              >
+                {opportunity.status === 'active' ? (
+                  <PauseIcon className="h-5 w-5" />
+                ) : (
+                  <PlayIcon className="h-5 w-5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleToggleFeatured(opportunity.slug, opportunity.featured)}
+                className="inline-flex items-center p-2 rounded-md ${opportunity.featured ? 'text-yellow-600' : 'text-gray-500'} hover:text-yellow-700 hover:bg-gray-100"
+                title={opportunity.featured ? 'Remover destaque' : 'Destacar'}
+              >
+                <StarIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => handleDuplicate(opportunity.slug)}
+                className="inline-flex items-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                title="Duplicar"
+              >
+                <DocumentDuplicateIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => handleDelete(opportunity.slug)}
+                className="inline-flex items-center p-2 rounded-md text-red-600 hover:bg-red-50"
+                title="Excluir"
+              >
+                <TrashIcon className="h-5 w-5" />
               </button>
             </div>
           </div>
         </div>
-        
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center text-sm text-gray-500">
-            <MapPinIcon className="h-4 w-4 mr-2" />
-            {opportunity.location}
-            {opportunity.remote && <span className="ml-2 text-green-600">(Remoto)</span>}
-          </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <CurrencyPoundIcon className="h-4 w-4 mr-2" />
-            {formatSalary(opportunity.salary, opportunity.type)}
-          </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <AcademicCapIcon className="h-4 w-4 mr-2" />
-            {getExperienceBadge(opportunity.experience)}
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            {opportunity.applications} candidaturas • {opportunity.views} visualizações
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* Botão de candidatura com VisitorAction */}
-            <VisitorAction
-              actionType="opportunity-application"
-              isAuthenticated={isAuthenticated}
-              isMember={isMember}
-              buttonText="Candidatar-se"
-              buttonClassName="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              onAction={() => handleApply()}
-            />
-            <button 
-              onClick={() => handleStatusChange(opportunity.id, opportunity.status)}
-              className="text-gray-400 hover:text-gray-600"
-              title={opportunity.status === 'active' ? 'Pausar' : 'Ativar'}
-            >
-              {opportunity.status === 'active' ? (
-                <PauseIcon className="h-5 w-5" />
-              ) : (
-                <PlayIcon className="h-5 w-5" />
-              )}
-            </button>
-            <button 
-              onClick={() => handleToggleFeatured(opportunity.id, opportunity.featured)}
-              className={`${opportunity.featured ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-600`}
-              title={opportunity.featured ? 'Remover destaque' : 'Destacar'}
-            >
-              <StarIcon className="h-5 w-5" />
-            </button>
-            <button 
-              onClick={() => handleDuplicate(opportunity.id)}
-              className="text-gray-400 hover:text-gray-600"
-              title="Duplicar"
-            >
-              <DocumentDuplicateIcon className="h-5 w-5" />
-            </button>
-            <Link 
-              to={`/dashboard/oportunidades/editar/${opportunity.id}`}
-              className="text-gray-400 hover:text-gray-600"
-              title="Editar"
-            >
-              <PencilIcon className="h-5 w-5" />
-            </Link>
-            <button 
-              onClick={() => handleDelete(opportunity.id)}
-              className="text-gray-400 hover:text-red-600"
-              title="Excluir"
-            >
-              <TrashIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
     );
   };
 
@@ -786,47 +875,47 @@ const OpportunitiesManagement = () => {
                               {opportunity.applications}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center space-x-2">
-                                <button 
-                                  onClick={() => handleStatusChange(opportunity.id, opportunity.status)}
-                                  className="text-gray-400 hover:text-gray-600"
-                                  title={opportunity.status === 'active' ? 'Pausar' : 'Ativar'}
-                                >
-                                  {opportunity.status === 'active' ? (
-                                    <PauseIcon className="h-5 w-5" />
-                                  ) : (
-                                    <PlayIcon className="h-5 w-5" />
-                                  )}
-                                </button>
-                                <button 
-                                  onClick={() => handleToggleFeatured(opportunity.id, opportunity.featured)}
-                                  className={`${opportunity.featured ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-600`}
-                                  title={opportunity.featured ? 'Remover destaque' : 'Destacar'}
-                                >
-                                  <StarIcon className="h-5 w-5" />
-                                </button>
-                                <button 
-                                  onClick={() => handleDuplicate(opportunity.id)}
-                                  className="text-gray-400 hover:text-gray-600"
-                                  title="Duplicar"
-                                >
-                                  <DocumentDuplicateIcon className="h-5 w-5" />
-                                </button>
-                                <Link 
-                                  to={`/dashboard/oportunidades/editar/${opportunity.id}`}
-                                  className="text-gray-400 hover:text-gray-600"
-                                  title="Editar"
-                                >
-                                  <PencilIcon className="h-5 w-5" />
-                                </Link>
-                                <button 
-                                  onClick={() => handleDelete(opportunity.id)}
-                                  className="text-gray-400 hover:text-red-600"
-                                  title="Excluir"
-                                >
-                                  <TrashIcon className="h-5 w-5" />
-                                </button>
-                              </div>
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => handleStatusChange(opportunity.id, opportunity.status)}
+                                className="text-gray-400 hover:text-gray-600"
+                                title={opportunity.status === 'active' ? 'Pausar' : 'Ativar'}
+                              >
+                                {opportunity.status === 'active' ? (
+                                  <PauseIcon className="h-5 w-5" />
+                                ) : (
+                                  <PlayIcon className="h-5 w-5" />
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => handleToggleFeatured(opportunity.id, opportunity.featured)}
+                                className={`${opportunity.featured ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-600`}
+                                title={opportunity.featured ? 'Remover destaque' : 'Destacar'}
+                              >
+                                <StarIcon className="h-5 w-5" />
+                              </button>
+                              <button 
+                                onClick={() => handleDuplicate(opportunity.id)}
+                                className="text-gray-400 hover:text-gray-600"
+                                title="Duplicar"
+                              >
+                                <DocumentDuplicateIcon className="h-5 w-5" />
+                              </button>
+                              <Link 
+                                to={`/oportunidade/${opportunity.id}`}
+                                className="text-gray-400 hover:text-gray-600"
+                                title="Ver detalhes"
+                              >
+                                <EyeIcon className="h-5 w-5" />
+                              </Link>
+                              <button 
+                                onClick={() => handleDelete(opportunity.id)}
+                                className="text-gray-400 hover:text-red-600"
+                                title="Excluir"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </div>
                             </td>
                           </tr>
                         ))}
