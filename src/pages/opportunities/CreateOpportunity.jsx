@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { services } from '../../services';
+import onboardingService from '../../services/onboardingService';
 import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../../contexts/NotificationsContext';
 
 function CreateOpportunity() {
@@ -8,6 +9,7 @@ function CreateOpportunity() {
   const { addNotification, showToast } = useNotifications();
   const [types, setTypes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [approvedCompanies, setApprovedCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -79,7 +81,18 @@ function CreateOpportunity() {
       }
     }
     loadMeta();
+    loadApprovedEmployerApplications();
   }, []);
+
+  async function loadApprovedEmployerApplications() {
+    try {
+      const apps = await onboardingService.getApplications({ status: 'approved', application_type: 'employer' });
+      setApprovedCompanies(apps);
+    } catch (e) {
+      console.warn('Falha ao carregar aplicações aprovadas de empregador:', e);
+      setApprovedCompanies([]);
+    }
+  }
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -144,6 +157,9 @@ function CreateOpportunity() {
         application_url: form.application_url || undefined,
       };
 
+      if (form.application_id) {
+        payload.application_id = Number(form.application_id);
+      }
       const created = await services.opportunities.createOpportunity(payload);
       setSuccess('Oportunidade criada com sucesso');
 
@@ -204,9 +220,32 @@ function CreateOpportunity() {
               {errors.title && <p className='mt-1 text-xs text-red-600'>{errors.title}</p>}
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700'>Empresa *</label>
-              <input name='company_name' value={form.company_name} onChange={handleChange} className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500' />
-              {errors.company_name && <p className='mt-1 text-xs text-red-600'>{errors.company_name}</p>}
+              <label className='block text-sm font-medium text-gray-700'>Empresa (Onboarding aprovado) *</label>
+              <select
+                name='application_id'
+                value={form.application_id || ''}
+                onChange={(e) => {
+                  handleChange(e);
+                  const selected = approvedCompanies.find(x => String(x.id) === String(e.target.value));
+                  if (selected) {
+                    setForm(prev => ({
+                      ...prev,
+                      company_name: selected.companyName
+                    }));
+                  }
+                }}
+                className='mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500'
+                disabled={!approvedCompanies.length}
+                required
+              >
+                <option value=''>Selecione...</option>
+                {approvedCompanies.map(app => (
+                  <option key={app.id} value={app.id}>{app.companyName}</option>
+                ))}
+              </select>
+              {!approvedCompanies.length && (
+                <p className='mt-1 text-xs text-yellow-700'>Conclua o onboarding como Empregador e aguarde aprovação para publicar oportunidades.</p>
+              )}
             </div>
           </div>
 

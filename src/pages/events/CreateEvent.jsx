@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import eventsService from '../../services/eventsService';
+import onboardingService from '../../services/onboardingService';
 import EventImageUpload from '../../components/events/EventImageUpload';
 import { useNotifications, NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../../contexts/NotificationsContext';
 
@@ -15,6 +16,7 @@ const CreateEvent = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState([]);
+  const [approvedCompanies, setApprovedCompanies] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,6 +45,7 @@ const CreateEvent = () => {
       return;
     }
     loadCategories();
+    loadApprovedOrganizerApplications();
   }, [isAuthenticated, navigate]);
 
   const loadCategories = async () => {
@@ -122,6 +125,10 @@ const CreateEvent = () => {
       errors.push('Número máximo de participantes deve ser maior que 0');
     }
 
+    if (!approvedCompanies.length) {
+      errors.push('Precisa de uma aplicação de onboarding aprovada como Organizador para criar eventos');
+    }
+
     return errors;
   };
 
@@ -157,6 +164,10 @@ const CreateEvent = () => {
         }
       });
 
+      // Incluir application_id selecionado
+      if (formData.application_id) {
+        submitData.append('application_id', String(formData.application_id));
+      }
       const response = await eventsService.createEvent(submitData);
 
       // Toast de sucesso imediato
@@ -212,9 +223,9 @@ const CreateEvent = () => {
             <p className="text-gray-600 mt-1">
               Crie um novo evento para a comunidade AwaysUK
             </p>
-          </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <div className="flex">
@@ -277,6 +288,32 @@ const CreateEvent = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Empresa/Organização (Onboarding aprovado) *
+                </label>
+                <select
+                  name="application_id"
+                  value={formData.application_id || ''}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  required
+                  disabled={!approvedCompanies.length}
+                >
+                  <option value="">Selecionar empresa</option>
+                  {approvedCompanies.map(app => (
+                    <option key={app.id} value={app.id}>
+                      {app.companyName}
+                    </option>
+                  ))}
+                </select>
+                {!approvedCompanies.length && (
+                  <p className="text-sm text-yellow-700 mt-2">
+                    Conclua o onboarding como Organizador e aguarde aprovação para criar eventos.
+                  </p>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -597,3 +634,12 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
+  const loadApprovedOrganizerApplications = async () => {
+    try {
+      const apps = await onboardingService.getApplications({ status: 'approved', application_type: 'organizer' });
+      setApprovedCompanies(apps);
+    } catch (err) {
+      console.warn('Falha ao carregar aplicações aprovadas de organizador:', err);
+      setApprovedCompanies([]);
+    }
+  };
