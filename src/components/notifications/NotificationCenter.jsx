@@ -38,6 +38,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [onlyUnreadByCategory, setOnlyUnreadByCategory] = useState({});
 
   const getUnreadCount = (id, localList) => {
     if (id === 'all') return categoryStats?.all?.unread ?? localList.filter(n => !n.read).length;
@@ -319,19 +320,28 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                   <Tab.Panels className="mt-4">
                     {categories.map((category) => (
                       <Tab.Panel key={category.id} className="px-6 pb-6">
+                        <div className="flex items-center justify-end mb-2">
+                          <button
+                            onClick={() => setOnlyUnreadByCategory(prev => ({ ...prev, [category.id]: !prev[category.id] }))}
+                            className={`px-2 py-1 text-xs rounded-md border ${onlyUnreadByCategory[category.id] ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
+                            disabled={loading}
+                          >
+                            Apenas não lidas
+                          </button>
+                        </div>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           {loading ? (
                             <div className="text-center py-8">
                               <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                               <p className="text-gray-500">A carregar...</p>
                             </div>
-                          ) : category.notifications.length === 0 ? (
+                          ) : (onlyUnreadByCategory[category.id] ? category.notifications.filter(n => !n.read) : category.notifications).length === 0 ? (
                             <div className="text-center py-8">
                               <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                               <p className="text-gray-500">Nenhuma notificação</p>
                             </div>
                           ) : (
-                            category.notifications.map((notification) => (
+                            (onlyUnreadByCategory[category.id] ? category.notifications.filter(n => !n.read) : category.notifications).map((notification) => (
                               <div
                                 key={notification.id}
                                 className={`p-4 rounded-lg border cursor-pointer transition-colors ${
