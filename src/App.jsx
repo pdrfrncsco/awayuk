@@ -134,7 +134,7 @@ function App() {
             } />
             <Route path="/perfil" element={
               <ProtectedRoute fallback={<PageLoader />}>
-                <PublicLayout><Profile /></PublicLayout>
+                <PublicLayout><Profile enableEditing={false} /></PublicLayout>
               </ProtectedRoute>
             } />
             <Route path="/nao-autorizado" element={<Unauthorized />} />
@@ -286,3 +286,8 @@ const SessionExpiredHandler = () => {
 };
 
 export default App;
+              <Route path="perfil" element={
+                <RouteGuard permission={PERMISSIONS.VIEW_DASHBOARD}>
+                  <Profile enableEditing={true} />
+                </RouteGuard>
+              } />

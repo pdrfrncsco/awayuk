@@ -12,7 +12,7 @@ import { useToast } from '../../components/common/Toast';
 import { getProfileImageUrl } from '../../utils/getProfileImageUrl';
 import VisitorAction from '../../components/auth/VisitorAction';
 
-const MemberProfile = () => {
+const MemberProfile = ({ enableEditing = false }) => {
   const { id } = useParams();
   const { user, isLoading } = useAuth();
   const { ToastContainer, showToast } = useToast();
@@ -941,13 +941,23 @@ const MemberProfile = () => {
             {isOwnProfile ? (
               <>
                 {/* Botão de edição de perfil para todos os tipos de usuário */}
-                <button
-                  onClick={() => setIsEditingProfile(true)}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
-                >
-                  <i className="fas fa-edit mr-2"></i>
-                  Editar Perfil
-                </button>
+                {enableEditing ? (
+                  <button
+                    onClick={() => setIsEditingProfile(true)}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <i className="fas fa-edit mr-2"></i>
+                    Editar Perfil
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/dashboard/perfil')}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <i className="fas fa-tools mr-2"></i>
+                    Gerir no Dashboard
+                  </button>
+                )}
                 
                 {/* Botão condicional para acesso ao dashboard baseado em permissões */}
                 {user?.permissions?.includes('view_dashboard') && (
@@ -1100,7 +1110,7 @@ const MemberProfile = () => {
                   <>
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900">Sobre Mim</h3>
-                      {isOwnProfile && (
+                      {isOwnProfile && enableEditing && (
                         <button
                           onClick={() => setIsEditingAbout(true)}
                           className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
@@ -1201,7 +1211,7 @@ const MemberProfile = () => {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900">Serviços</h3>
-                      {isOwnProfile && (
+                      {isOwnProfile && enableEditing && (
                         <button
                           onClick={() => setIsEditingServices(true)}
                           className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
@@ -1270,7 +1280,7 @@ const MemberProfile = () => {
                   />
                 ) : (
                   <div>
-                    {isOwnProfile && (
+                    {isOwnProfile && enableEditing && (
                       <div className="mb-6 flex justify-end">
                         <button
                           onClick={() => setIsEditingPortfolio(true)}

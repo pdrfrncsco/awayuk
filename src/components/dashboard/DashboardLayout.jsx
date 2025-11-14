@@ -52,6 +52,13 @@ const DashboardLayout = () => {
       userTypes: ['member', 'business', 'admin']
     },
     { 
+      name: 'Perfil', 
+      href: '/dashboard/perfil', 
+      icon: UserIcon,
+      permission: PERMISSIONS.VIEW_DASHBOARD,
+      userTypes: ['member', 'business', 'admin']
+    },
+    { 
       name: 'Onboarding', 
       href: '/dashboard/onboarding', 
       icon: DocumentTextIcon,

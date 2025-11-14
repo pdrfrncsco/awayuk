@@ -269,6 +269,13 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 gap-4">
                 {[
                   {
+                    name: 'Gerir Perfil',
+                    description: 'Editar perfil, sobre, serviços e portfólio',
+                    href: '/dashboard/perfil',
+                    icon: UsersIcon,
+                    color: 'bg-blue-500 hover:bg-blue-600'
+                  },
+                  {
                     name: 'Criar Evento',
                     description: 'Organizar um novo evento para a comunidade',
                     href: '/dashboard/events/create',
