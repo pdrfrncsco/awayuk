@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { notificationService } from '../services';
+import { services } from '../services';
 
 // Tipos de notificação
 export const NOTIFICATION_TYPES = {
@@ -45,6 +45,10 @@ export const NotificationsProvider = ({ children }) => {
     opportunities: true,
     member: true
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [categoryStats, setCategoryStats] = useState({});
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
   // Mapa do backend -> frontend
   const mapBackendNotification = useCallback((n) => {
@@ -73,25 +77,45 @@ export const NotificationsProvider = ({ children }) => {
 
     const load = async () => {
       try {
-        const res = await notificationService.getNotifications({ page: 1, limit: 50 });
+        setLoading(true);
+        setError(null);
+        const res = await services.notifications.getNotifications({ page: 1, limit: 50 });
         const items = Array.isArray(res) ? res : res?.results || [];
         const mapped = items.map(mapBackendNotification);
         setNotifications(mapped);
+        setCategoryStats(computeCategoryStats(mapped));
 
         // Buscar contagem real se disponível
         try {
-          const stats = await notificationService.getNotificationStats();
+          const stats = await services.notifications.getNotificationStats();
           setUnreadCount(stats?.unread_notifications ?? mapped.filter(n => !n.read).length);
+          const normalizedStats = normalizeStats(stats, mapped);
+          if (normalizedStats) setCategoryStats(normalizedStats);
         } catch {
           setUnreadCount(mapped.filter(n => !n.read).length);
         }
+
+        try {
+          const prefs = await services.notifications.getNotificationSettings();
+          const normalized = normalizeSettings(prefs);
+          setSettings(prev => ({ ...prev, ...normalized }));
+        } catch (e) {
+        }
+
       } catch (error) {
         console.warn('Falha ao obter notificações:', error.message);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     load();
   }, [isAuthenticated, user, mapBackendNotification]);
+
+  useEffect(() => {
+    setCategoryStats(computeCategoryStats(notifications));
+  }, [notifications]);
 
   // Adicionar nova notificação
   const addNotification = useCallback((notification) => {
@@ -139,7 +163,7 @@ export const NotificationsProvider = ({ children }) => {
   // Marcar notificação como lida (sincroniza com backend)
   const markAsRead = useCallback(async (notificationId) => {
     try {
-      await notificationService.markAsRead(notificationId);
+      await services.notifications.markAsRead(notificationId);
     } catch (e) {
       console.warn('Falha ao marcar como lida:', e.message);
     }
@@ -153,7 +177,7 @@ export const NotificationsProvider = ({ children }) => {
   // Marcar todas como lidas (sincroniza com backend)
   const markAllAsRead = useCallback(async () => {
     try {
-      await notificationService.markAllAsRead();
+      await services.notifications.markAllAsRead();
     } catch (e) {
       console.warn('Falha ao marcar todas como lidas:', e.message);
     }
@@ -162,7 +186,12 @@ export const NotificationsProvider = ({ children }) => {
   }, []);
 
   // Remover notificação
-  const removeNotification = useCallback((notificationId) => {
+  const removeNotification = useCallback(async (notificationId) => {
+    try {
+      await services.notifications.deleteNotification(notificationId);
+    } catch (e) {
+      console.warn('Falha ao remover notificação:', e.message);
+    }
     setNotifications(prev => {
       const notification = prev.find(n => n.id === notificationId);
       const newNotifications = prev.filter(n => n.id !== notificationId);
@@ -174,19 +203,129 @@ export const NotificationsProvider = ({ children }) => {
   }, []);
 
   // Limpar todas as notificações
-  const clearAllNotifications = useCallback(() => {
-    setNotifications([]);
-    setUnreadCount(0);
+  const clearAllNotifications = useCallback(async () => {
+    try {
+      await services.notifications.deleteAllRead();
+    } catch (e) {
+      console.warn('Falha ao limpar notificações lidas:', e.message);
+    }
+    setNotifications(prev => prev.filter(n => !n.read));
   }, []);
 
   // Atualizar configurações (aceita objeto ou par chave/valor)
-  const updateSettings = useCallback((keyOrSettings, value) => {
+  const updateSettings = useCallback(async (keyOrSettings, value) => {
+    let next;
     if (typeof keyOrSettings === 'string') {
-      setSettings(prev => ({ ...prev, [keyOrSettings]: value }));
+      next = (prev => ({ ...prev, [keyOrSettings]: value }));
+      setSettings(prev => next(prev));
     } else {
-      setSettings(prev => ({ ...prev, ...keyOrSettings }));
+      next = (prev => ({ ...prev, ...keyOrSettings }));
+      setSettings(prev => next(prev));
     }
-  }, []);
+    try {
+      setSettingsSaving(true);
+      const current = typeof keyOrSettings === 'string'
+        ? next(settings)
+        : next(settings);
+      const payload = toBackendSettings(current);
+      await services.notifications.updateNotificationSettings(payload);
+    } catch (e) {
+      console.warn('Falha ao atualizar configurações:', e.message);
+    } finally {
+      setSettingsSaving(false);
+    }
+  }, [settings]);
+
+  const computeCategoryStats = (list) => {
+    const base = { all: { total: 0, unread: 0 }, event: { total: 0, unread: 0 }, opportunity: { total: 0, unread: 0 }, member: { total: 0, unread: 0 }, system: { total: 0, unread: 0 } };
+    for (const n of list) {
+      const cat = base[n.category] ? n.category : 'system';
+      base[cat].total += 1;
+      if (!n.read) base[cat].unread += 1;
+      base.all.total += 1;
+      if (!n.read) base.all.unread += 1;
+    }
+    return base;
+  };
+
+  const normalizeStats = (stats, mapped) => {
+    if (!stats) return null;
+    const base = computeCategoryStats(mapped);
+    const source = stats.by_category || stats.category_counts || null;
+    if (!source) return base;
+    const apply = (cat, data) => {
+      const total = data.total ?? data.count ?? data.all ?? base[cat].total;
+      const unread = data.unread ?? data.unread_count ?? base[cat].unread;
+      return { total, unread };
+    };
+    if (Array.isArray(source)) {
+      for (const item of source) {
+        const key = (item.category || item.name || '').toLowerCase();
+        if (base[key]) base[key] = apply(key, item);
+      }
+      base.all = apply('all', stats);
+      return base;
+    }
+    for (const key of Object.keys(source)) {
+      if (base[key]) base[key] = apply(key, source[key]);
+    }
+    base.all = apply('all', stats);
+    return base;
+  };
+
+  const sendTestNotification = useCallback(async () => {
+    try {
+      const res = await services.notifications.sendTestNotification();
+      const item = Array.isArray(res) ? res[0] : res?.notification || res;
+      if (item) {
+        const mapped = mapBackendNotification(item);
+        addNotification(mapped);
+      } else {
+        addNotification({ title: 'Notificação de teste', message: 'Teste enviado', category: 'system' });
+      }
+    } catch (e) {
+      addNotification({ title: 'Falha no teste', message: e.message || 'Erro ao enviar notificação de teste', category: 'system' });
+    }
+  }, [addNotification, mapBackendNotification]);
+
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const res = await services.notifications.getNotifications({ page: 1, limit: 50 });
+      const items = Array.isArray(res) ? res : res?.results || [];
+      const mapped = items.map(mapBackendNotification);
+      setNotifications(mapped);
+      setCategoryStats(computeCategoryStats(mapped));
+    } catch (e) {
+    }
+  }, [mapBackendNotification]);
+
+  const normalizeSettings = (prefs) => {
+    const flat = {
+      emailNotifications: prefs.emailNotifications ?? prefs.email_notifications ?? settings.emailNotifications,
+      pushNotifications: prefs.pushNotifications ?? prefs.push_notifications ?? settings.pushNotifications,
+    };
+    const categories = prefs.categories || {};
+    return {
+      ...flat,
+      system: prefs.system ?? categories.system ?? settings.system,
+      events: prefs.events ?? categories.events ?? settings.events,
+      opportunities: prefs.opportunities ?? categories.opportunities ?? settings.opportunities,
+      member: prefs.member ?? categories.member ?? settings.member
+    };
+  };
+
+  const toBackendSettings = (cur) => {
+    return {
+      email_notifications: !!cur.emailNotifications,
+      push_notifications: !!cur.pushNotifications,
+      categories: {
+        system: !!cur.system,
+        events: !!cur.events,
+        opportunities: !!cur.opportunities,
+        member: !!cur.member
+      }
+    };
+  };
 
   // Filtrar notificações por categoria
   const getNotificationsByCategory = useCallback((category) => {
@@ -208,6 +347,10 @@ export const NotificationsProvider = ({ children }) => {
     unreadCount,
     toastNotifications,
     settings,
+    loading,
+    error,
+    categoryStats,
+    settingsSaving,
     addNotification,
     showToast,
     removeToast,
@@ -216,6 +359,8 @@ export const NotificationsProvider = ({ children }) => {
     removeNotification,
     clearAllNotifications,
     updateSettings,
+    sendTestNotification,
+    refreshNotifications,
     getNotificationsByCategory,
     getUnreadNotifications
   };

@@ -11,7 +11,9 @@ import {
   ChatBubbleLeftIcon,
   InformationCircleIcon,
   UserGroupIcon,
-  UserIcon
+  UserIcon,
+  PaperAirplaneIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { useNotifications, NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from '../../contexts/NotificationsContext';
 
@@ -25,11 +27,27 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     clearAllNotifications,
     getNotificationsByCategory,
     settings,
-    updateSettings
+    updateSettings,
+    loading,
+    error,
+    categoryStats,
+    sendTestNotification,
+    refreshNotifications,
+    settingsSaving
   } = useNotifications();
 
   const [activeTab, setActiveTab] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+
+  const getUnreadCount = (id, localList) => {
+    if (id === 'all') return categoryStats?.all?.unread ?? localList.filter(n => !n.read).length;
+    return categoryStats?.[id]?.unread ?? localList.filter(n => !n.read).length;
+  };
+
+  const getTotalCount = (id, localList) => {
+    if (id === 'all') return categoryStats?.all?.total ?? localList.length;
+    return categoryStats?.[id]?.total ?? localList.length;
+  };
 
   const categories = [
     { 
@@ -156,9 +174,20 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                           {unreadCount} não lida{unreadCount !== 1 ? 's' : ''}
                         </p>
                       )}
+                      {error && (
+                        <p className="text-xs text-red-600">{error}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <button
+                      onClick={refreshNotifications}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
+                      title="Atualizar"
+                      disabled={loading}
+                    >
+                      <ArrowPathIcon className="h-5 w-5" />
+                    </button>
                     <button
                       onClick={() => setShowSettings(!showSettings)}
                       className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
@@ -171,14 +200,24 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                         onClick={markAllAsRead}
                         className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
                         title="Marcar todas como lidas"
+                        disabled={loading}
                       >
                         <CheckIcon className="h-5 w-5" />
                       </button>
                     )}
                     <button
+                      onClick={sendTestNotification}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
+                      title="Enviar teste"
+                      disabled={loading}
+                    >
+                      <PaperAirplaneIcon className="h-5 w-5" />
+                    </button>
+                    <button
                       onClick={clearAllNotifications}
                       className="p-2 text-gray-400 hover:text-red-600 rounded-md"
-                      title="Limpar todas"
+                      title="Limpar lidas"
+                      disabled={loading}
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
@@ -205,6 +244,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                           checked={settings.emailNotifications}
                           onChange={(e) => updateSettings({ emailNotifications: e.target.checked })}
                           className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                          disabled={loading || settingsSaving}
                         />
                       </div>
                       <div className="flex items-center justify-between">
@@ -214,6 +254,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                           checked={settings.pushNotifications}
                           onChange={(e) => updateSettings({ pushNotifications: e.target.checked })}
                           className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                          disabled={loading || settingsSaving}
                         />
                       </div>
                       <div className="pt-2 border-t border-gray-200">
@@ -234,6 +275,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                               checked={!!settings[key]}
                               onChange={(e) => handleSettingsChange(key, e.target.checked)}
                               className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                              disabled={loading || settingsSaving}
                             />
                           </div>
                         ))}
@@ -259,9 +301,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                         <div className="flex items-center justify-center space-x-2">
                           <category.icon className="h-4 w-4" />
                           <span>{category.name}</span>
-                          {category.notifications.filter(n => !n.read).length > 0 && (
+                          {getTotalCount(category.id, category.notifications) > 0 && (
+                            <span className="bg-gray-200 text-gray-700 text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
+                              {getTotalCount(category.id, category.notifications)}
+                            </span>
+                          )}
+                          {getUnreadCount(category.id, category.notifications) > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
-                              {category.notifications.filter(n => !n.read).length}
+                              {getUnreadCount(category.id, category.notifications)}
                             </span>
                           )}
                         </div>
@@ -273,7 +320,12 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                     {categories.map((category) => (
                       <Tab.Panel key={category.id} className="px-6 pb-6">
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {category.notifications.length === 0 ? (
+                          {loading ? (
+                            <div className="text-center py-8">
+                              <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                              <p className="text-gray-500">A carregar...</p>
+                            </div>
+                          ) : category.notifications.length === 0 ? (
                             <div className="text-center py-8">
                               <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                               <p className="text-gray-500">Nenhuma notificação</p>
@@ -336,10 +388,10 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                     ))}
                   </Tab.Panels>
                 </Tab.Group>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
+      </Dialog.Panel>
+    </Transition.Child>
+  </div>
+</div>
       </Dialog>
     </Transition>
   );

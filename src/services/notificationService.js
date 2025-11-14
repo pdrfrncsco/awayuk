@@ -169,6 +169,18 @@ class NotificationService {
     }
   }
 
+  async updateNotificationSettings(settings) {
+    try {
+      return await this.apiClient.patch('/notifications/preferences/', settings);
+    } catch (error) {
+      throw new ApiError(
+        error.message || 'Erro ao atualizar configurações de notificação',
+        error.status || 400,
+        error.data
+      );
+    }
+  }
+
   /**
    * Cria uma nova notificação (para admins)
    * @param {Object} notificationData - Dados da notificação
