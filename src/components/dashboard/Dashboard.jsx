@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
   UsersIcon,
   CalendarIcon,
@@ -16,10 +17,13 @@ import { dashboardService } from '../../services';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [overview, setOverview] = useState(null);
 
   const displayName = user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Utilizador';
 
@@ -40,34 +44,34 @@ const Dashboard = () => {
       // Transformar dados das estatísticas para o formato do componente
       const transformedStats = [
         {
-          name: 'Total de Membros',
+          name: t('dashboard.stats.totalMembers'),
           value: dashboardStats.members.total.toLocaleString(),
-          change: `+${dashboardStats.members.growthRate}%`,
+          change: `${parseFloat(dashboardStats.members.growthRate) >= 0 ? '+' : ''}${dashboardStats.members.growthRate}%`,
           changeType: parseFloat(dashboardStats.members.growthRate) >= 0 ? 'increase' : 'decrease',
           icon: UsersIcon,
           color: 'bg-gradient-to-br from-blue-500 to-blue-600',
-          details: `${dashboardStats.members.newThisMonth} novos este mês`
+          details: `${dashboardStats.members.newThisMonth} ${t('members.newThisMonth')}`
         },
         {
-          name: 'Eventos Este Mês',
+          name: t('dashboard.stats.eventsThisMonth'),
           value: dashboardStats.events.thisMonth.toString(),
-          change: `+${dashboardStats.events.growthRate}%`,
+          change: `${parseFloat(dashboardStats.events.growthRate) >= 0 ? '+' : ''}${dashboardStats.events.growthRate}%`,
           changeType: parseFloat(dashboardStats.events.growthRate) >= 0 ? 'increase' : 'decrease',
           icon: CalendarIcon,
           color: 'bg-gradient-to-br from-green-500 to-green-600',
-          details: `${dashboardStats.events.upcoming} próximos eventos`
+          details: `${dashboardStats.events.upcoming} ${t('events.upcoming')}`
         },
         {
-          name: 'Oportunidades Ativas',
+          name: t('dashboard.stats.activeOpportunities'),
           value: dashboardStats.opportunities.active.toString(),
-          change: `+${dashboardStats.opportunities.growthRate}%`,
+          change: `${parseFloat(dashboardStats.opportunities.growthRate) >= 0 ? '+' : ''}${dashboardStats.opportunities.growthRate}%`,
           changeType: parseFloat(dashboardStats.opportunities.growthRate) >= 0 ? 'increase' : 'decrease',
           icon: BriefcaseIcon,
           color: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
-          details: `${dashboardStats.opportunities.totalApplications} candidaturas`
+          details: `${dashboardStats.opportunities.totalApplications} ${t('opportunities.applications')}`
         },
         {
-          name: 'Visualizações',
+          name: t('content.views'),
           value: dashboardStats.analytics.pageViews.toLocaleString(),
           change: dashboardStats.analytics.bounceRate < 40 ? '+5%' : '-2%',
           changeType: dashboardStats.analytics.bounceRate < 40 ? 'increase' : 'decrease',
@@ -79,6 +83,8 @@ const Dashboard = () => {
 
       setStats(transformedStats);
       setRecentActivities(activities);
+      setOverview(dashboardStats);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Erro ao carregar dados do dashboard:', err);
       setError('Erro ao carregar dados do dashboard. Usando dados de exemplo.');
@@ -207,8 +213,19 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Bem-vindo(a), {displayName}</h1>
-          <p className="text-gray-600">Aqui está a sua visão geral da comunidade AWAYSUK</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">{t('dashboard.title')}</h1>
+          <p className="text-gray-600">{t('dashboard.welcome', { name: displayName })}</p>
+          <div className="mt-3 flex items-center space-x-3">
+            <button
+              onClick={loadDashboardData}
+              className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-yellow-500 to-red-500 text-white hover:opacity-90"
+            >
+              Atualizar
+            </button>
+            {lastUpdated && (
+              <span className="text-xs text-gray-500">Atualizado às {new Date(lastUpdated).toLocaleTimeString()}</span>
+            )}
+          </div>
           
           {error && (
             <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-4">
@@ -379,8 +396,8 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-500 rounded-lg">
                   <EyeIcon className="w-6 h-6 text-white" />
                 </div>
-                <h4 className="mt-4 text-lg font-semibold text-gray-900">Visualizações</h4>
-                <p className="mt-2 text-3xl font-bold text-blue-600">45.2K</p>
+                <h4 className="mt-4 text-lg font-semibold text-gray-900">{t('content.views')}</h4>
+                <p className="mt-2 text-3xl font-bold text-blue-600">{overview?.analytics?.pageViews?.toLocaleString() || '0'}</p>
                 <p className="mt-1 text-sm text-gray-500">Este mês</p>
               </div>
               <div className="text-center p-6 bg-green-50 rounded-lg">
@@ -388,7 +405,7 @@ const Dashboard = () => {
                   <ChatBubbleLeftRightIcon className="w-6 h-6 text-white" />
                 </div>
                 <h4 className="mt-4 text-lg font-semibold text-gray-900">Interações</h4>
-                <p className="mt-2 text-3xl font-bold text-green-600">12.8K</p>
+                <p className="mt-2 text-3xl font-bold text-green-600">{overview?.analytics?.interactions?.toLocaleString() || '0'}</p>
                 <p className="mt-1 text-sm text-gray-500">Este mês</p>
               </div>
               <div className="text-center p-6 bg-yellow-50 rounded-lg">
@@ -396,7 +413,7 @@ const Dashboard = () => {
                   <UsersIcon className="w-6 h-6 text-white" />
                 </div>
                 <h4 className="mt-4 text-lg font-semibold text-gray-900">Novos Membros</h4>
-                <p className="mt-2 text-3xl font-bold text-yellow-600">342</p>
+                <p className="mt-2 text-3xl font-bold text-yellow-600">{String(overview?.members?.newThisMonth || 0)}</p>
                 <p className="mt-1 text-sm text-gray-500">Este mês</p>
               </div>
             </div>
