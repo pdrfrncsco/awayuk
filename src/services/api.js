@@ -147,7 +147,7 @@ class ApiClient {
             }
           }
           if (status === 403) {
-            friendlyMessage = 'Você não tem permissão para realizar esta ação.';
+            friendlyMessage = data?.user_message || friendlyMessage || 'Você não tem permissão para realizar esta ação.';
           }
           const apiError = new ApiError(friendlyMessage, status, data);
           return Promise.reject(apiError);
