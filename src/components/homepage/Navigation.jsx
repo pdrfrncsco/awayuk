@@ -82,9 +82,19 @@ const Navigation = () => {
             >
               {t('navigation.about')}
             </Link>
+            <Link 
+              to="/servicos" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/servicos' 
+                  ? 'text-red-600 bg-red-50' 
+                  : 'text-gray-700 hover:text-red-600'
+              }`}
+            >
+              {t('navigation.services')}
+            </Link>
           </div>
           <div className="flex items-center space-x-3">
-            <LanguageSelector />
+            <div className="hidden md:block"><LanguageSelector /></div>
              {isAuthenticated ? (
                <div className="relative">
                  <button
@@ -171,6 +181,9 @@ const Navigation = () => {
         {/* Menu mobile */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
+            <div className="flex justify-end px-2 py-2 bg-white border-t border-gray-200">
+              <LanguageSelector />
+            </div>
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
               <Link 
                 to="/" 
@@ -229,6 +242,17 @@ const Navigation = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('navigation.about')}
+              </Link>
+              <Link 
+                to="/servicos" 
+                className={`block px-3 py-2 text-base font-medium rounded-md ${
+                  location.pathname === '/servicos' 
+                    ? 'text-red-600 bg-red-50' 
+                    : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t('navigation.services')}
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
                  {isAuthenticated ? (
