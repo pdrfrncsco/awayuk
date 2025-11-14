@@ -213,6 +213,9 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
+           {/* <div className="flex items-center space-x-3 mb-2">
+            <img src="/awuk.png" alt="AWUK" className="h-12 w-auto" />
+          </div>*/}
           <h1 className="text-3xl font-bold text-gray-900 mb-1">{t('dashboard.title')}</h1>
           <p className="text-gray-600">{t('dashboard.welcome', { name: displayName })}</p>
           <div className="mt-3 flex items-center space-x-3">
