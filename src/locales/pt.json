@@ -25,7 +25,12 @@
     "home": "Início",
     "about": "Sobre",
     "contact": "Contacto",
-    "language": "Idioma"
+    "language": "Idioma",
+    "registerForEvent": "common.registerForEvent",
+    "share": "common.share",
+    "saved": "common.saved",
+    "contactOrganizer": "common.contactOrganizer",
+    "continue": "common.continue"
   },
   "navigation": {
     "home": "Início",
@@ -74,40 +79,38 @@
   },
   "auth": {
     "login": {
-      "title": "Entrar na sua conta",
-      "subtitle": "Bem-vindo de volta! Entre na sua conta para continuar.",
-      "email": "Email",
-      "password": "Palavra-passe",
-      "rememberMe": "Lembrar-me",
-      "forgotPassword": "Esqueceu a palavra-passe?",
-      "loginButton": "Entrar",
-      "noAccount": "Não tem conta?",
-      "signUp": "Registar-se"
+      "title": "auth.login.title",
+      "subtitle": "auth.login.subtitle",
+      "email": "auth.login.email",
+      "password": "auth.login.password",
+      "rememberMe": "auth.login.rememberMe",
+      "forgotPassword": "auth.login.forgotPassword",
+      "loginButton": "auth.login.loginButton",
+      "noAccount": "auth.login.noAccount",
+      "signUp": "auth.login.signUp"
     },
     "register": {
-      "title": "Criar nova conta",
-      "subtitle": "Junte-se à nossa comunidade e comece a conectar-se hoje.",
-      "firstName": "Primeiro Nome",
-      "lastName": "Último Nome",
-      "email": "Email",
-      "password": "Palavra-passe",
-      "confirmPassword": "Confirmar Palavra-passe",
-      "phone": "Telefone",
-      "dateOfBirth": "Data de Nascimento",
-      "gender": "Género",
-      "currentCity": "Cidade Atual",
-      "postcode": "Código Postal",
-      "originProvince": "Província de Origem",
-      "arrivalYear": "Ano de Chegada ao Reino Unido",
-      "profession": "Profissão",
-      "interests": "Interesses",
-      "languagesSpoken": "Idiomas Falados",
-      "registerButton": "Criar Conta",
-      "hasAccount": "Já tem conta?",
-      "signIn": "Entrar"
+      "title": "auth.register.title",
+      "subtitle": "auth.register.subtitle",
+      "firstName": "auth.register.firstName",
+      "lastName": "auth.register.lastName",
+      "email": "auth.register.email",
+      "password": "auth.register.password",
+      "confirmPassword": "auth.register.confirmPassword",
+      "phone": "auth.register.phone",
+      "dateOfBirth": "auth.register.dateOfBirth",
+      "gender": "auth.register.gender",
+      "currentCity": "auth.register.currentCity",
+      "postcode": "auth.register.postcode",
+      "originProvince": "auth.register.originProvince",
+      "arrivalYear": "auth.register.arrivalYear",
+      "profession": "auth.register.profession",
+      "interests": "auth.register.interests",
+      "languagesSpoken": "auth.register.languagesSpoken",
+      "registerButton": "auth.register.registerButton",
+      "hasAccount": "auth.register.hasAccount",
+      "signIn": "auth.register.signIn"
     },
-    "login": "Entrar",
-    "register": "Registar",
     "logout": "Sair",
     "email": "Email",
     "password": "Palavra-passe",
@@ -136,7 +139,13 @@
     "registerToJoinEvent": "Registe-se para se inscrever neste evento",
     "registerToApplyOpportunity": "Registe-se para se candidatar a esta oportunidade",
     "becomeAMember": "Torne-se membro",
-    "completeOnboarding": "Complete o processo de onboarding para aceder a todas as funcionalidades"
+    "completeOnboarding": "Complete o processo de onboarding para aceder a todas as funcionalidades",
+    "registerToSendMessages": "auth.registerToSendMessages",
+    "registerForEvent": "auth.registerForEvent",
+    "registerForOpportunity": "auth.registerForOpportunity",
+    "registerToUse": "auth.registerToUse",
+    "becomeMember": "auth.becomeMember",
+    "completeProfile": "auth.completeProfile"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -197,7 +206,8 @@
     "location": "Local",
     "attendees": "Participantes",
     "status": "Estado",
-    "actions": "Ações"
+    "actions": "Ações",
+    "create_event": "events.create_event"
   },
   "opportunities": {
     "title": "Gestão de Oportunidades",
@@ -272,5 +282,63 @@
   "João Silva": "João Silva",
   "Funcionalidade de recuperação de password será implementada em breve": {
     "": "Funcionalidade de recuperação de password será implementada em breve."
-  }
+  },
+  "Conteúdo para visitantes": "Conteúdo para visitantes",
+  "Teste simples funcionando!": "Teste simples funcionando!",
+  "Teste de configuração funcionando!": "Teste de configuração funcionando!",
+  "/accounts/profile/": "/accounts/profile/",
+  "/accounts/profile/extended/": "/accounts/profile/extended/",
+  "/accounts/services/": "/accounts/services/",
+  "/accounts/portfolio/": "/accounts/portfolio/",
+  "/opportunities/categories/": "/opportunities/categories/",
+  "/opportunities/types/": "/opportunities/types/",
+  "/opportunities/stats/": "/opportunities/stats/",
+  "/notifications/mark-all-read/": "/notifications/mark-all-read/",
+  "/notifications/preferences/": "/notifications/preferences/",
+  "/accounts/messages/": "/accounts/messages/",
+  "/accounts/conversations/": "/accounts/conversations/",
+  "/accounts/users/stats/": "/accounts/users/stats/",
+  "/health/": "/health/",
+  "/events/categories/": "/events/categories/",
+  "/events/stats/": "/events/stats/",
+  "a": "a",
+  "T": "T",
+  "/accounts/users/": "/accounts/users/",
+  "/events/": "/events/",
+  "/opportunities/": "/opportunities/",
+  "/analytics/dashboard/": "/analytics/dashboard/",
+  "/accounts/users/?ordering=-date_joined&limit=5": "/accounts/users/?ordering=-date_joined&limit=5",
+  "/events/?ordering=-created_at&limit=5": "/events/?ordering=-created_at&limit=5",
+  "/opportunities/?ordering=-created_at&limit=5": "/opportunities/?ordering=-created_at&limit=5",
+  "/content/api/posts/?ordering=-created_at&limit=5": "/content/api/posts/?ordering=-created_at&limit=5",
+  "/content/categories": "/content/categories",
+  "/content/types": "/content/types",
+  "/auth/email/resend/": "/auth/email/resend/",
+  "/accounts/permissions": "/accounts/permissions",
+  "/accounts/statistics/roles": "/accounts/statistics/roles",
+  "Inscrição enviada com sucesso!": "Inscrição enviada com sucesso!",
+  "Erro ao enviar mensagem": {
+    " Tente novamente": {
+      "": "Erro ao enviar mensagem. Tente novamente."
+    }
+  },
+  "token": "token",
+  "email": "email",
+  "Falha ao aprovar": {
+    " Tente novamente": {
+      "": "Falha ao aprovar. Tente novamente."
+    }
+  },
+  "Erro ao deletar evento": "Erro ao deletar evento",
+  "Erro ao duplicar evento": "Erro ao duplicar evento",
+  "Erro ao alterar status do evento": "Erro ao alterar status do evento",
+  "Erro ao exportar eventos": "Erro ao exportar eventos",
+  "Erro ao eliminar conteúdo": "Erro ao eliminar conteúdo",
+  "Erro ao duplicar conteúdo": "Erro ao duplicar conteúdo",
+  "Erro ao atualizar status": "Erro ao atualizar status",
+  "Erro ao alterar destaque": "Erro ao alterar destaque",
+  "Erro ao exportar conteúdos": "Erro ao exportar conteúdos",
+  "/registo": "/registo",
+  "/login": "/login",
+  "/": "/"
 }

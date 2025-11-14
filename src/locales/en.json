@@ -25,7 +25,12 @@
     "home": "Home",
     "about": "About",
     "contact": "Contact",
-    "language": "Language"
+    "language": "Language",
+    "registerForEvent": "[common.registerForEvent]",
+    "share": "[common.share]",
+    "saved": "[common.saved]",
+    "contactOrganizer": "[common.contactOrganizer]",
+    "continue": "[common.continue]"
   },
   "navigation": {
     "home": "Home",
@@ -105,7 +110,42 @@
       "registerButton": "Create Account",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in"
-    }
+    },
+    "logout": "[auth.logout]",
+    "email": "[auth.email]",
+    "password": "[auth.password]",
+    "confirmPassword": "[auth.confirmPassword]",
+    "forgotPassword": "[auth.forgotPassword]",
+    "resetPassword": "[auth.resetPassword]",
+    "noAccount": "[auth.noAccount]",
+    "hasAccount": "[auth.hasAccount]",
+    "createAccount": "[auth.createAccount]",
+    "loginSuccess": "[auth.loginSuccess]",
+    "loginError": "[auth.loginError]",
+    "registerSuccess": "[auth.registerSuccess]",
+    "registerError": "[auth.registerError]",
+    "logoutSuccess": "[auth.logoutSuccess]",
+    "verifyEmail": "[auth.verifyEmail]",
+    "verifyEmailSent": "[auth.verifyEmailSent]",
+    "verifyEmailSuccess": "[auth.verifyEmailSuccess]",
+    "verifyEmailError": "[auth.verifyEmailError]",
+    "unauthorized": "[auth.unauthorized]",
+    "accessDenied": "[auth.accessDenied]",
+    "sessionExpired": "[auth.sessionExpired]",
+    "pleaseLogin": "[auth.pleaseLogin]",
+    "registrationRequired": "[auth.registrationRequired]",
+    "registerToContinue": "[auth.registerToContinue]",
+    "registerToMessage": "[auth.registerToMessage]",
+    "registerToJoinEvent": "[auth.registerToJoinEvent]",
+    "registerToApplyOpportunity": "[auth.registerToApplyOpportunity]",
+    "becomeAMember": "[auth.becomeAMember]",
+    "completeOnboarding": "[auth.completeOnboarding]",
+    "registerToSendMessages": "[auth.registerToSendMessages]",
+    "registerForEvent": "[auth.registerForEvent]",
+    "registerForOpportunity": "[auth.registerForOpportunity]",
+    "registerToUse": "[auth.registerToUse]",
+    "becomeMember": "[auth.becomeMember]",
+    "completeProfile": "[auth.completeProfile]"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -166,7 +206,8 @@
     "location": "Location",
     "attendees": "Attendees",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Actions",
+    "create_event": "[events.create_event]"
   },
   "opportunities": {
     "title": "Opportunities Management",
@@ -241,5 +282,63 @@
   "João Silva": "[João Silva]",
   "Funcionalidade de recuperação de password será implementada em breve": {
     "": "[Funcionalidade de recuperação de password será implementada em breve.]"
-  }
+  },
+  "Conteúdo para visitantes": "[Conteúdo para visitantes]",
+  "Teste simples funcionando!": "[Teste simples funcionando!]",
+  "Teste de configuração funcionando!": "[Teste de configuração funcionando!]",
+  "/accounts/profile/": "[/accounts/profile/]",
+  "/accounts/profile/extended/": "[/accounts/profile/extended/]",
+  "/accounts/services/": "[/accounts/services/]",
+  "/accounts/portfolio/": "[/accounts/portfolio/]",
+  "/opportunities/categories/": "[/opportunities/categories/]",
+  "/opportunities/types/": "[/opportunities/types/]",
+  "/opportunities/stats/": "[/opportunities/stats/]",
+  "/notifications/mark-all-read/": "[/notifications/mark-all-read/]",
+  "/notifications/preferences/": "[/notifications/preferences/]",
+  "/accounts/messages/": "[/accounts/messages/]",
+  "/accounts/conversations/": "[/accounts/conversations/]",
+  "/accounts/users/stats/": "[/accounts/users/stats/]",
+  "/health/": "[/health/]",
+  "/events/categories/": "[/events/categories/]",
+  "/events/stats/": "[/events/stats/]",
+  "a": "[a]",
+  "T": "[T]",
+  "/accounts/users/": "[/accounts/users/]",
+  "/events/": "[/events/]",
+  "/opportunities/": "[/opportunities/]",
+  "/analytics/dashboard/": "[/analytics/dashboard/]",
+  "/accounts/users/?ordering=-date_joined&limit=5": "[/accounts/users/?ordering=-date_joined&limit=5]",
+  "/events/?ordering=-created_at&limit=5": "[/events/?ordering=-created_at&limit=5]",
+  "/opportunities/?ordering=-created_at&limit=5": "[/opportunities/?ordering=-created_at&limit=5]",
+  "/content/api/posts/?ordering=-created_at&limit=5": "[/content/api/posts/?ordering=-created_at&limit=5]",
+  "/content/categories": "[/content/categories]",
+  "/content/types": "[/content/types]",
+  "/auth/email/resend/": "[/auth/email/resend/]",
+  "/accounts/permissions": "[/accounts/permissions]",
+  "/accounts/statistics/roles": "[/accounts/statistics/roles]",
+  "Inscrição enviada com sucesso!": "[Inscrição enviada com sucesso!]",
+  "Erro ao enviar mensagem": {
+    " Tente novamente": {
+      "": "[Erro ao enviar mensagem. Tente novamente.]"
+    }
+  },
+  "token": "[token]",
+  "email": "[email]",
+  "Falha ao aprovar": {
+    " Tente novamente": {
+      "": "[Falha ao aprovar. Tente novamente.]"
+    }
+  },
+  "Erro ao deletar evento": "[Erro ao deletar evento]",
+  "Erro ao duplicar evento": "[Erro ao duplicar evento]",
+  "Erro ao alterar status do evento": "[Erro ao alterar status do evento]",
+  "Erro ao exportar eventos": "[Erro ao exportar eventos]",
+  "Erro ao eliminar conteúdo": "[Erro ao eliminar conteúdo]",
+  "Erro ao duplicar conteúdo": "[Erro ao duplicar conteúdo]",
+  "Erro ao atualizar status": "[Erro ao atualizar status]",
+  "Erro ao alterar destaque": "[Erro ao alterar destaque]",
+  "Erro ao exportar conteúdos": "[Erro ao exportar conteúdos]",
+  "/registo": "[/registo]",
+  "/login": "[/login]",
+  "/": "[/]"
 }
