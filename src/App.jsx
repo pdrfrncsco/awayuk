@@ -28,6 +28,7 @@ import OnboardingPage from './pages/onboarding/Onboarding';
 import CreateOpportunity from './pages/opportunities/CreateOpportunity';
 import BusinessOpportunities from './pages/public/BusinessOpportunities';
 import OpportunityDetails from './pages/public/OpportunityDetails';
+import ServicesExplorer from './pages/public/ServicesExplorer';
 import AboutUs from './pages/public/AboutUs';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -109,6 +110,7 @@ function App() {
             } />
             { /* Removed duplicate event details route; using EventDetail instead */ }
             <Route path="/oportunidades" element={<PublicLayout><BusinessOpportunities /></PublicLayout>} />
+            <Route path="/servicos" element={<PublicLayout><ServicesExplorer /></PublicLayout>} />
             <Route path="/criar-oportunidade" element={
               <MultiTypeRoute allowedTypes={['business', 'admin']} redirectTo="/dashboard">
                 <PublicLayout><CreateOpportunity /></PublicLayout>
