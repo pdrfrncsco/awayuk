@@ -135,8 +135,21 @@ class ApiClient {
         }
 
         if (hasResponse) {
-          const message = data?.detail || data?.message || error.message || 'Erro na requisição';
-          const apiError = new ApiError(message, status, data);
+          let friendlyMessage = data?.user_message || data?.detail || data?.message || error.message || 'Erro na requisição';
+          if (status === 401) {
+            const code = String(data?.code || '').toLowerCase();
+            if (code === 'not_authenticated') {
+              friendlyMessage = 'Faça login para continuar.';
+            } else if (code === 'authentication_failed') {
+              friendlyMessage = 'Credenciais inválidas. Verifique e tente novamente.';
+            } else {
+              friendlyMessage = 'Sessão expirada ou inválida. Faça login novamente.';
+            }
+          }
+          if (status === 403) {
+            friendlyMessage = 'Você não tem permissão para realizar esta ação.';
+          }
+          const apiError = new ApiError(friendlyMessage, status, data);
           return Promise.reject(apiError);
         } else if (error.request) {
           const apiError = new ApiError('Erro de conexão', 0, { originalError: error });

@@ -24,7 +24,7 @@ const HeroSection = () => {
           </div>
           <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0">
             <div className="relative rounded-xl shadow-xl">
-              <img className="w-full rounded-lg" src="https://picsum.photos/1350/800?random=30" alt="AWAYUK" />
+              <img className="w-full rounded-lg" src="https://picsum.photos/1350/800?random=30" alt="AWUK" />
               <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg w-3/4">
                 <div className="flex items-center">
                   <img className="h-12 w-12 rounded-full border-2 border-yellow-500" src="https://picsum.photos/50/50?random=2" alt="User" />

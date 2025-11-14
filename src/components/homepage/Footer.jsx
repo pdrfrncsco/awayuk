@@ -49,7 +49,7 @@ const Footer = () => {
               <div className="flex items-center justify-center h-10 w-10 rounded-md bg-gradient-to-r from-yellow-500 to-red-500 text-white">
                 <i className="fas fa-globe-africa text-xl"></i>
               </div>
-              <span className="ml-3 text-xl font-bold text-white">AWAYUK</span>
+              <span className="ml-3 text-xl font-bold text-white">AWUK</span>
             </div>
             <p className="text-gray-300 text-base">
               {t('footer.description')}
